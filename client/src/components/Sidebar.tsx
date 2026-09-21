@@ -60,19 +60,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   return (
     <aside className="w-56 shrink-0 bg-[#ebe7de] border-r border-[#ded9cf] min-h-screen flex flex-col select-none">
-      {/* Top Brand / Logo */}
-      <div className="p-4 flex items-center gap-2 border-b border-[#ded9cf]/60">
-        <div className="flex items-center gap-0.5">
-          <div className="w-2.5 h-6 rounded-full bg-[#2563EB]"></div>
-          <div className="w-2.5 h-7 rounded-full bg-[#3B82F6]"></div>
-          <div className="w-2.5 h-8 rounded-full bg-[#0284C7]"></div>
-          <div className="w-2.5 h-6 rounded-full bg-[#0EA5E9]"></div>
-        </div>
-        <div>
-          <div className="font-bold text-slate-900 text-lg tracking-tight font-heading leading-tight">
+      {/* Top Brand / Official Logo */}
+      <div className="p-3.5 flex items-center gap-3 border-b border-[#ded9cf]/60">
+        <img
+          src="/logo.png"
+          alt="SIR MV Logo"
+          className="w-11 h-11 object-contain drop-shadow-xs shrink-0"
+        />
+        <div className="min-w-0">
+          <div className="font-extrabold text-slate-900 text-[15px] tracking-tight font-heading leading-tight truncate">
             SIR MV
           </div>
-          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
             PU COLLEGE
           </div>
         </div>
