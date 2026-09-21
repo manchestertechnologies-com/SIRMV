@@ -1,0 +1,79 @@
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { initDatabase } from './database/db';
+import { authRouter } from './routes/auth';
+import { branchesRouter } from './routes/branches';
+import { teachersRouter } from './routes/teachers';
+import { substitutionsRouter } from './routes/substitutions';
+import { floorAttenderRouter } from './routes/floorAttender';
+import { lecturesRouter } from './routes/lectures';
+import { attendanceRouter } from './routes/attendance';
+import { eveningStudyRouter } from './routes/eveningStudy';
+import { hostelRouter } from './routes/hostel';
+import { outpassRouter } from './routes/outpass';
+import { reportsRouter } from './routes/reports';
+import { auditRouter } from './routes/audit';
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Enable CORS and JSON body parser
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Ensure upload directories exist
+const uploadDirs = ['uploads', 'uploads/classroom_photos', 'uploads/pickup_photos', 'uploads/evaluated_papers'];
+uploadDirs.forEach((dir) => {
+  const fullPath = path.join(__dirname, '..', dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
+
+// Serve uploaded files securely (or static assets)
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+// Register API Routes
+app.use('/api/auth', authRouter);
+app.use('/api/branches', branchesRouter);
+app.use('/api/teachers', teachersRouter);
+app.use('/api/substitutions', substitutionsRouter);
+app.use('/api/floor-attender', floorAttenderRouter);
+app.use('/api/lectures', lecturesRouter);
+app.use('/api/attendance', attendanceRouter);
+app.use('/api/evening-study', eveningStudyRouter);
+app.use('/api/hostel', hostelRouter);
+app.use('/api/outpass', outpassRouter);
+app.use('/api/reports', reportsRouter);
+app.use('/api/audit', auditRouter);
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    institution: 'SIR MV PU COLLEGE',
+    branches: ['Davangere', 'Shivamogga', 'Ballari'],
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('API Error:', err);
+  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+});
+
+// Initialize database schema and start server
+initDatabase();
+
+app.listen(PORT, () => {
+  console.log(`================================================================`);
+  console.log(`🚀 SIR MV PU COLLEGE Server is running on http://localhost:${PORT}`);
+  console.log(`🏢 Branches: Davangere, Shivamogga, Ballari`);
+  console.log(`================================================================`);
+});
+
+export default app;
