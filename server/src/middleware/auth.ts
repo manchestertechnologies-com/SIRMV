@@ -1,13 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { db } from '../database/db';
+import { queryOne } from '../database/pgDb';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'sirmv_secure_jwt_secret_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'sirmv_super_secret_jwt_key_2026';
+
+export type UserRole =
+  | 'ADMIN'
+  | 'PRINCIPAL'
+  | 'HOD'
+  | 'TEACHER'
+  | 'FLOOR_ATTENDER'
+  | 'NON_TEACHING_STAFF'
+  | 'GATE_STAFF'
+  | 'WARDEN'
+  | 'HEAD_WARDEN'
+  | 'STUDENT'
+  | 'PARENT';
 
 export interface AuthUser {
   id: string;
   username: string;
-  role: string;
+  role: UserRole | string;
   name: string;
   email?: string;
   phone?: string;
@@ -25,7 +38,7 @@ export function generateToken(user: AuthUser): string {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
 }
 
-export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+export async function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized. No token provided.' });
@@ -36,7 +49,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
     
     // Check if user still active
-    const userRow = db.prepare('SELECT is_active FROM users WHERE id = ?').get(decoded.id) as { is_active: number } | undefined;
+    const userRow = await queryOne<{ is_active: number }>('SELECT is_active FROM users WHERE id = $1', [decoded.id]);
     if (!userRow || userRow.is_active !== 1) {
       return res.status(401).json({ error: 'User account is inactive or not found.' });
     }

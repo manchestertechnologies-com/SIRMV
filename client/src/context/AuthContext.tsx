@@ -1,10 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiFetch, setAuthToken, removeAuthToken, getAuthToken } from '../services/api';
 
+export type UserRole =
+  | 'ADMIN'
+  | 'PRINCIPAL'
+  | 'HOD'
+  | 'TEACHER'
+  | 'FLOOR_ATTENDER'
+  | 'NON_TEACHING_STAFF'
+  | 'GATE_STAFF'
+  | 'WARDEN'
+  | 'HEAD_WARDEN'
+  | 'STUDENT'
+  | 'PARENT';
+
 export interface User {
   id: string;
   username: string;
-  role: 'ADMIN' | 'PRINCIPAL' | 'HOD' | 'TEACHER' | 'FLOOR_ATTENDER' | 'GATE_STAFF' | 'WARDEN' | 'STUDENT' | 'PARENT';
+  role: UserRole;
   name: string;
   email?: string;
   phone?: string;
@@ -33,10 +46,10 @@ interface AuthContextType {
   branches: Branch[];
   currentBranch: Branch | null;
   isLoading: boolean;
-  login: (username: string, password?: string) => Promise<void>;
+  login: (identifier: string, password?: string) => Promise<void>;
   logout: () => void;
   switchBranch: (branchId: string) => void;
-  quickSwitchUser: (username: string) => Promise<void>;
+  quickSwitchUser: (identifier: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!token) {
         // Auto-login default admin for smooth evaluation if no token
         try {
-          await login('admin', 'password123');
+          await login('admin.demo@college.test', 'Demo@12345');
         } catch (err) {
           setIsLoading(false);
         }
@@ -96,12 +109,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, branches]);
 
-  const login = async (username: string, password: string = 'password123') => {
+  const login = async (identifier: string, password: string = 'Demo@12345') => {
     setIsLoading(true);
     try {
       const res = await apiFetch<{ token: string; user: User }>('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email: identifier, username: identifier, password })
       });
       setAuthToken(res.token);
       setUser(res.user);
@@ -126,8 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const quickSwitchUser = async (username: string) => {
-    await login(username, 'password123');
+  const quickSwitchUser = async (identifier: string) => {
+    await login(identifier, 'Demo@12345');
   };
 
   return (

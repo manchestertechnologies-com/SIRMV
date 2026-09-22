@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { db } from '../database/db';
+import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import { otpService } from '../services/otpService';
@@ -35,7 +35,7 @@ outpassRouter.post('/upload-photo', authenticate, upload.single('photo'), (req: 
 });
 
 // 1. Create Outpass Request (with Pickup details & Photo)
-outpassRouter.post('/request', authenticate, (req: AuthRequest, res: Response) => {
+outpassRouter.post('/request', authenticate, async (req: AuthRequest, res: Response) => {
   const {
     student_id,
     reason,
@@ -53,7 +53,7 @@ outpassRouter.post('/request', authenticate, (req: AuthRequest, res: Response) =
   }
 
   // Get student details
-  const student = db.prepare(`SELECT * FROM student_profiles WHERE id = ?`).get(student_id) as any;
+  const student = await queryOne(`SELECT * FROM student_profiles WHERE id = ?`, [student_id]);
   if (!student) {
     return res.status(404).json({ error: 'Student profile not found.' });
   }
@@ -68,17 +68,17 @@ outpassRouter.post('/request', authenticate, (req: AuthRequest, res: Response) =
   // Generate initial verification code (becomes active upon Principal approval)
   const verificationCode = otpService.generate4DigitOutpassCode();
 
-  db.prepare(`
+  await execute(`
     INSERT INTO outpasses (
       id, outpass_number, branch_id, student_id, reason, pickup_person_name,
       pickup_person_phone, relationship, id_type, id_number, pickup_photo_url,
       parent_phone, parent_otp_verified, verification_code, status, requested_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'PENDING', CURRENT_TIMESTAMP)
-  `).run(
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, 'PENDING', CURRENT_TIMESTAMP)
+  `, [
     outpassId, outpassNumber, branchId, student_id, reason, pickup_person_name,
     pickup_person_phone, relationship, id_type, id_number || null, pickup_photo_url || null,
     resolvedParentPhone, verificationCode
-  );
+  ]);
 
   logAudit(req, 'OUTPASS_REQUESTED', 'outpasses', outpassId, {
     outpassNumber,
@@ -100,12 +100,12 @@ outpassRouter.post('/request', authenticate, (req: AuthRequest, res: Response) =
 outpassRouter.post('/:id/send-otp', authenticate, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const outpass = db.prepare(`
+  const outpass = await queryOne(`
     SELECT op.*, sp.name as student_name 
     FROM outpasses op
     JOIN student_profiles sp ON op.student_id = sp.id
     WHERE op.id = ?
-  `).get(id) as any;
+  `, [id]);
 
   if (!outpass) {
     return res.status(404).json({ error: 'Outpass not found.' });
@@ -148,10 +148,10 @@ outpassRouter.post('/:id/verify-otp', authenticate, (req: AuthRequest, res: Resp
 });
 
 // 4. Principal Pending Outpass Queue
-outpassRouter.get('/pending-principal', authenticate, requireRoles('PRINCIPAL', 'ADMIN', 'HOD'), (req: AuthRequest, res: Response) => {
+outpassRouter.get('/pending-principal', authenticate, requireRoles('PRINCIPAL', 'ADMIN', 'HOD'), async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
-  const pendingOutpasses = db.prepare(`
+  const pendingOutpasses = await query(`
     SELECT op.*, sp.name as student_name, sp.register_number, sp.photo_url as student_photo,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
            br.name as branch_name, br.principal_name
@@ -163,32 +163,32 @@ outpassRouter.get('/pending-principal', authenticate, requireRoles('PRINCIPAL', 
     JOIN branches br ON op.branch_id = br.id
     WHERE op.branch_id = ? AND op.status = 'PENDING'
     ORDER BY op.requested_at DESC
-  `).all(branchId);
+  `, [branchId]);
 
   return res.json({ pendingOutpasses });
 });
 
 // 5. Principal Approval / Rejection
-outpassRouter.post('/:id/approve', authenticate, requireRoles('PRINCIPAL', 'ADMIN'), (req: AuthRequest, res: Response) => {
+outpassRouter.post('/:id/approve', authenticate, requireRoles('PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const principalId = req.user!.id;
   const principalName = req.user!.name;
 
-  const outpass = db.prepare(`SELECT * FROM outpasses WHERE id = ?`).get(id) as any;
+  const outpass = await queryOne(`SELECT * FROM outpasses WHERE id = ?`, [id]);
   if (!outpass) {
     return res.status(404).json({ error: 'Outpass not found.' });
   }
 
   const digitalSignatureHash = `SIG_DIGITAL_PRINCIPAL_${principalId.slice(0, 8)}_${outpass.verification_code}_${Date.now()}`;
 
-  db.prepare(`
+  await execute(`
     UPDATE outpasses SET
       status = 'APPROVED',
       approved_by = ?,
       approved_at = CURRENT_TIMESTAMP,
       digital_signature_hash = ?
     WHERE id = ?
-  `).run(principalId, digitalSignatureHash, id);
+  `, [principalId, digitalSignatureHash, id]);
 
   logAudit(req, 'OUTPASS_APPROVED', 'outpasses', id, {
     outpassNumber: outpass.outpass_number,
@@ -204,19 +204,19 @@ outpassRouter.post('/:id/approve', authenticate, requireRoles('PRINCIPAL', 'ADMI
   });
 });
 
-outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN'), (req: AuthRequest, res: Response) => {
+outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { reason } = req.body;
   const principalId = req.user!.id;
 
-  db.prepare(`
+  await execute(`
     UPDATE outpasses SET
       status = 'REJECTED',
       approved_by = ?,
       approved_at = CURRENT_TIMESTAMP,
       rejection_reason = ?
     WHERE id = ?
-  `).run(principalId, reason || 'Rejected by Principal', id);
+  `, [principalId, reason || 'Rejected by Principal', id]);
 
   logAudit(req, 'OUTPASS_REJECTED', 'outpasses', id, { rejection_reason: reason });
 
@@ -224,11 +224,11 @@ outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN
 });
 
 // 6. Gate Staff Instant Search & Verification (by Outpass Number OR 4-digit code)
-outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), (req: AuthRequest, res: Response) => {
-  const { query } = req.params;
+outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), async (req: AuthRequest, res: Response) => {
+  const { query: searchQuery } = req.params;
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
-  const outpass = db.prepare(`
+  const outpass = await queryOne(`
     SELECT op.*, sp.name as student_name, sp.register_number, sp.photo_url as student_photo,
            sp.gender, sp.phone as student_phone,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
@@ -246,7 +246,7 @@ outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF'
     LEFT JOIN users u_exit ON op.exit_gate_staff_id = u_exit.id
     LEFT JOIN users u_ret ON op.return_gate_staff_id = u_ret.id
     WHERE op.branch_id = ? AND (op.outpass_number = ? OR op.verification_code = ? OR op.id = ?)
-  `).get(branchId, query.trim(), query.trim(), query.trim()) as any;
+  `, [branchId, searchQuery.trim(), searchQuery.trim(), searchQuery.trim()]);
 
   if (!outpass) {
     return res.status(404).json({ error: 'No matching outpass found with this code or number.' });
@@ -256,11 +256,11 @@ outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF'
 });
 
 // 7. Gate Staff Record Exit
-outpassRouter.post('/:id/record-exit', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL'), (req: AuthRequest, res: Response) => {
+outpassRouter.post('/:id/record-exit', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const gateStaffId = req.user!.id;
 
-  const outpass = db.prepare(`SELECT * FROM outpasses WHERE id = ?`).get(id) as any;
+  const outpass = await queryOne(`SELECT * FROM outpasses WHERE id = ?`, [id]);
   if (!outpass) {
     return res.status(404).json({ error: 'Outpass not found.' });
   }
@@ -268,13 +268,13 @@ outpassRouter.post('/:id/record-exit', authenticate, requireRoles('GATE_STAFF', 
     return res.status(400).json({ error: `Cannot exit. Outpass status is ${outpass.status}` });
   }
 
-  db.prepare(`
+  await execute(`
     UPDATE outpasses SET
       status = 'OUT',
       exit_time = CURRENT_TIMESTAMP,
       exit_gate_staff_id = ?
     WHERE id = ?
-  `).run(gateStaffId, id);
+  `, [gateStaffId, id]);
 
   logAudit(req, 'GATE_EXIT_RECORDED', 'outpasses', id, {
     outpassNumber: outpass.outpass_number,
@@ -285,11 +285,11 @@ outpassRouter.post('/:id/record-exit', authenticate, requireRoles('GATE_STAFF', 
 });
 
 // 8. Gate Staff Record Return
-outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), (req: AuthRequest, res: Response) => {
+outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const gateStaffId = req.user!.id;
 
-  const outpass = db.prepare(`SELECT * FROM outpasses WHERE id = ?`).get(id) as any;
+  const outpass = await queryOne(`SELECT * FROM outpasses WHERE id = ?`, [id]);
   if (!outpass) {
     return res.status(404).json({ error: 'Outpass not found.' });
   }
@@ -297,13 +297,13 @@ outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF'
     return res.status(400).json({ error: `Cannot record return. Outpass status is currently ${outpass.status}` });
   }
 
-  db.prepare(`
+  await execute(`
     UPDATE outpasses SET
       status = 'RETURNED',
       return_time = CURRENT_TIMESTAMP,
       return_gate_staff_id = ?
     WHERE id = ?
-  `).run(gateStaffId, id);
+  `, [gateStaffId, id]);
 
   logAudit(req, 'GATE_RETURN_RECORDED', 'outpasses', id, {
     outpassNumber: outpass.outpass_number,
@@ -314,14 +314,14 @@ outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF'
 });
 
 // 9. Principal Outpass Register (Today's Outpasses & Historical Filter)
-outpassRouter.get('/register', authenticate, (req: AuthRequest, res: Response) => {
+outpassRouter.get('/register', authenticate, async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
   const status = req.query.status as string;
   const date = req.query.date as string;
   const classId = req.query.class_id as string;
   const search = req.query.search as string;
 
-  let query = `
+  let sql = `
     SELECT op.*, sp.name as student_name, sp.register_number, sp.photo_url as student_photo,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
            u_appr.name as approved_by_name,
@@ -340,25 +340,25 @@ outpassRouter.get('/register', authenticate, (req: AuthRequest, res: Response) =
   const params: any[] = [branchId];
 
   if (status && status !== 'ALL') {
-    query += ` AND op.status = ?`;
+    sql += ` AND op.status = ?`;
     params.push(status);
   }
   if (date) {
-    query += ` AND date(op.requested_at) = ?`;
+    sql += ` AND DATE(op.requested_at) = DATE(?)`;
     params.push(date);
   }
   if (classId) {
-    query += ` AND sp.class_id = ?`;
+    sql += ` AND sp.class_id = ?`;
     params.push(classId);
   }
   if (search) {
-    query += ` AND (sp.name LIKE ? OR sp.register_number LIKE ? OR op.outpass_number LIKE ?)`;
+    sql += ` AND (sp.name LIKE ? OR sp.register_number LIKE ? OR op.outpass_number LIKE ?)`;
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
-  query += ` ORDER BY op.requested_at DESC LIMIT 100`;
+  sql += ` ORDER BY op.requested_at DESC LIMIT 100`;
 
-  const outpasses = db.prepare(query).all(...params);
+  const outpasses = await query(sql, params);
 
   // Status breakdown metrics
   const counts = {
@@ -374,7 +374,7 @@ outpassRouter.get('/register', authenticate, (req: AuthRequest, res: Response) =
 });
 
 // 10. Student Outpass History
-outpassRouter.get('/student/:studentId', authenticate, (req: AuthRequest, res: Response) => {
+outpassRouter.get('/student/:studentId', authenticate, async (req: AuthRequest, res: Response) => {
   const { studentId } = req.params;
 
   // Authorization check for Student / Parent
@@ -382,7 +382,7 @@ outpassRouter.get('/student/:studentId', authenticate, (req: AuthRequest, res: R
     return res.status(403).json({ error: 'Unauthorized to view another student outpass history.' });
   }
 
-  const history = db.prepare(`
+  const history = await query(`
     SELECT op.*, u_appr.name as approved_by_name, u_exit.name as exit_staff_name, u_ret.name as return_staff_name
     FROM outpasses op
     LEFT JOIN users u_appr ON op.approved_by = u_appr.id
@@ -390,16 +390,16 @@ outpassRouter.get('/student/:studentId', authenticate, (req: AuthRequest, res: R
     LEFT JOIN users u_ret ON op.return_gate_staff_id = u_ret.id
     WHERE op.student_id = ?
     ORDER BY op.requested_at DESC
-  `).all(studentId);
+  `, [studentId]);
 
   return res.json({ history });
 });
 
 // 11. Printable Outpass Data
-outpassRouter.get('/:id/print', authenticate, (req: AuthRequest, res: Response) => {
+outpassRouter.get('/:id/print', authenticate, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const outpass = db.prepare(`
+  const outpass = await queryOne(`
     SELECT op.*, sp.name as student_name, sp.register_number, sp.photo_url as student_photo,
            sp.gender, sp.phone as student_phone,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
@@ -418,7 +418,7 @@ outpassRouter.get('/:id/print', authenticate, (req: AuthRequest, res: Response) 
     LEFT JOIN users u_exit ON op.exit_gate_staff_id = u_exit.id
     LEFT JOIN users u_ret ON op.return_gate_staff_id = u_ret.id
     WHERE op.id = ?
-  `).get(id) as any;
+  `, [id]);
 
   if (!outpass) {
     return res.status(404).json({ error: 'Outpass record not found.' });
@@ -426,3 +426,4 @@ outpassRouter.get('/:id/print', authenticate, (req: AuthRequest, res: Response) 
 
   return res.json({ outpass });
 });
+

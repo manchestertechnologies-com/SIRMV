@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { db } from '../database/db';
+import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import crypto from 'crypto';
@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // 1. Floor Attender Operational Dashboard
-floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL', 'HOD'), (req: AuthRequest, res: Response) => {
+floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL', 'HOD'), async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
   const floor = parseInt(req.query.floor as string, 10) || 2;
   const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
@@ -35,19 +35,19 @@ floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER
   const dayOfWeek = dayNames[targetDate.getDay()] === 'Sunday' ? 'Monday' : dayNames[targetDate.getDay()];
 
   // Get all rooms on this floor
-  const rooms = db.prepare(`
+  const rooms = await query(`
     SELECT * FROM rooms 
     WHERE branch_id = ? AND floor = ?
     ORDER BY room_number ASC
-  `).all(branchId, floor) as any[];
+  `, [branchId, floor]);
 
   // Get timetable entries for these rooms on this day
-  const roomIds = rooms.map((r) => r.id);
-  const roomPlaceholders = roomIds.map(() => '?').join(',');
+  const roomIds = rooms.map((r: any) => r.id);
 
   let scheduledLectures: any[] = [];
   if (roomIds.length > 0) {
-    scheduledLectures = db.prepare(`
+    const roomPlaceholders = roomIds.map(() => '?').join(',');
+    scheduledLectures = await query(`
       SELECT tt.*, s.name as subject_name, s.code as subject_code,
              c.name as class_name, sec.name as section_name, b.name as batch_name,
              r.room_number, r.floor,
@@ -62,13 +62,13 @@ floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER
       JOIN users u ON tp.user_id = u.id
       WHERE tt.branch_id = ? AND tt.day_of_week = ? AND tt.room_id IN (${roomPlaceholders})
       ORDER BY tt.period_number ASC, r.room_number ASC
-    `).all(branchId, dayOfWeek, ...roomIds) as any[];
+    `, [branchId, dayOfWeek, ...roomIds]);
   }
 
   // Combine with actual lecture sessions recorded today
-  const lecturesWithStatus = scheduledLectures.map((entry) => {
+  const lecturesWithStatus = await Promise.all(scheduledLectures.map(async (entry: any) => {
     // Check if lecture session already initiated
-    let session = db.prepare(`
+    const session = await queryOne(`
       SELECT ls.*, u_sub.name as substitute_teacher_name,
              u_fa.name as floor_attender_name,
              lc.chapter, lc.concept, lc.topic_taught,
@@ -82,19 +82,19 @@ floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER
       LEFT JOIN users u_fa ON ls.floor_attender_id = u_fa.id
       LEFT JOIN lecture_concepts lc ON ls.id = lc.lecture_session_id
       WHERE ls.timetable_entry_id = ? AND ls.date = ?
-    `).get(entry.id, date) as any;
+    `, [entry.id, date]);
 
     // Check if teacher is marked absent
-    const absence = db.prepare(`SELECT * FROM teacher_absences WHERE teacher_id = ? AND date = ? AND status = 'RECORDED'`).get(entry.teacher_id, date);
+    const absence = await queryOne(`SELECT * FROM teacher_absences WHERE teacher_id = ? AND date = ? AND status = 'RECORDED'`, [entry.teacher_id, date]);
     
     // Check substitution assignment
-    const subAssignment = db.prepare(`
+    const subAssignment = await queryOne(`
       SELECT sa.*, u.name as substitute_name 
       FROM substitution_assignments sa
       JOIN teacher_profiles tp ON sa.substitute_teacher_id = tp.id
       JOIN users u ON tp.user_id = u.id
       WHERE sa.timetable_entry_id = ? AND sa.date = ?
-    `).get(entry.id, date) as any;
+    `, [entry.id, date]);
 
     let computedTeacherStatus = 'PENDING';
     if (session) {
@@ -110,14 +110,14 @@ floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER
       substituteAssignment: subAssignment || null,
       computedTeacherStatus
     };
-  });
+  }));
 
   // Calculate high-level floor statistics
   const totalClasses = scheduledLectures.length;
-  const classesStarted = lecturesWithStatus.filter((l) => l.session && l.session.teacher_time_in).length;
-  const classesCompleted = lecturesWithStatus.filter((l) => l.session && l.session.finalization_status === 'COMPLETED').length;
-  const attendancePending = lecturesWithStatus.filter((l) => !l.session || l.session.finalization_status === 'PENDING').length;
-  const teachersAbsent = lecturesWithStatus.filter((l) => l.isAbsent).length;
+  const classesStarted = lecturesWithStatus.filter((l: any) => l.session && l.session.teacher_time_in).length;
+  const classesCompleted = lecturesWithStatus.filter((l: any) => l.session && l.session.finalization_status === 'COMPLETED').length;
+  const attendancePending = lecturesWithStatus.filter((l: any) => !l.session || l.session.finalization_status === 'PENDING').length;
+  const teachersAbsent = lecturesWithStatus.filter((l: any) => l.isAbsent).length;
 
   return res.json({
     floor,
@@ -136,7 +136,7 @@ floorAttenderRouter.get('/dashboard', authenticate, requireRoles('FLOOR_ATTENDER
 });
 
 // 2. Initialize or Update Lecture Session (Time In, Time Out, Concept, Status)
-floorAttenderRouter.post('/lecture-session', authenticate, requireRoles('FLOOR_ATTENDER', 'TEACHER', 'HOD', 'ADMIN'), (req: AuthRequest, res: Response) => {
+floorAttenderRouter.post('/lecture-session', authenticate, requireRoles('FLOOR_ATTENDER', 'TEACHER', 'HOD', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   const {
     id: existingId,
     timetable_entry_id,
@@ -172,7 +172,7 @@ floorAttenderRouter.post('/lecture-session', authenticate, requireRoles('FLOOR_A
 
   if (sessionId) {
     // Update existing lecture session
-    db.prepare(`
+    await execute(`
       UPDATE lecture_sessions SET
         teacher_time_in = COALESCE(?, teacher_time_in),
         lecture_start_time = COALESCE(?, lecture_start_time),
@@ -186,40 +186,40 @@ floorAttenderRouter.post('/lecture-session', authenticate, requireRoles('FLOOR_A
         remarks = COALESCE(?, remarks),
         finalization_status = COALESCE(?, finalization_status)
       WHERE id = ?
-    `).run(
+    `, [
       teacher_time_in, lecture_start_time, lecture_end_time, teacher_time_out,
       teacher_status, substitute_teacher_id, classroom_photo_url, recording_url,
       floorAttenderId, remarks, finalization_status, sessionId
-    );
+    ]);
   } else {
     // Create new lecture session
     sessionId = 'lec-' + crypto.randomUUID();
-    db.prepare(`
+    await execute(`
       INSERT INTO lecture_sessions (
         id, branch_id, timetable_entry_id, date, academic_year, class_id, section_id, batch_id,
         subject_id, teacher_id, substitute_teacher_id, room_id, floor, scheduled_start, scheduled_end,
         teacher_time_in, lecture_start_time, lecture_end_time, teacher_time_out, teacher_status,
         classroom_photo_url, recording_url, floor_attender_id, remarks, finalization_status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       sessionId, branchId, timetable_entry_id, date, academic_year, class_id, section_id, batch_id,
       subject_id, teacher_id, substitute_teacher_id || null, room_id, floor, scheduled_start, scheduled_end,
       teacher_time_in, lecture_start_time, lecture_end_time, teacher_time_out, teacher_status,
       classroom_photo_url, recording_url, floorAttenderId, remarks, finalization_status
-    );
+    ]);
   }
 
   // Update Concept Taught if provided
   if (chapter || concept || topic_taught) {
-    db.prepare(`
+    await execute(`
       INSERT INTO lecture_concepts (id, lecture_session_id, chapter, concept, topic_taught)
       VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(lecture_session_id) DO UPDATE SET
-        chapter = excluded.chapter,
-        concept = excluded.concept,
-        topic_taught = excluded.topic_taught,
+        chapter = EXCLUDED.chapter,
+        concept = EXCLUDED.concept,
+        topic_taught = EXCLUDED.topic_taught,
         updated_at = CURRENT_TIMESTAMP
-    `).run('lc-' + crypto.randomUUID(), sessionId, chapter || '', concept || '', topic_taught || '');
+    `, ['lc-' + crypto.randomUUID(), sessionId, chapter || '', concept || '', topic_taught || '']);
   }
 
   logAudit(req, 'LECTURE_SESSION_UPDATED', 'lecture_sessions', sessionId, {
@@ -245,3 +245,4 @@ floorAttenderRouter.post('/upload-photo', authenticate, upload.single('photo'), 
   const photoUrl = `/uploads/classroom_photos/${req.file.filename}`;
   return res.json({ success: true, photoUrl });
 });
+

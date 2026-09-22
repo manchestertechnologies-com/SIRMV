@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
-import { initDatabase } from './database/db';
+import { testConnection } from './database/postgres';
 import { authRouter } from './routes/auth';
 import { branchesRouter } from './routes/branches';
 import { teachersRouter } from './routes/teachers';
+import { studentsRouter } from './routes/students';
+import { staffRouter } from './routes/staff';
 import { substitutionsRouter } from './routes/substitutions';
 import { floorAttenderRouter } from './routes/floorAttender';
 import { lecturesRouter } from './routes/lectures';
@@ -40,6 +42,8 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/api/auth', authRouter);
 app.use('/api/branches', branchesRouter);
 app.use('/api/teachers', teachersRouter);
+app.use('/api/students', studentsRouter);
+app.use('/api/staff', staffRouter);
 app.use('/api/substitutions', substitutionsRouter);
 app.use('/api/floor-attender', floorAttenderRouter);
 app.use('/api/lectures', lecturesRouter);
@@ -66,8 +70,26 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
 });
 
-// Initialize database schema and start server
-initDatabase();
+// Serve frontend in production if built
+const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
+// Verify PostgreSQL connection and start server
+testConnection().then((res) => {
+  if (res.success) {
+    console.log(`✅ Connected to Neon PostgreSQL database (${res.serverVersion})`);
+  } else {
+    console.error(`❌ Neon PostgreSQL connection failed:`, res.error);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`================================================================`);
@@ -77,3 +99,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
+

@@ -5,7 +5,7 @@ export async function seedPostgresDatabase() {
   console.log('🔄 Starting Neon PostgreSQL database seed inside a transactional block...');
   
   const client = await getClient();
-  const passwordHash = bcrypt.hashSync('password123', 10);
+  const passwordHash = bcrypt.hashSync('Demo@12345', 10);
 
   const stats: Record<string, { inserted: number; skipped: number }> = {};
   const recordStat = (table: string, count: number) => {
@@ -129,7 +129,7 @@ export async function seedPostgresDatabase() {
       }
     }
 
-    // 4. Users (9 Roles)
+    // 4. Users (10 Standard Roles & Demo Accounts)
     const userSql = `
       INSERT INTO users (id, branch_id, username, password_hash, role, name, email, phone, avatar_url, is_active)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -140,17 +140,18 @@ export async function seedPostgresDatabase() {
         name = EXCLUDED.name,
         email = EXCLUDED.email,
         phone = EXCLUDED.phone,
-        avatar_url = EXCLUDED.avatar_url;
+        avatar_url = EXCLUDED.avatar_url,
+        is_active = EXCLUDED.is_active;
     `;
 
-    // Admin & Principals
-    await upsert(userSql, ['usr-admin', 'branch-dvg', 'admin', passwordHash, 'ADMIN', 'System Administrator', 'admin@sirmv.edu.in', '9880011223', '/avatars/admin.png', 1], 'users');
-    await upsert(userSql, ['usr-prin-dvg', 'branch-dvg', 'principal_dvg', passwordHash, 'PRINCIPAL', 'Dr. B. N. Vishwanath (Principal)', 'principal.dvg@sirmv.edu.in', '9845011222', '/avatars/principal.png', 1], 'users');
+    // Standard Demo Accounts (Password: Demo@12345)
+    await upsert(userSql, ['usr-admin', 'branch-dvg', 'admin.demo@college.test', passwordHash, 'ADMIN', 'Aarav Kulkarni (System Admin)', 'admin.demo@college.test', '9880011223', '/avatars/admin.png', 1], 'users');
+    await upsert(userSql, ['usr-prin-dvg', 'branch-dvg', 'principal.demo@college.test', passwordHash, 'PRINCIPAL', 'Dr. B. N. Vishwanath (Principal)', 'principal.demo@college.test', '9845011222', '/avatars/principal.png', 1], 'users');
     await upsert(userSql, ['usr-prin-smg', 'branch-smg', 'principal_smg', passwordHash, 'PRINCIPAL', 'Prof. K. R. Suresh (Principal)', 'principal.smg@sirmv.edu.in', '9845022333', '/avatars/principal.png', 1], 'users');
     await upsert(userSql, ['usr-prin-bly', 'branch-bly', 'principal_bly', passwordHash, 'PRINCIPAL', 'Dr. H. M. Manjunath (Principal)', 'principal.bly@sirmv.edu.in', '9845033444', '/avatars/principal.png', 1], 'users');
 
     // HODs
-    await upsert(userSql, ['usr-hod-phy', 'branch-dvg', 'hod_physics', passwordHash, 'HOD', 'Dr. A. S. Patil', 'patil.phy@sirmv.edu.in', '9845044555', '/avatars/hod_phy.png', 1], 'users');
+    await upsert(userSql, ['usr-hod-phy', 'branch-dvg', 'hod.demo@college.test', passwordHash, 'HOD', 'Dr. A. S. Patil (HOD Physics)', 'hod.demo@college.test', '9845044555', '/avatars/hod_phy.png', 1], 'users');
     await upsert(userSql, ['usr-hod-chem', 'branch-dvg', 'hod_chem', passwordHash, 'HOD', 'Dr. Rekha M', 'rekha.chem@sirmv.edu.in', '9845055666', '/avatars/hod_chem.png', 1], 'users');
     await upsert(userSql, ['usr-hod-math', 'branch-dvg', 'hod_math', passwordHash, 'HOD', 'Prof. Jagadish K', 'jagadish.math@sirmv.edu.in', '9845066777', '/avatars/hod_math.png', 1], 'users');
 
@@ -160,22 +161,27 @@ export async function seedPostgresDatabase() {
     await client.query(`UPDATE departments SET hod_user_id = 'usr-hod-math' WHERE id = 'dept-math-branch-dvg'`);
 
     // Teachers
-    await upsert(userSql, ['usr-teacher-abc', 'branch-dvg', 'teacher_abc', passwordHash, 'TEACHER', 'Mr. Anand Kumar (Mr. ABC)', 'anand.abc@sirmv.edu.in', '9845077888', '/avatars/teacher_abc.png', 1], 'users');
+    await upsert(userSql, ['usr-teacher-abc', 'branch-dvg', 'teacher.demo@college.test', passwordHash, 'TEACHER', 'Mr. Anand Kumar (Physics Faculty)', 'teacher.demo@college.test', '9845077888', '/avatars/teacher_abc.png', 1], 'users');
     await upsert(userSql, ['usr-teacher-xyz', 'branch-dvg', 'teacher_xyz', passwordHash, 'TEACHER', 'Mrs. Sneha Hegde (Mrs. XYZ)', 'sneha.xyz@sirmv.edu.in', '9845088999', '/avatars/teacher_xyz.png', 1], 'users');
     await upsert(userSql, ['usr-teacher-pqr', 'branch-dvg', 'teacher_pqr', passwordHash, 'TEACHER', 'Mr. Prashanth Rao (Mr. PQR)', 'prashanth.pqr@sirmv.edu.in', '9845099000', '/avatars/teacher_pqr.png', 1], 'users');
     await upsert(userSql, ['usr-teacher-chem1', 'branch-dvg', 'teacher_chem1', passwordHash, 'TEACHER', 'Dr. Ramesh B', 'ramesh.chem@sirmv.edu.in', '9845100111', '/avatars/teacher_chem.png', 1], 'users');
     await upsert(userSql, ['usr-teacher-bio1', 'branch-dvg', 'teacher_bio1', passwordHash, 'TEACHER', 'Mrs. Shwetha N', 'shwetha.bio@sirmv.edu.in', '9845111222', '/avatars/teacher_bio.png', 1], 'users');
 
     // Floor Attenders
-    await upsert(userSql, ['usr-attender-fl2', 'branch-dvg', 'attender_floor2', passwordHash, 'FLOOR_ATTENDER', 'Ramesh Kumar (Floor 2 Attender)', 'ramesh.attender@sirmv.edu.in', '9740011223', '/avatars/attender.png', 1], 'users');
+    await upsert(userSql, ['usr-attender-fl2', 'branch-dvg', 'floor.demo@college.test', passwordHash, 'FLOOR_ATTENDER', 'Ramesh Kumar (Floor Attender)', 'floor.demo@college.test', '9740011223', '/avatars/attender.png', 1], 'users');
     await upsert(userSql, ['usr-attender-fl3', 'branch-dvg', 'attender_floor3', passwordHash, 'FLOOR_ATTENDER', 'Manjunath S (Floor 3 Attender)', 'manjunath.attender@sirmv.edu.in', '9740022334', '/avatars/attender.png', 1], 'users');
 
-    // Gate Staff & Warden
-    await upsert(userSql, ['usr-gate-1', 'branch-dvg', 'gate_staff', passwordHash, 'GATE_STAFF', 'Basavarajappa K (Main Gate Security)', 'security.gate@sirmv.edu.in', '9740033445', '/avatars/security.png', 1], 'users');
-    await upsert(userSql, ['usr-warden-1', 'branch-dvg', 'warden_boys', passwordHash, 'WARDEN', 'Chandrashekhar M (Boys Hostel Warden)', 'warden.boys@sirmv.edu.in', '9740044556', '/avatars/warden.png', 1], 'users');
+    // Non-Teaching Staff & Gate Staff
+    await upsert(userSql, ['usr-staff-1', 'branch-dvg', 'staff.demo@college.test', passwordHash, 'NON_TEACHING_STAFF', 'Basavarajappa K (Office Staff)', 'staff.demo@college.test', '9740033445', '/avatars/security.png', 1], 'users');
+    await upsert(userSql, ['usr-gate-1', 'branch-dvg', 'gate_staff', passwordHash, 'GATE_STAFF', 'Mallikarjun G (Gate Security)', 'security.gate@sirmv.edu.in', '9740033446', '/avatars/security.png', 1], 'users');
 
-    // Parents
-    await upsert(userSql, ['usr-parent-rahul', 'branch-dvg', 'parent_rahul', passwordHash, 'PARENT', 'Mr. Rakesh Sharma', 'rakesh.sharma@gmail.com', '9845012345', '/avatars/parent.png', 1], 'users');
+    // Wardens & Head Warden
+    await upsert(userSql, ['usr-warden-1', 'branch-dvg', 'warden.demo@college.test', passwordHash, 'WARDEN', 'Chandrashekhar M (Boys Hostel Warden)', 'warden.demo@college.test', '9740044556', '/avatars/warden.png', 1], 'users');
+    await upsert(userSql, ['usr-headwarden-1', 'branch-dvg', 'headwarden.demo@college.test', passwordHash, 'HEAD_WARDEN', 'Dr. M. S. Siddalingaiah (Head Warden)', 'headwarden.demo@college.test', '9740044557', '/avatars/warden.png', 1], 'users');
+
+    // Students & Parents
+    await upsert(userSql, ['usr-student-rahul', 'branch-dvg', 'student.demo@college.test', passwordHash, 'STUDENT', 'Rahul Sharma (Student)', 'student.demo@college.test', '9845012341', '/avatars/student_rahul.png', 1], 'users');
+    await upsert(userSql, ['usr-parent-rahul', 'branch-dvg', 'parent.demo@college.test', passwordHash, 'PARENT', 'Mr. Rakesh Sharma (Parent)', 'parent.demo@college.test', '9845012345', '/avatars/parent.png', 1], 'users');
     await upsert(userSql, ['usr-parent-sneha', 'branch-dvg', 'parent_sneha', passwordHash, 'PARENT', 'Mrs. Malathi K', 'malathi.k@gmail.com', '9845012346', '/avatars/parent.png', 1], 'users');
 
     // 5. Teacher Profiles
