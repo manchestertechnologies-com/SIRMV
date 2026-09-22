@@ -19,6 +19,7 @@
     "lucide-react": "^1.47.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "sir-mv": "file:..",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3"
   },

@@ -409,6 +409,97 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 14. Non-Teaching Staff (Floor In-Charge, Cleaning, Bus, Warden, Mess, etc.)
+CREATE TABLE IF NOT EXISTS staff_profiles (
+  id TEXT PRIMARY KEY,
+  branch_id TEXT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  user_id TEXT UNIQUE REFERENCES users(id) ON DELETE SET NULL,
+  employee_id TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  photo_url TEXT,
+  date_of_birth TEXT,
+  phone TEXT,
+  email TEXT,
+  address TEXT,
+  category TEXT NOT NULL CHECK(category IN ('FLOOR_INCHARGE', 'CLEANING', 'BUS', 'WARDEN', 'MESS')),
+  assigned_area TEXT, -- e.g. 'Floor 2', 'Bus Route 4', 'Boys Hostel Block A', 'Mess Hall 1'
+  shift TEXT, -- 'MORNING', 'AFTERNOON', 'EVENING', 'FULL_DAY'
+  joining_date TEXT,
+  is_active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS staff_leaves (
+  id TEXT PRIMARY KEY,
+  staff_type TEXT NOT NULL CHECK(staff_type IN ('TEACHING', 'NON_TEACHING')),
+  teacher_id TEXT REFERENCES teacher_profiles(id) ON DELETE CASCADE,
+  staff_id TEXT REFERENCES staff_profiles(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  reason TEXT,
+  status TEXT DEFAULT 'RECORDED' CHECK(status IN ('RECORDED', 'APPROVED', 'REJECTED', 'CANCELLED')),
+  approved_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Student Documents (Aadhar, Study Certificate, SSLC Marks Card, TC, Caste & Income Certificate, EWS, PWD)
+CREATE TABLE IF NOT EXISTS student_documents (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+  doc_type TEXT NOT NULL CHECK(doc_type IN ('AADHAR', 'STUDY_CERTIFICATE', 'SSLC_MARKS_CARD', 'TC', 'CASTE_INCOME_CERTIFICATE', 'EWS', 'PWD')),
+  file_url TEXT NOT NULL,
+  category TEXT, -- caste category value shown on profile (General/OBC/SC/ST/EWS etc.)
+  uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(student_id, doc_type)
+);
+
+-- NOTE: additional student_profiles columns (category, sslc_result, residence_status,
+-- admission_type) are added safely via the migration step in database/db.ts, since
+-- SQLite's ALTER TABLE ADD COLUMN is not idempotent and can't sit inside this
+-- CREATE-TABLE-IF-NOT-EXISTS schema file (it re-runs on every server start).
+
+-- 16. Online / Offline Tests
+CREATE TABLE IF NOT EXISTS tests (
+  id TEXT PRIMARY KEY,
+  branch_id TEXT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  mode TEXT NOT NULL CHECK(mode IN ('ONLINE', 'OFFLINE')),
+  class_id TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  batch_id TEXT NOT NULL REFERENCES batches(id) ON DELETE CASCADE,
+  subject_id TEXT REFERENCES subjects(id) ON DELETE SET NULL,
+  scheduled_date TEXT NOT NULL,
+  start_time TEXT,
+  duration_minutes INTEGER DEFAULT 60,
+  total_marks REAL DEFAULT 100,
+  question_paper_url TEXT, -- for OFFLINE tests
+  status TEXT DEFAULT 'SCHEDULED' CHECK(status IN ('SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED')),
+  created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS test_questions (
+  id TEXT PRIMARY KEY,
+  test_id TEXT NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
+  question_text TEXT NOT NULL,
+  option_a TEXT NOT NULL,
+  option_b TEXT NOT NULL,
+  option_c TEXT NOT NULL,
+  option_d TEXT NOT NULL,
+  correct_option TEXT NOT NULL CHECK(correct_option IN ('A', 'B', 'C', 'D')),
+  marks REAL DEFAULT 1,
+  sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS test_submissions (
+  id TEXT PRIMARY KEY,
+  test_id TEXT NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
+  student_id TEXT NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+  marks_obtained REAL,
+  answers_json TEXT, -- { question_id: 'A' } for ONLINE tests
+  submitted_at DATETIME,
+  UNIQUE(test_id, student_id)
+);
+
 -- Indexes for lightning fast queries
 CREATE INDEX IF NOT EXISTS idx_timetable_lookup ON timetable_entries(branch_id, day_of_week, period_number);
 CREATE INDEX IF NOT EXISTS idx_timetable_teacher ON timetable_entries(teacher_id);
