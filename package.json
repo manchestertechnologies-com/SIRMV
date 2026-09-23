@@ -7,7 +7,6 @@
     "dev:server": "tsx watch server/src/index.ts",
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix client install --include=dev && npm --prefix client run build",
-    "postinstall": "npm --prefix client install --include=dev && npm --prefix client run build",
     "seed": "tsx server/src/database/postgres-seed.ts",
     "start": "tsx server/src/index.ts",
     "test": "tsx tests/api.test.ts"
