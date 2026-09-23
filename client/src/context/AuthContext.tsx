@@ -43,13 +43,13 @@ export interface Branch {
 
 const DEFAULT_BRANCHES: Branch[] = [
   {
-    id: 'br-smg-02',
-    name: 'Shivamogga PU Campus',
-    code: 'SMG-02',
+    id: 'branch-smg',
+    name: 'SIR MV PU College - Shivamogga',
+    code: 'SIRMV-SMG',
     city: 'Shivamogga',
-    address: 'Sagar Road, Shivamogga, Karnataka - 577201',
-    phone: '+91 81822 55667',
-    email: 'shivamogga@sirmv.edu.in',
+    address: 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201',
+    phone: '08182-278901',
+    email: 'info.smg@sirmv.edu.in',
     principal_name: 'College Principal'
   }
 ];
@@ -158,9 +158,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: match.name,
           email: identifier.includes('@') ? identifier : `${identifier}@sirmv.edu.in`,
           phone: '+91 81822 55667',
-          branch_id: 'br-smg-02',
-          branch_name: 'Shivamogga PU Campus',
-          branch_code: 'SMG-02',
+          branch_id: 'branch-smg',
+          branch_name: 'SIR MV PU College - Shivamogga',
+          branch_code: 'SIRMV-SMG',
           branch_city: 'Shivamogga'
         };
         setUser(fallbackUser);

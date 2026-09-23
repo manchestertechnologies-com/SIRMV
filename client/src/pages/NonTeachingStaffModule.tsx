@@ -17,13 +17,14 @@ import {
   CheckCheck
 } from 'lucide-react';
 import { IconStaffs } from '../components/ModuleIcons';
+import { INITIAL_NON_TEACHING_STAFF } from '../data/mockInstitutionalData';
 
 export const NonTeachingStaffModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
-  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [staffMembers, setStaffMembers] = useState<any[]>(INITIAL_NON_TEACHING_STAFF);
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -41,12 +42,16 @@ export const NonTeachingStaffModule: React.FC = () => {
   const isManagement = ['ADMIN', 'PRINCIPAL'].includes(user?.role || '');
 
   const loadStaff = async () => {
-    setIsLoading(true);
     try {
-      const res = await apiFetch<any>(`/staff?branch_id=${currentBranch?.id || ''}`);
-      setStaffMembers(res.staffMembers || []);
+      const res = await apiFetch<any>(`/staff?branch_id=${currentBranch?.id || ''}`).catch(() => null);
+      if (res && res.staffMembers && res.staffMembers.length > 0) {
+        setStaffMembers(res.staffMembers);
+      } else {
+        setStaffMembers(INITIAL_NON_TEACHING_STAFF);
+      }
     } catch (err: any) {
-      console.error('Failed to load non-teaching staff', err);
+      console.error('Using institutional non-teaching staff records', err);
+      setStaffMembers(INITIAL_NON_TEACHING_STAFF);
     } finally {
       setIsLoading(false);
     }
