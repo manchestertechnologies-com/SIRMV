@@ -399,7 +399,7 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
               {/* Teacher Status */}
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Faculty Status</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {['PRESENT', 'ABSENT', 'LATE', 'SUBSTITUTE'].map((st) => (
                     <button
                       key={st}

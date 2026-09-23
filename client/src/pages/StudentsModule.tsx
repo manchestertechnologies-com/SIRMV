@@ -598,6 +598,7 @@ export const StudentsModule: React.FC = () => {
                     <p className="text-slate-400 text-xs">No exam records uploaded yet.</p>
                   ) : (
                     <div className="border border-[#ded9cf] rounded-2xl overflow-hidden">
+                      <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-[#fdfcfb] text-slate-600 font-bold border-b border-[#ded9cf]">
                           <tr>
@@ -629,6 +630,7 @@ export const StudentsModule: React.FC = () => {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   )}
                 </div>

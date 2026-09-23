@@ -228,6 +228,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
 
       {tab === 'results' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-slate-50 text-slate-500">
               <tr><th className="text-left p-3">Rank</th><th className="text-left p-3">Register No.</th><th className="text-left p-3">Name</th><th className="text-left p-3">Marks</th></tr>
@@ -244,6 +245,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
               {results.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">No submissions yet.</td></tr>}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <style>{`.input { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.55rem 0.75rem; font-size: 0.8rem; outline: none; }`}</style>

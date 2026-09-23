@@ -127,6 +127,7 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 text-slate-500">
             <tr><th className="text-left p-3">Subject</th><th className="text-left p-3">Class</th><th className="text-left p-3">Max Marks</th><th className="text-left p-3">Exam Date</th><th className="p-3"></th></tr>
@@ -146,6 +147,7 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
             {subjects.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-400">No subjects added to this cycle yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showAddSubject && (
@@ -226,6 +228,7 @@ const MarksEntry: React.FC<{ examSubjectId: string; onBack: () => void }> = ({ e
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 text-slate-500">
             <tr><th className="text-left p-3">Register No.</th><th className="text-left p-3">Name</th><th className="text-left p-3">Section</th><th className="text-left p-3">Marks (/{examSubject.max_marks})</th><th className="text-left p-3">Evaluated Paper</th></tr>
@@ -260,6 +263,7 @@ const MarksEntry: React.FC<{ examSubjectId: string; onBack: () => void }> = ({ e
             {students.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-400">No students in this class.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -105,6 +105,7 @@ const BatchDetail: React.FC<{ batchId: string; onBack: () => void }> = ({ batchI
       </button>
       <h2 className="text-lg font-bold text-slate-900">{data.batch.name}</h2>
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 text-slate-500">
             <tr><th className="text-left p-3">Register No.</th><th className="text-left p-3">Name</th><th className="text-left p-3">Class / Section</th><th className="text-left p-3">Admission Type</th></tr>
@@ -121,6 +122,7 @@ const BatchDetail: React.FC<{ batchId: string; onBack: () => void }> = ({ batchI
             {data.students.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">No students in this batch yet.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

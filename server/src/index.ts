@@ -21,12 +21,8 @@ import { hostelRouter } from './routes/hostel';
 import { outpassRouter } from './routes/outpass';
 import { reportsRouter } from './routes/reports';
 import { auditRouter } from './routes/audit';
-import { staffRouter } from './routes/staff';
-import { studentsRouter } from './routes/students';
-import { classesRouter } from './routes/classes';
-import { batchesRouter } from './routes/batches';
-import { testsRouter } from './routes/tests';
-import { boardMarksRouter } from './routes/boardMarks';
+import { announcementsRouter } from './routes/announcements';
+import { notificationsRouter } from './routes/notifications';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -67,12 +63,8 @@ app.use('/api/hostel', hostelRouter);
 app.use('/api/outpass', outpassRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/audit', auditRouter);
-app.use('/api/staff', staffRouter);
-app.use('/api/students', studentsRouter);
-app.use('/api/classes', classesRouter);
-app.use('/api/batches', batchesRouter);
-app.use('/api/tests', testsRouter);
-app.use('/api/board-marks', boardMarksRouter);
+app.use('/api/announcements', announcementsRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -25,6 +25,7 @@ import { ArrowLeft } from 'lucide-react';
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard-home');
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
 
   const moduleTitles: Record<string, string> = {
@@ -58,14 +59,19 @@ export function App() {
 
   return (
     <div className="min-h-screen flex bg-[#ebe7de] text-slate-800 font-sans">
-      {/* Left Sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Right Column: Navbar + Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        <Navbar />
+        <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => setActiveTab(tab)} />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => setActiveTab(tab)} />
           ) : activeTab === 'staffs' ? (
