@@ -61,18 +61,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   return (
     <aside className="w-56 shrink-0 bg-[#ebe7de] border-r border-[#ded9cf] min-h-screen flex flex-col select-none">
       {/* Top Brand / Official Logo */}
-      <div className="p-3.5 flex items-center gap-3 border-b border-[#ded9cf]/60">
+      <div className="p-3.5 flex items-center gap-2.5 border-b border-[#ded9cf]/60">
         <img
           src="/logo.png"
           alt="SIR MV Logo"
-          className="w-11 h-11 object-contain drop-shadow-xs shrink-0"
+          className="w-10 h-10 object-contain drop-shadow-xs shrink-0"
         />
         <div className="min-w-0">
-          <div className="font-extrabold text-slate-900 text-[15px] tracking-tight font-heading leading-tight truncate">
-            SIR MV
+          <div className="font-extrabold text-slate-900 text-[13px] tracking-tight font-heading leading-tight truncate">
+            SIR MV PU COLLEGE
           </div>
-          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
-            PU COLLEGE
+          <div className="text-[10px] text-blue-700 font-extrabold uppercase tracking-wider truncate">
+            SHIVAMOGGA CAMPUS
           </div>
         </div>
       </div>

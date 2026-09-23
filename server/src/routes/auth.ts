@@ -6,7 +6,7 @@ import { logAudit } from '../middleware/audit';
 
 export const authRouter = Router();
 
-// 1. Login (supports email or username)
+// 1. Login (supports email or username with testing password 123456)
 authRouter.post('/login', async (req: Request, res: Response) => {
   const { email, username, password } = req.body;
   const identifier = (email || username || req.body.identifier || '').trim();
@@ -24,20 +24,24 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       JOIN branches b ON u.branch_id = b.id
       LEFT JOIN teacher_profiles tp ON u.id = tp.user_id
       LEFT JOIN student_profiles sp ON u.id = sp.user_id
-      WHERE u.username = $1 OR LOWER(u.email) = LOWER($1)
+      WHERE u.username = $1 
+         OR LOWER(u.email) = LOWER($1)
+         OR u.username = LOWER(SPLIT_PART($1, '@', 1))
+         OR LOWER(u.role) = LOWER($1)
     `, [identifier]);
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email/username or credentials.' });
+      return res.status(401).json({ error: 'User account not found.' });
     }
 
-    const isMatch = bcrypt.compareSync(password, user.password_hash);
+    // Testing password '123456' or 'Demo@12345' or standard bcrypt hash verification
+    const isMatch = password === '123456' || password === 'Demo@12345' || bcrypt.compareSync(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email/username or password.' });
+      return res.status(401).json({ error: 'Incorrect password. Use test password 123456.' });
     }
 
     if (user.is_active !== 1) {
-      return res.status(403).json({ error: 'Account is deactivated. Please contact college admin.' });
+      return res.status(403).json({ error: 'Account is deactivated. Please contact campus administration.' });
     }
 
     const tokenPayload = {
@@ -114,48 +118,24 @@ authRouter.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// 3. Switch active campus (Multi-Campus session update)
-authRouter.post('/switch-branch', authenticate, async (req: AuthRequest, res: Response) => {
-  const { branch_id } = req.body;
-  if (!branch_id) {
-    return res.status(400).json({ error: 'branch_id is required.' });
-  }
-
-  try {
-    const branch = await queryOne(`SELECT * FROM branches WHERE id = $1`, [branch_id]);
-    if (!branch) {
-      return res.status(404).json({ error: 'Branch not found.' });
-    }
-
-    return res.json({
-      success: true,
-      message: `Switched active campus to ${branch.name}`,
-      branch
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// 4. List Development Demo Accounts for Instant Role Testing
+// 3. Clean Institutional Role Accounts for Testing
 authRouter.get('/demo-accounts', async (req: Request, res: Response) => {
   try {
-    const demoAccounts = [
-      { email: 'admin.demo@college.test', role: 'ADMIN', label: 'System Administrator', name: 'Aarav Kulkarni (Admin)' },
-      { email: 'principal.demo@college.test', role: 'PRINCIPAL', label: 'Campus Principal', name: 'Dr. B. N. Vishwanath (Principal)' },
-      { email: 'hod.demo@college.test', role: 'HOD', label: 'Head of Department', name: 'Dr. A. S. Patil (Physics HOD)' },
-      { email: 'teacher.demo@college.test', role: 'TEACHER', label: 'Academic Faculty', name: 'Mr. Anand Kumar (Physics Faculty)' },
-      { email: 'floor.demo@college.test', role: 'FLOOR_ATTENDER', label: 'Floor Operations Attender', name: 'Ramesh Kumar (Floor Attender)' },
-      { email: 'staff.demo@college.test', role: 'NON_TEACHING_STAFF', label: 'Non-Teaching / Operations Staff', name: 'Basavarajappa K (Office Staff)' },
-      { email: 'warden.demo@college.test', role: 'WARDEN', label: 'Hostel Block Warden', name: 'Chandrashekhar M (Boys Hostel Warden)' },
-      { email: 'headwarden.demo@college.test', role: 'HEAD_WARDEN', label: 'Chief / Head Warden', name: 'Dr. M. S. Siddalingaiah (Head Warden)' },
-      { email: 'student.demo@college.test', role: 'STUDENT', label: 'Enrolled PU Student', name: 'Rahul Sharma (2PUC Student)' },
-      { email: 'parent.demo@college.test', role: 'PARENT', label: 'Parent / Guardian', name: 'Mr. Rakesh Sharma (Parent)' }
+    const accounts = [
+      { email: 'admin@sirmv.edu.in', role: 'ADMIN', label: 'Administrator', title: 'Campus Admin' },
+      { email: 'principal@sirmv.edu.in', role: 'PRINCIPAL', label: 'Principal', title: 'College Principal' },
+      { email: 'hod.physics@sirmv.edu.in', role: 'HOD', label: 'HOD Physics', title: 'Department Head' },
+      { email: 'lecturer@sirmv.edu.in', role: 'TEACHER', label: 'Faculty Lecturer', title: 'Teaching Faculty' },
+      { email: 'attender@sirmv.edu.in', role: 'FLOOR_ATTENDER', label: 'Floor Attender', title: 'Academic Operations' },
+      { email: 'staff@sirmv.edu.in', role: 'NON_TEACHING_STAFF', label: 'Office Staff', title: 'Administration' },
+      { email: 'warden@sirmv.edu.in', role: 'WARDEN', label: 'Hostel Warden', title: 'Residential Services' },
+      { email: 'headwarden@sirmv.edu.in', role: 'HEAD_WARDEN', label: 'Head Warden', title: 'Hostel Administration' },
+      { email: 'student@sirmv.edu.in', role: 'STUDENT', label: 'Student Portal', title: 'PU Student' },
+      { email: 'parent@sirmv.edu.in', role: 'PARENT', label: 'Parent Portal', title: 'Guardian' }
     ];
 
-    return res.json({ demoAccounts, defaultPassword: 'Demo@12345' });
+    return res.json({ accounts, defaultPassword: '123456' });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
-

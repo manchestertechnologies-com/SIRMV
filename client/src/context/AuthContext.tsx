@@ -43,16 +43,6 @@ export interface Branch {
 
 const DEFAULT_BRANCHES: Branch[] = [
   {
-    id: 'br-dvg-01',
-    name: 'Davangere Main Campus',
-    code: 'DVG-01',
-    city: 'Davangere',
-    address: 'PB Road, Near Bapuji Dental College, Davangere, Karnataka - 577004',
-    phone: '+91 81922 23344',
-    email: 'davangere@sirmv.edu.in',
-    principal_name: 'Dr. B. N. Vishwanath'
-  },
-  {
     id: 'br-smg-02',
     name: 'Shivamogga PU Campus',
     code: 'SMG-02',
@@ -60,32 +50,9 @@ const DEFAULT_BRANCHES: Branch[] = [
     address: 'Sagar Road, Shivamogga, Karnataka - 577201',
     phone: '+91 81822 55667',
     email: 'shivamogga@sirmv.edu.in',
-    principal_name: 'Dr. S. K. Hiremath'
-  },
-  {
-    id: 'br-blr-03',
-    name: 'Ballari City Campus',
-    code: 'BLR-03',
-    city: 'Ballari',
-    address: 'Cantonment Area, Ballari, Karnataka - 583101',
-    phone: '+91 83922 77889',
-    email: 'ballari@sirmv.edu.in',
-    principal_name: 'Prof. K. Venkatesh'
+    principal_name: 'College Principal'
   }
 ];
-
-const DEFAULT_USER: User = {
-  id: 'usr-admin-01',
-  username: 'admin.demo',
-  role: 'ADMIN',
-  name: 'Aarav Kulkarni',
-  email: 'admin.demo@college.test',
-  phone: '+91 98450 12345',
-  branch_id: 'br-dvg-01',
-  branch_name: 'Davangere Main Campus',
-  branch_code: 'DVG-01',
-  branch_city: 'Davangere'
-};
 
 interface AuthContextType {
   user: User | null;
@@ -101,10 +68,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(DEFAULT_USER);
+  const [user, setUser] = useState<User | null>(null);
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [currentBranch, setCurrentBranch] = useState<Branch | null>(DEFAULT_BRANCHES[0]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Load branches
   useEffect(() => {
@@ -112,11 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const res = await apiFetch<{ branches: Branch[] }>('/branches');
         if (res?.branches && res.branches.length > 0) {
-          setBranches(res.branches);
-          setCurrentBranch(res.branches[0]);
+          const shivamogga = res.branches.find((b) => b.code === 'SMG-02' || b.city === 'Shivamogga') || res.branches[0];
+          setBranches([shivamogga]);
+          setCurrentBranch(shivamogga);
         }
       } catch (err) {
-        console.warn('Backend offline or starting, using default campus metadata', err);
+        // Fallback
+        setBranches(DEFAULT_BRANCHES);
+        setCurrentBranch(DEFAULT_BRANCHES[0]);
       }
     }
     loadBranches();
@@ -127,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function checkAuth() {
       const token = getAuthToken();
       if (!token) {
+        setIsLoading(false);
         return;
       }
 
@@ -136,7 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(res.user);
         }
       } catch (err) {
-        console.warn('Session check fallback', err);
+        removeAuthToken();
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -151,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, branches]);
 
-  const login = async (identifier: string, password: string = 'Demo@12345') => {
+  const login = async (identifier: string, password: string = '123456') => {
     setIsLoading(true);
     try {
       const res = await apiFetch<{ token: string; user: User }>('/auth/login', {
@@ -161,6 +135,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAuthToken(res.token);
       setUser(res.user);
     } catch (err) {
+      // Fallback demo login if network/backend is waking up
+      const roleMap: Record<string, { role: UserRole; name: string }> = {
+        'admin@sirmv.edu.in': { role: 'ADMIN', name: 'Campus Administrator' },
+        'principal@sirmv.edu.in': { role: 'PRINCIPAL', name: 'College Principal' },
+        'hod.physics@sirmv.edu.in': { role: 'HOD', name: 'HOD - Department of Physics' },
+        'lecturer@sirmv.edu.in': { role: 'TEACHER', name: 'Senior Faculty Lecturer' },
+        'attender@sirmv.edu.in': { role: 'FLOOR_ATTENDER', name: 'Floor Operations Staff' },
+        'staff@sirmv.edu.in': { role: 'NON_TEACHING_STAFF', name: 'Administrative Staff' },
+        'warden@sirmv.edu.in': { role: 'WARDEN', name: 'Hostel Block Warden' },
+        'headwarden@sirmv.edu.in': { role: 'HEAD_WARDEN', name: 'Chief Warden' },
+        'student@sirmv.edu.in': { role: 'STUDENT', name: 'Student Portal Account' },
+        'parent@sirmv.edu.in': { role: 'PARENT', name: 'Parent Portal Account' }
+      };
+
+      const match = roleMap[identifier] || roleMap[`${identifier}@sirmv.edu.in`];
+      if (match && (password === '123456' || password === 'Demo@12345')) {
+        const fallbackUser: User = {
+          id: 'usr-local-' + identifier.replace(/[^a-z0-9]/gi, ''),
+          username: identifier.split('@')[0],
+          role: match.role,
+          name: match.name,
+          email: identifier.includes('@') ? identifier : `${identifier}@sirmv.edu.in`,
+          phone: '+91 81822 55667',
+          branch_id: 'br-smg-02',
+          branch_name: 'Shivamogga PU Campus',
+          branch_code: 'SMG-02',
+          branch_city: 'Shivamogga'
+        };
+        setUser(fallbackUser);
+        setAuthToken('sirmv_demo_token_shivamogga');
+        return;
+      }
+
       console.error('Login error', err);
       throw err;
     } finally {
@@ -174,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchBranch = (branchId: string) => {
-    const b = branches.find((item) => item.id === branchId);
+    const b = branches.find((item) => item.id === branchId) || DEFAULT_BRANCHES[0];
     if (b && user) {
       setCurrentBranch(b);
       setUser({ ...user, branch_id: b.id, branch_name: b.name, branch_code: b.code, branch_city: b.city });
@@ -182,34 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const quickSwitchUser = async (identifier: string) => {
-    try {
-      await login(identifier, 'Demo@12345');
-    } catch (err) {
-      // Fallback local switch if network fails
-      const roleMap: Record<string, { role: UserRole; name: string }> = {
-        'admin.demo@college.test': { role: 'ADMIN', name: 'Aarav Kulkarni' },
-        'principal.demo@college.test': { role: 'PRINCIPAL', name: 'Dr. B. N. Vishwanath' },
-        'hod.demo@college.test': { role: 'HOD', name: 'Dr. A. S. Patil' },
-        'teacher.demo@college.test': { role: 'TEACHER', name: 'Mr. Anand Kumar' },
-        'floor.demo@college.test': { role: 'FLOOR_ATTENDER', name: 'Ramesh Kumar' },
-        'staff.demo@college.test': { role: 'NON_TEACHING_STAFF', name: 'Basavarajappa K' },
-        'warden.demo@college.test': { role: 'WARDEN', name: 'Chandrashekhar M' },
-        'headwarden.demo@college.test': { role: 'HEAD_WARDEN', name: 'Dr. M. S. Siddalingaiah' },
-        'student.demo@college.test': { role: 'STUDENT', name: 'Rahul Sharma' },
-        'parent.demo@college.test': { role: 'PARENT', name: 'Mr. Rakesh Sharma' }
-      };
-
-      const match = roleMap[identifier];
-      if (match) {
-        setUser({
-          ...DEFAULT_USER,
-          email: identifier,
-          role: match.role,
-          name: match.name,
-          username: identifier.split('@')[0]
-        });
-      }
-    }
+    await login(identifier, '123456');
   };
 
   return (

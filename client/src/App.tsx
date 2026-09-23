@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
-import { LoginModal } from './components/LoginModal';
+import { LoginPage } from './pages/LoginPage';
+import { SirMVIntroAnimation } from './components/SirMVIntroAnimation';
 import { DashboardHome } from './pages/DashboardHome';
 import { TeachersModule } from './pages/TeachersModule';
 import { StudentsModule } from './pages/StudentsModule';
@@ -17,6 +18,7 @@ import { ArrowLeft, Users, ShieldAlert } from 'lucide-react';
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard-home');
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
+  const [showIntro, setShowIntro] = useState<boolean>(true);
   const { user, isLoading } = useAuth();
 
   const moduleTitles: Record<string, string> = {
@@ -43,11 +45,18 @@ export function App() {
     'report-card': 'Report Card'
   };
 
+  // 1. Intro Animation if unauthenticated
+  if (!user && !isLoading && showIntro) {
+    return <SirMVIntroAnimation onComplete={() => setShowIntro(false)} />;
+  }
+
+  // 2. Login Page if unauthenticated and intro completed
+  if (!user && !isLoading) {
+    return <LoginPage onReplayIntro={() => setShowIntro(true)} />;
+  }
+
   return (
     <div className="min-h-screen flex bg-[#ebe7de] text-slate-800 font-sans">
-      {/* Show login modal if unauthenticated */}
-      {!user && !isLoading && <LoginModal />}
-
       {/* Left Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
