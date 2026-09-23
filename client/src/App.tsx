@@ -11,6 +11,10 @@ import { HostelDashboard } from './pages/HostelDashboard';
 import { OutpassSystem } from './pages/OutpassSystem';
 import { ReportCardGenerator } from './pages/ReportCardGenerator';
 import { ReportsModule } from './pages/ReportsModule';
+import { LiveClassModule } from './pages/LiveClassModule';
+import { TestsAndMarksModule } from './pages/TestsAndMarksModule';
+import { NoticeboardModule } from './pages/NoticeboardModule';
+import { FeeModule } from './pages/FeeModule';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -254,6 +258,90 @@ export function App() {
                 </div>
               </div>
               <TeachersModule />
+            </div>
+          ) : (activeTab === 'tests' || activeTab === 'board-marks' || activeTab === 'classes' || activeTab === 'batches') ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    {moduleTitles[activeTab] || 'Tests & Examinations'}
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • Academic Assessments & Marks Registry
+                  </p>
+                </div>
+              </div>
+              <TestsAndMarksModule />
+            </div>
+          ) : activeTab === 'live-class' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    Live Classes & Recorded Lectures
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • Recorded Lectures for Absent Students
+                  </p>
+                </div>
+              </div>
+              <LiveClassModule />
+            </div>
+          ) : activeTab === 'noticeboard' ? (
+            <div className="space-y-6 max-w-5xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    Noticeboard & Circulars
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • Institutional Announcements
+                  </p>
+                </div>
+              </div>
+              <NoticeboardModule />
+            </div>
+          ) : activeTab === 'fee' ? (
+            <div className="space-y-6 max-w-5xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    Fee & Receipts Desk
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • Tuition & Term Payments
+                  </p>
+                </div>
+              </div>
+              <FeeModule />
             </div>
           ) : (
             <div className="space-y-6 max-w-5xl mx-auto">
