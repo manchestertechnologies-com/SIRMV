@@ -7,6 +7,10 @@ import { authRouter } from './routes/auth';
 import { branchesRouter } from './routes/branches';
 import { teachersRouter } from './routes/teachers';
 import { studentsRouter } from './routes/students';
+import { classesRouter } from './routes/classes';
+import { batchesRouter } from './routes/batches';
+import { testsRouter } from './routes/tests';
+import { boardMarksRouter } from './routes/boardMarks';
 import { staffRouter } from './routes/staff';
 import { substitutionsRouter } from './routes/substitutions';
 import { floorAttenderRouter } from './routes/floorAttender';
@@ -33,10 +37,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Ensure upload directories exist
-const uploadDirs = [
-  'uploads', 'uploads/classroom_photos', 'uploads/pickup_photos', 'uploads/evaluated_papers',
-  'uploads/staff_photos', 'uploads/student_photos', 'uploads/student_documents', 'uploads/question_papers'
-];
+const uploadDirs = ['uploads', 'uploads/classroom_photos', 'uploads/pickup_photos', 'uploads/evaluated_papers', 'uploads/student_photos', 'uploads/student_documents', 'uploads/question_papers'];
 uploadDirs.forEach((dir) => {
   const fullPath = path.join(__dirname, '..', dir);
   if (!fs.existsSync(fullPath)) {
@@ -52,6 +53,10 @@ app.use('/api/auth', authRouter);
 app.use('/api/branches', branchesRouter);
 app.use('/api/teachers', teachersRouter);
 app.use('/api/students', studentsRouter);
+app.use('/api/classes', classesRouter);
+app.use('/api/batches', batchesRouter);
+app.use('/api/tests', testsRouter);
+app.use('/api/board-marks', boardMarksRouter);
 app.use('/api/staff', staffRouter);
 app.use('/api/substitutions', substitutionsRouter);
 app.use('/api/floor-attender', floorAttenderRouter);

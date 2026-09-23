@@ -419,3 +419,62 @@ CREATE INDEX IF NOT EXISTS idx_outpass_lookup ON outpasses(branch_id, status, re
 CREATE INDEX IF NOT EXISTS idx_outpass_student ON outpasses(student_id);
 CREATE INDEX IF NOT EXISTS idx_marks_student ON student_marks(student_id);
 CREATE INDEX IF NOT EXISTS idx_marks_subject ON student_marks(exam_subject_id);
+-- 16. Online / Offline Tests
+CREATE TABLE IF NOT EXISTS tests (
+  id VARCHAR(64) PRIMARY KEY,
+  branch_id VARCHAR(64) NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  mode VARCHAR(32) NOT NULL CHECK(mode IN ('ONLINE', 'OFFLINE')),
+  class_id VARCHAR(64) NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  batch_id VARCHAR(64) NOT NULL REFERENCES batches(id) ON DELETE CASCADE,
+  subject_id VARCHAR(64) REFERENCES subjects(id) ON DELETE SET NULL,
+  scheduled_date VARCHAR(32) NOT NULL,
+  start_time VARCHAR(16),
+  duration_minutes INTEGER DEFAULT 60,
+  total_marks DOUBLE PRECISION DEFAULT 100,
+  question_paper_url TEXT, -- for OFFLINE tests
+  status VARCHAR(32) DEFAULT 'SCHEDULED' CHECK(status IN ('SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED')),
+  created_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS test_questions (
+  id VARCHAR(64) PRIMARY KEY,
+  test_id VARCHAR(64) NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
+  question_text TEXT NOT NULL,
+  option_a VARCHAR(255) NOT NULL,
+  option_b VARCHAR(255) NOT NULL,
+  option_c VARCHAR(255) NOT NULL,
+  option_d VARCHAR(255) NOT NULL,
+  correct_option VARCHAR(8) NOT NULL CHECK(correct_option IN ('A', 'B', 'C', 'D')),
+  marks DOUBLE PRECISION DEFAULT 1,
+  sort_order INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS test_submissions (
+  id VARCHAR(64) PRIMARY KEY,
+  test_id VARCHAR(64) NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
+  student_id VARCHAR(64) NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+  marks_obtained DOUBLE PRECISION,
+  answers_json TEXT, -- { question_id: 'A' } for ONLINE tests
+  submitted_at TIMESTAMPTZ,
+  UNIQUE(test_id, student_id)
+);
+
+-- 17. Student Documents (Aadhar, Study Certificate, SSLC Marks Card, TC, Caste & Income Certificate, EWS, PWD)
+CREATE TABLE IF NOT EXISTS student_documents (
+  id VARCHAR(64) PRIMARY KEY,
+  student_id VARCHAR(64) NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+  doc_type VARCHAR(64) NOT NULL CHECK(doc_type IN ('AADHAR', 'STUDY_CERTIFICATE', 'SSLC_MARKS_CARD', 'TC', 'CASTE_INCOME_CERTIFICATE', 'EWS', 'PWD')),
+  file_url TEXT NOT NULL,
+  category VARCHAR(64), -- caste category value shown on profile (General/OBC/SC/ST/EWS etc.)
+  uploaded_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+  uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(student_id, doc_type)
+);
+
+-- Additional indexes for the new tables
+CREATE INDEX IF NOT EXISTS idx_tests_lookup ON tests(branch_id, class_id, batch_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_test_questions_test ON test_questions(test_id);
+CREATE INDEX IF NOT EXISTS idx_test_submissions_test ON test_submissions(test_id);
+CREATE INDEX IF NOT EXISTS idx_student_documents_student ON student_documents(student_id);

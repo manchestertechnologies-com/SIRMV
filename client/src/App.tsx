@@ -13,6 +13,10 @@ import { ReportCardGenerator } from './pages/ReportCardGenerator';
 import { ReportsModule } from './pages/ReportsModule';
 import { LiveClassModule } from './pages/LiveClassModule';
 import { TestsAndMarksModule } from './pages/TestsAndMarksModule';
+import { ClassesPage } from './pages/ClassesPage';
+import { BatchesPage } from './pages/BatchesPage';
+import { TestsPage } from './pages/TestsPage';
+import { BoardMarksPage } from './pages/BoardMarksPage';
 import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
 import { useAuth } from './context/AuthContext';
@@ -89,21 +93,19 @@ export function App() {
                 <div className="flex items-center gap-1 bg-[#ded9cf]/60 p-1 rounded-2xl self-start sm:self-auto">
                   <button
                     onClick={() => setStaffSubTab('teaching')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      staffSubTab === 'teaching'
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${staffSubTab === 'teaching'
                         ? 'bg-white text-slate-900 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     Teaching Faculty
                   </button>
                   <button
                     onClick={() => setStaffSubTab('non-teaching')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      staffSubTab === 'non-teaching'
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${staffSubTab === 'non-teaching'
                         ? 'bg-white text-slate-900 shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                      }`}
                   >
                     Non-Teaching Staff
                   </button>
@@ -259,7 +261,7 @@ export function App() {
               </div>
               <TeachersModule />
             </div>
-          ) : (activeTab === 'tests' || activeTab === 'board-marks' || activeTab === 'classes' || activeTab === 'batches') ? (
+          ) : activeTab === 'classes' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
                 <button
@@ -270,15 +272,62 @@ export function App() {
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                  <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    {moduleTitles[activeTab] || 'Tests & Examinations'}
-                  </h1>
-                  <p className="text-xs text-slate-500">
-                    SIR MV PU College • Academic Assessments & Marks Registry
-                  </p>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Classes & Sections</p>
                 </div>
               </div>
-              <TestsAndMarksModule />
+              <ClassesPage />
+            </div>
+          ) : activeTab === 'batches' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
+                  <p className="text-xs text-slate-500">SIR MV PU College • NEET / JEE / KCET Batches</p>
+                </div>
+              </div>
+              <BatchesPage />
+            </div>
+          ) : activeTab === 'tests' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Online & Offline Tests</p>
+                </div>
+              </div>
+              <TestsPage />
+            </div>
+          ) : activeTab === 'board-marks' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Cycle 1 / 2 / 3 Board Marks</p>
+                </div>
+              </div>
+              <BoardMarksPage />
             </div>
           ) : activeTab === 'live-class' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
