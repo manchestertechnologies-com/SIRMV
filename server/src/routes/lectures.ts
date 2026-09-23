@@ -1,15 +1,14 @@
 import { Router, Response } from 'express';
-import { db } from '../database/db';
-import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
-import { logAudit } from '../middleware/audit';
+import { query, queryOne } from '../database/pgDb';
+import { authenticate, AuthRequest } from '../middleware/auth';
 
 export const lecturesRouter = Router();
 
 // 1. One-Page Consolidated Lecture Record (for Admin, Principal, HOD, Teacher, Floor Attender)
-lecturesRouter.get('/:id', authenticate, (req: AuthRequest, res: Response) => {
+lecturesRouter.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const lecture = db.prepare(`
+  const lecture = await queryOne(`
     SELECT ls.*,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
            s.name as subject_name, s.code as subject_code,
@@ -31,35 +30,35 @@ lecturesRouter.get('/:id', authenticate, (req: AuthRequest, res: Response) => {
     LEFT JOIN users u_sub ON tp_sub.user_id = u_sub.id
     LEFT JOIN users u_fa ON ls.floor_attender_id = u_fa.id
     WHERE ls.id = ?
-  `).get(id) as any;
+  `, [id]);
 
   if (!lecture) {
     return res.status(404).json({ error: 'Lecture session record not found.' });
   }
 
   // Fetch Concept Taught
-  const concept = db.prepare(`
+  const concept = await queryOne(`
     SELECT * FROM lecture_concepts WHERE lecture_session_id = ?
-  `).get(id) as any;
+  `, [id]);
 
   // Fetch Student Attendance Breakdown
-  const attendanceRecords = db.prepare(`
+  const attendanceRecords = await query(`
     SELECT ar.*, sp.name as student_name, sp.register_number, sp.photo_url as student_photo,
            sp.is_hostelite
     FROM attendance_records ar
     JOIN student_profiles sp ON ar.student_id = sp.id
     WHERE ar.lecture_session_id = ?
     ORDER BY sp.name ASC
-  `).all(id) as any[];
+  `, [id]);
 
   // Attendance summary metrics
   const total = attendanceRecords.length;
-  const present = attendanceRecords.filter((a) => a.status === 'PRESENT').length;
-  const absent = attendanceRecords.filter((a) => a.status === 'ABSENT').length;
-  const late = attendanceRecords.filter((a) => a.status === 'LATE').length;
-  const excused = attendanceRecords.filter((a) => a.status === 'EXCUSED').length;
-  const medical = attendanceRecords.filter((a) => a.status === 'MEDICAL').length;
-  const onLeave = attendanceRecords.filter((a) => a.status === 'ON_LEAVE').length;
+  const present = attendanceRecords.filter((a: any) => a.status === 'PRESENT').length;
+  const absent = attendanceRecords.filter((a: any) => a.status === 'ABSENT').length;
+  const late = attendanceRecords.filter((a: any) => a.status === 'LATE').length;
+  const excused = attendanceRecords.filter((a: any) => a.status === 'EXCUSED').length;
+  const medical = attendanceRecords.filter((a: any) => a.status === 'MEDICAL').length;
+  const onLeave = attendanceRecords.filter((a: any) => a.status === 'ON_LEAVE').length;
 
   return res.json({
     lecture,
@@ -80,7 +79,7 @@ lecturesRouter.get('/:id', authenticate, (req: AuthRequest, res: Response) => {
 });
 
 // 2. Absent Student Portal -> Missed Classes & Class Recording View
-lecturesRouter.get('/student/missed-classes', authenticate, (req: AuthRequest, res: Response) => {
+lecturesRouter.get('/student/missed-classes', authenticate, async (req: AuthRequest, res: Response) => {
   const studentId = req.user!.student_id;
   const targetStudentId = (req.query.student_id as string) || studentId;
 
@@ -93,7 +92,7 @@ lecturesRouter.get('/student/missed-classes', authenticate, (req: AuthRequest, r
     return res.status(403).json({ error: 'Access denied. You can only view your own missed classes.' });
   }
 
-  const missedClasses = db.prepare(`
+  const missedClasses = await query(`
     SELECT ar.status as attendance_status, ar.updated_at as marked_time,
            ls.id as lecture_session_id, ls.date, ls.scheduled_start, ls.scheduled_end,
            ls.recording_url,
@@ -114,10 +113,10 @@ lecturesRouter.get('/student/missed-classes', authenticate, (req: AuthRequest, r
     LEFT JOIN lecture_concepts lc ON ls.id = lc.lecture_session_id
     WHERE ar.student_id = ? AND ar.status IN ('ABSENT', 'MEDICAL', 'ON_LEAVE')
     ORDER BY ls.date DESC, ls.scheduled_start DESC
-  `).all(targetStudentId) as any[];
+  `, [targetStudentId]);
 
   return res.json({
-    missedClasses: missedClasses.map((mc) => ({
+    missedClasses: missedClasses.map((mc: any) => ({
       ...mc,
       hasRecording: !!(mc.recording_url && mc.recording_url.trim().length > 0)
     }))
@@ -125,7 +124,7 @@ lecturesRouter.get('/student/missed-classes', authenticate, (req: AuthRequest, r
 });
 
 // 3. Search and filter all lectures across branch
-lecturesRouter.get('/', authenticate, (req: AuthRequest, res: Response) => {
+lecturesRouter.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
   const date = req.query.date as string;
   const teacherId = req.query.teacher_id as string;
@@ -135,7 +134,7 @@ lecturesRouter.get('/', authenticate, (req: AuthRequest, res: Response) => {
   const batchId = req.query.batch_id as string;
   const roomId = req.query.room_id as string;
 
-  let query = `
+  let sql = `
     SELECT ls.*,
            c.name as class_name, sec.name as section_name, b.name as batch_name,
            s.name as subject_name, s.code as subject_code,
@@ -158,16 +157,17 @@ lecturesRouter.get('/', authenticate, (req: AuthRequest, res: Response) => {
   `;
   const params: any[] = [branchId];
 
-  if (date) { query += ` AND ls.date = ?`; params.push(date); }
-  if (teacherId) { query += ` AND (ls.teacher_id = ? OR ls.substitute_teacher_id = ?)`; params.push(teacherId, teacherId); }
-  if (subjectId) { query += ` AND ls.subject_id = ?`; params.push(subjectId); }
-  if (classId) { query += ` AND ls.class_id = ?`; params.push(classId); }
-  if (sectionId) { query += ` AND ls.section_id = ?`; params.push(sectionId); }
-  if (batchId) { query += ` AND ls.batch_id = ?`; params.push(batchId); }
-  if (roomId) { query += ` AND ls.room_id = ?`; params.push(roomId); }
+  if (date) { sql += ` AND ls.date = ?`; params.push(date); }
+  if (teacherId) { sql += ` AND (ls.teacher_id = ? OR ls.substitute_teacher_id = ?)`; params.push(teacherId, teacherId); }
+  if (subjectId) { sql += ` AND ls.subject_id = ?`; params.push(subjectId); }
+  if (classId) { sql += ` AND ls.class_id = ?`; params.push(classId); }
+  if (sectionId) { sql += ` AND ls.section_id = ?`; params.push(sectionId); }
+  if (batchId) { sql += ` AND ls.batch_id = ?`; params.push(batchId); }
+  if (roomId) { sql += ` AND ls.room_id = ?`; params.push(roomId); }
 
-  query += ` ORDER BY ls.date DESC, ls.scheduled_start DESC LIMIT 100`;
+  sql += ` ORDER BY ls.date DESC, ls.scheduled_start DESC LIMIT 100`;
 
-  const lectures = db.prepare(query).all(...params);
+  const lectures = await query(sql, params);
   return res.json({ lectures });
 });
+

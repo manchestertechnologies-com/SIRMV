@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
-import { db } from '../database/db';
+import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import crypto from 'crypto';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -24,16 +25,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // 1. Get Exams & Exam Subjects for Branch
-reportsRouter.get('/exams', authenticate, (req: AuthRequest, res: Response) => {
+reportsRouter.get('/exams', authenticate, async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
-  const exams = db.prepare(`
+  const exams = await query(`
     SELECT * FROM exams 
     WHERE branch_id = ?
     ORDER BY start_date DESC
-  `).all(branchId) as any[];
+  `, [branchId]);
 
-  const examSubjects = db.prepare(`
+  const examSubjects = await query(`
     SELECT es.*, s.name as subject_name, s.code as subject_code, c.name as class_name
     FROM exam_subjects es
     JOIN exams e ON es.exam_id = e.id
@@ -41,13 +42,13 @@ reportsRouter.get('/exams', authenticate, (req: AuthRequest, res: Response) => {
     JOIN classes c ON es.class_id = c.id
     WHERE e.branch_id = ?
     ORDER BY es.exam_date ASC
-  `).all(branchId);
+  `, [branchId]);
 
   return res.json({ exams, examSubjects });
 });
 
 // 2. Generate Single / Multi / All Subject Report Card for Student
-reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) => {
+reportsRouter.post('/generate', authenticate, async (req: AuthRequest, res: Response) => {
   const {
     student_id,
     exam_id,
@@ -65,7 +66,7 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
   }
 
   // Fetch Student Profile
-  const student = db.prepare(`
+  const student = await queryOne(`
     SELECT sp.*, c.name as class_name, sec.name as section_name, b.name as batch_name,
            br.name as college_name, br.address as college_address, br.phone as college_phone,
            br.email as college_email, br.principal_name, br.city as college_city
@@ -75,14 +76,14 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
     JOIN batches b ON sp.batch_id = b.id
     JOIN branches br ON sp.branch_id = br.id
     WHERE sp.id = ?
-  `).get(student_id) as any;
+  `, [student_id]);
 
   if (!student) {
     return res.status(404).json({ error: 'Student not found.' });
   }
 
   // Fetch Exam Info
-  const exam = db.prepare(`SELECT * FROM exams WHERE id = ?`).get(exam_id) as any;
+  const exam = await queryOne(`SELECT * FROM exams WHERE id = ?`, [exam_id]);
   if (!exam) {
     return res.status(404).json({ error: 'Exam not found.' });
   }
@@ -107,14 +108,14 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
   }
 
   marksQuery += ` ORDER BY s.name ASC`;
-  const subjectMarks = db.prepare(marksQuery).all(...marksParams) as any[];
+  const subjectMarks = await query(marksQuery, marksParams);
 
   // Calculate Aggregates
   let totalMaxMarks = 0;
   let totalObtainedMarks = 0;
   for (const m of subjectMarks) {
-    totalMaxMarks += m.max_marks;
-    totalObtainedMarks += m.marks_obtained;
+    totalMaxMarks += Number(m.max_marks);
+    totalObtainedMarks += Number(m.marks_obtained);
   }
 
   const overallPercentage = totalMaxMarks > 0 ? parseFloat(((totalObtainedMarks / totalMaxMarks) * 100).toFixed(2)) : 0;
@@ -126,28 +127,32 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
   else if (overallPercentage >= 50) overallGrade = 'C (Pass Class)';
 
   // Fetch Student Attendance Summary
-  const attendanceStats = db.prepare(`
+  const attendanceStats = await queryOne(`
     SELECT 
       COUNT(*) as total_lectures,
-      SUM(CASE WHEN ar.status = 'PRESENT' THEN 1 ELSE 0 END) as present_count,
-      SUM(CASE WHEN ar.status = 'ABSENT' THEN 1 ELSE 0 END) as absent_count,
-      SUM(CASE WHEN ar.status = 'LATE' THEN 1 ELSE 0 END) as late_count
+      COALESCE(SUM(CASE WHEN ar.status = 'PRESENT' THEN 1 ELSE 0 END), 0) as present_count,
+      COALESCE(SUM(CASE WHEN ar.status = 'ABSENT' THEN 1 ELSE 0 END), 0) as absent_count,
+      COALESCE(SUM(CASE WHEN ar.status = 'LATE' THEN 1 ELSE 0 END), 0) as late_count
     FROM attendance_records ar
     JOIN lecture_sessions ls ON ar.lecture_session_id = ls.id
     WHERE ar.student_id = ?
-  `).get(student_id) as any;
+  `, [student_id]);
 
-  const attendancePercentage = attendanceStats && attendanceStats.total_lectures > 0
-    ? (((attendanceStats.present_count + attendanceStats.late_count) / attendanceStats.total_lectures) * 100).toFixed(1)
+  const totalLectures = Number(attendanceStats?.total_lectures || 0);
+  const presentCount = Number(attendanceStats?.present_count || 0);
+  const lateCount = Number(attendanceStats?.late_count || 0);
+
+  const attendancePercentage = totalLectures > 0
+    ? (((presentCount + lateCount) / totalLectures) * 100).toFixed(1)
     : '94.5';
 
   // Fetch Exam Remarks
-  const remarks = db.prepare(`
+  const remarks = await queryOne(`
     SELECT * FROM exam_remarks WHERE student_id = ? AND exam_id = ?
-  `).get(student_id, exam_id) as any;
+  `, [student_id, exam_id]);
 
   // Fetch Student Exam History (List of all exams attempted)
-  const examHistory = db.prepare(`
+  const examHistory = await query(`
     SELECT DISTINCT e.id as exam_id, e.name as exam_name, e.exam_type, e.academic_year, e.start_date,
            (SELECT SUM(sm2.marks_obtained) FROM student_marks sm2 JOIN exam_subjects es2 ON sm2.exam_subject_id = es2.id WHERE es2.exam_id = e.id AND sm2.student_id = ?) as total_obtained,
            (SELECT SUM(es2.max_marks) FROM student_marks sm2 JOIN exam_subjects es2 ON sm2.exam_subject_id = es2.id WHERE es2.exam_id = e.id AND sm2.student_id = ?) as total_max
@@ -156,7 +161,7 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
     JOIN student_marks sm ON sm.exam_subject_id = es.id
     WHERE sm.student_id = ?
     ORDER BY e.start_date DESC
-  `).all(student_id, student_id, student_id);
+  `, [student_id, student_id, student_id]);
 
   logAudit(req, 'REPORT_CARD_GENERATED', 'report_cards', student_id, {
     student: student.name,
@@ -190,7 +195,7 @@ reportsRouter.post('/generate', authenticate, (req: AuthRequest, res: Response) 
 });
 
 // 3. Bulk Report Card Generation (for whole class, section, or batch)
-reportsRouter.post('/bulk-generate', authenticate, requireRoles('TEACHER', 'HOD', 'PRINCIPAL', 'ADMIN'), (req: AuthRequest, res: Response) => {
+reportsRouter.post('/bulk-generate', authenticate, requireRoles('TEACHER', 'HOD', 'PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   const { class_id, section_id, batch_id, exam_id, student_ids } = req.body;
 
   if (!exam_id) {
@@ -211,7 +216,7 @@ reportsRouter.post('/bulk-generate', authenticate, requireRoles('TEACHER', 'HOD'
   }
 
   studentQuery += ` ORDER BY name ASC`;
-  const students = db.prepare(studentQuery).all(...params) as any[];
+  const students = await query(studentQuery, params);
 
   logAudit(req, 'BULK_REPORT_GENERATED', 'exams', exam_id, {
     studentCount: students.length,
@@ -228,7 +233,7 @@ reportsRouter.post('/bulk-generate', authenticate, requireRoles('TEACHER', 'HOD'
 });
 
 // 4. Secure Evaluated Paper Viewer (Authorization check: Student/Parent/Teacher only)
-reportsRouter.get('/evaluated-paper/:studentId/:examSubjectId', authenticate, (req: AuthRequest, res: Response) => {
+reportsRouter.get('/evaluated-paper/:studentId/:examSubjectId', authenticate, async (req: AuthRequest, res: Response) => {
   const { studentId, examSubjectId } = req.params;
 
   // Authorization check
@@ -236,7 +241,7 @@ reportsRouter.get('/evaluated-paper/:studentId/:examSubjectId', authenticate, (r
     return res.status(403).json({ error: 'Access denied. You can only view your own evaluated papers.' });
   }
 
-  const paper = db.prepare(`
+  const paper = await queryOne(`
     SELECT ep.*, s.name as subject_name, e.name as exam_name, sp.name as student_name, sp.register_number
     FROM evaluated_papers ep
     JOIN exam_subjects es ON ep.exam_subject_id = es.id
@@ -244,7 +249,7 @@ reportsRouter.get('/evaluated-paper/:studentId/:examSubjectId', authenticate, (r
     JOIN exams e ON es.exam_id = e.id
     JOIN student_profiles sp ON ep.student_id = sp.id
     WHERE ep.student_id = ? AND ep.exam_subject_id = ?
-  `).get(studentId, examSubjectId) as any;
+  `, [studentId, examSubjectId]);
 
   if (!paper) {
     return res.status(404).json({ error: 'Evaluated paper document not found for this exam subject.' });
@@ -254,7 +259,7 @@ reportsRouter.get('/evaluated-paper/:studentId/:examSubjectId', authenticate, (r
 });
 
 // 5. Upload Evaluated Paper Image / PDF
-reportsRouter.post('/evaluated-paper/upload', authenticate, requireRoles('TEACHER', 'HOD', 'ADMIN'), upload.single('paper'), (req: AuthRequest, res: Response) => {
+reportsRouter.post('/evaluated-paper/upload', authenticate, requireRoles('TEACHER', 'HOD', 'ADMIN'), upload.single('paper'), async (req: AuthRequest, res: Response) => {
   const { student_id, exam_subject_id } = req.body;
 
   if (!req.file || !student_id || !exam_subject_id) {
@@ -264,14 +269,14 @@ reportsRouter.post('/evaluated-paper/upload', authenticate, requireRoles('TEACHE
   const fileUrl = `/uploads/evaluated_papers/${req.file.filename}`;
   const id = 'ep-' + crypto.randomUUID();
 
-  db.prepare(`
+  await execute(`
     INSERT INTO evaluated_papers (id, student_id, exam_subject_id, file_url, uploaded_by, uploaded_at)
     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(student_id, exam_subject_id) DO UPDATE SET
-      file_url = excluded.file_url,
-      uploaded_by = excluded.uploaded_by,
+      file_url = EXCLUDED.file_url,
+      uploaded_by = EXCLUDED.uploaded_by,
       uploaded_at = CURRENT_TIMESTAMP
-  `).run(id, student_id, exam_subject_id, fileUrl, req.user!.id);
+  `, [id, student_id, exam_subject_id, fileUrl, req.user!.id]);
 
   logAudit(req, 'EVALUATED_PAPER_UPLOADED', 'evaluated_papers', id, {
     student_id,
@@ -281,3 +286,4 @@ reportsRouter.post('/evaluated-paper/upload', authenticate, requireRoles('TEACHE
 
   return res.json({ success: true, message: 'Evaluated paper uploaded successfully.', fileUrl });
 });
+
