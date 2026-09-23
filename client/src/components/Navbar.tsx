@@ -33,9 +33,13 @@ export const Navbar: React.FC = () => {
         
         {/* Left: Brand & Campus Identification */}
         <div className="flex items-center gap-3">
-          {/* Official Academic Crest Icon */}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-900 to-indigo-900 flex items-center justify-center p-2 shadow-xs shrink-0 ring-2 ring-amber-400/20">
-            <GraduationCap className="w-5 h-5 text-amber-400" />
+          {/* Official Institution Logo */}
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-2xs shrink-0 border border-[#ded8cb]">
+            <img
+              src="/logo.png"
+              alt="SIR MV Logo"
+              className="w-8 h-8 object-contain"
+            />
           </div>
 
           <div>
