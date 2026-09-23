@@ -74,11 +74,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-      return next();
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      return res.sendFile(path.join(clientDistPath, 'index.html'));
     }
-    res.sendFile(path.join(clientDistPath, 'index.html'));
+    next();
   });
 }
 
