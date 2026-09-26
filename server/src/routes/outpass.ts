@@ -73,7 +73,7 @@ outpassRouter.post('/request', authenticate, async (req: AuthRequest, res: Respo
       id, outpass_number, branch_id, student_id, reason, pickup_person_name,
       pickup_person_phone, relationship, id_type, id_number, pickup_photo_url,
       parent_phone, parent_otp_verified, verification_code, status, requested_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, 'PENDING', CURRENT_TIMESTAMP)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'PENDING', CURRENT_TIMESTAMP)
   `, [
     outpassId, outpassNumber, branchId, student_id, reason, pickup_person_name,
     pickup_person_phone, relationship, id_type, id_number || null, pickup_photo_url || null,
