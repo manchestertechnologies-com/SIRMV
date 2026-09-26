@@ -522,7 +522,7 @@ const CreateExamView: React.FC<{ onCancel: () => void; onCreated: (id: string) =
 
   const [name, setName] = useState('');
   const [academicYearId, setAcademicYearId] = useState('');
-  const [puLevel, setPuLevel] = useState<'1 PU' | '2 PU'>('2 PU');
+  const [puLevel, setPuLevel] = useState<'1 PU' | '2 PU' | 'LT'>('2 PU');
   const [instructions, setInstructions] = useState('');
   const [seatingLayout, setSeatingLayout] = useState<'ZIGZAG' | 'USHAPE'>('ZIGZAG');
   const [separateSameClass, setSeparateSameClass] = useState(true);
@@ -627,6 +627,7 @@ const CreateExamView: React.FC<{ onCancel: () => void; onCreated: (id: string) =
             <select value={puLevel} onChange={(e) => setPuLevel(e.target.value as any)} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none">
               <option value="1 PU">1 PU</option>
               <option value="2 PU">2 PU</option>
+              <option value="LT">LT (Long Term)</option>
             </select>
           </div>
           <div>
@@ -651,7 +652,15 @@ const CreateExamView: React.FC<{ onCancel: () => void; onCreated: (id: string) =
         <div>
           <label className="text-xs font-semibold text-slate-500 flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Selected Batches (Class + Section)</label>
           <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {classes.filter((c) => c.name.startsWith(puLevel === '1 PU' ? '1' : '2')).map((c) =>
+            {classes.filter((c) => {
+              // 1 PU / 2 PU narrow the batch picker to just that year's
+              // classes. LT ("Long Term") isn't a specific class year, so
+              // don't filter by name prefix — show every class/section and
+              // let the user pick whichever batches this long-term exam
+              // actually covers.
+              if (puLevel === 'LT') return true;
+              return c.name.startsWith(puLevel === '1 PU' ? '1' : '2');
+            }).map((c) =>
               c.sections.map((s) => {
                 const key = `${c.id}:${s.id}`;
                 const checked = selectedSections.some((sel) => `${sel.classId}:${sel.sectionId}` === key);
@@ -834,16 +843,24 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
         )}
       </div>
 
-      {/* Publish workflow */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-violet-600" /> Publishing locks the exam and notifies every invigilator, student and parent of their final room/seat.</div>
-        <div className="flex gap-2">
-          <button onClick={markReady} disabled={exam.status === 'PUBLISHED'} className="px-4 py-2 rounded-xl text-xs font-semibold text-violet-700 bg-violet-100 hover:bg-violet-200 disabled:opacity-50">Mark Ready to Publish</button>
-          <button onClick={publish} disabled={exam.status !== 'READY_TO_PUBLISH'} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50">
-            <Rocket className="w-3.5 h-3.5" /> Publish Exam
-          </button>
+      {/* Publish workflow — stays hidden until rooms/seats/invigilators are
+          done for every session, so the flow only reveals this final step
+          once it's actually reachable rather than showing it from the start. */}
+      {STATUS_STEPS.indexOf(exam.status) < STATUS_STEPS.indexOf('INVIGILATORS_ALLOCATED') ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 text-center text-[11px] text-slate-400">
+          Complete room, seat and invigilator allocation for every session above to unlock publishing.
         </div>
-      </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-violet-600" /> Publishing locks the exam and notifies every invigilator, student and parent of their final room/seat.</div>
+          <div className="flex gap-2">
+            <button onClick={markReady} disabled={exam.status === 'PUBLISHED'} className="px-4 py-2 rounded-xl text-xs font-semibold text-violet-700 bg-violet-100 hover:bg-violet-200 disabled:opacity-50">Mark Ready to Publish</button>
+            <button onClick={publish} disabled={exam.status !== 'READY_TO_PUBLISH'} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50">
+              <Rocket className="w-3.5 h-3.5" /> Publish Exam
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Reports */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
@@ -961,13 +978,20 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
   };
 
   const sendInvigilatorRequest = async () => {
-    if (!requestDeptId || requestCount < 1) return;
+    if (!requestDeptId) {
+      flash('error', 'Select a department first.');
+      return;
+    }
+    if (requestCount < 1) {
+      flash('error', 'Required count must be at least 1.');
+      return;
+    }
     try {
       await apiFetch('/exam-management/invigilator-requests', {
         method: 'POST',
         body: JSON.stringify({ exam_session_id: sessionId, department_id: requestDeptId, required_count: requestCount })
       });
-      flash('success', 'Invigilator request sent to the department HOD.');
+      flash('success', 'Request sent to the department HOD.');
     } catch (err: any) {
       flash('error', err.message);
     }
@@ -1047,26 +1071,43 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
         </div>
       )}
 
-      {seating.length > 0 && (
+      {/* Step 2: seating — unlocked once rooms are actually allocated to this
+          session, so the workflow reveals one step at a time rather than
+          showing every stage at once. */}
+      {(summary?.roomsUsed ?? 0) === 0 ? (
+        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-400">
+          Allocate rooms above to unlock seating.
+        </div>
+      ) : (
         <div className="bg-slate-50 rounded-xl p-3">
           <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5"><ArrowLeftRight className="w-3.5 h-3.5" /> Seating — click two students to swap their seats</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto">
-            {seating.map((s) => (
-              <button
-                key={s.student_id}
-                onClick={() => handleSeatClick(s.student_id)}
-                className={`text-left p-2 rounded-lg border text-[11px] transition ${swapA === s.student_id ? 'bg-violet-100 border-violet-400' : 'bg-white border-slate-200 hover:border-violet-300'}`}
-              >
-                <div className="font-bold text-slate-900">{s.student_name}</div>
-                <div className="text-slate-400">{s.register_number} · {s.class_name} {s.section_name}</div>
-                <div className="text-violet-700 font-semibold mt-0.5">Room {s.room_number} · Bench {s.bench_number} · Seat {s.seat_number}</div>
-              </button>
-            ))}
-          </div>
+          {seating.length === 0 ? (
+            <div className="text-[11px] text-slate-400 py-2">Click "Allocate Seats" above to seat students in the allocated rooms.</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto">
+              {seating.map((s) => (
+                <button
+                  key={s.student_id}
+                  onClick={() => handleSeatClick(s.student_id)}
+                  className={`text-left p-2 rounded-lg border text-[11px] transition ${swapA === s.student_id ? 'bg-violet-100 border-violet-400' : 'bg-white border-slate-200 hover:border-violet-300'}`}
+                >
+                  <div className="font-bold text-slate-900">{s.student_name}</div>
+                  <div className="text-slate-400">{s.register_number} · {s.class_name} {s.section_name}</div>
+                  <div className="text-violet-700 font-semibold mt-0.5">Room {s.room_number} · Bench {s.bench_number} · Seat {s.seat_number}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {invigilatorOptions && (
+      {/* Step 3: invigilators — unlocked once at least one student has been
+          seated for this session. */}
+      {(summary?.allocated ?? 0) === 0 ? (
+        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-400">
+          Allocate seats above to unlock invigilator assignment.
+        </div>
+      ) : invigilatorOptions && (
         <div className="bg-slate-50 rounded-xl p-3 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Invigilators</div>
