@@ -23,6 +23,7 @@ import {
 
 export const ReportCardGenerator: React.FC = () => {
   const { user, currentBranch } = useAuth();
+  const isStudentOrParent = user?.role === 'STUDENT' || user?.role === 'PARENT';
   const [exams, setExams] = useState<any[]>([]);
   const [examSubjects, setExamSubjects] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -61,10 +62,18 @@ export const ReportCardGenerator: React.FC = () => {
           setSelectedExamId(examRes.exams[0].id);
         }
 
-        const studentRes = await apiFetch<any>(`/evening-study/session?branch_id=${branchId}`);
-        setStudents(studentRes.students || []);
-        if (studentRes.students?.length > 0) {
-          setSelectedStudentId(studentRes.students[0].id);
+        if (isStudentOrParent) {
+          // Self-service: always the caller's own (or their child's)
+          // profile, resolved server-side — never a picker over every
+          // student in the branch.
+          const meRes = await apiFetch<any>('/students/me/profile');
+          if (meRes.profile?.id) setSelectedStudentId(meRes.profile.id);
+        } else {
+          const studentRes = await apiFetch<any>(`/evening-study/session?branch_id=${branchId}`);
+          setStudents(studentRes.students || []);
+          if (studentRes.students?.length > 0) {
+            setSelectedStudentId(studentRes.students[0].id);
+          }
         }
       } catch (err: any) {
         console.error('Failed to load report generator metadata', err);
@@ -141,7 +150,10 @@ export const ReportCardGenerator: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Generator Configuration Card (hidden when printing) */}
+      {/* Generator Configuration Card — staff-only. Student/Parent get just
+          the report card itself below, scoped to their own (child's)
+          profile, with no generator controls at all. */}
+      {!isStudentOrParent && (
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5 no-print">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
@@ -275,6 +287,7 @@ export const ReportCardGenerator: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* REPORT CARD DOCUMENT VIEW */}
       {reportData && (

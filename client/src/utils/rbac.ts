@@ -70,7 +70,6 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         roleSubtitle: 'Department academic governance, faculty timetable matrix, substitute allocations and performance.',
         menuItems: [
           { id: 'dashboard', label: 'HOD Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Department academic KPIs' },
-          { id: 'staffs', label: 'Department Faculty', icon: IconStaffs, targetTab: 'staffs', description: 'Teachers directory & profiles' },
           { id: 'timetable', label: 'Department Timetable', icon: IconTimetable, targetTab: 'timetable', description: 'Substitution center & lecture matrix' },
           { id: 'students', label: 'Department Students', icon: IconStudents, targetTab: 'students', description: 'All PUC students in department' },
           { id: 'tests', label: 'Department Tests', icon: IconTests, targetTab: 'tests', description: 'Test schedules & question banks' },

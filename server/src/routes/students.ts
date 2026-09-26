@@ -132,7 +132,14 @@ studentsRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
 // missing entirely, so the student/parent self-service banner silently fell
 // back to placeholder demo data for every real user).
 studentsRouter.get('/me/profile', authenticate, async (req: AuthRequest, res: Response) => {
-  const studentId = req.user!.student_id;
+  let studentId = req.user!.student_id;
+  // A PARENT account has no student_profiles row of its own — resolve their
+  // linked child instead, via student_profiles.parent_user_id, never from
+  // anything the client supplies.
+  if (!studentId && req.user!.role === 'PARENT') {
+    const child = await queryOne<{ id: string }>(`SELECT id FROM student_profiles WHERE parent_user_id = $1`, [req.user!.id]);
+    studentId = child?.id;
+  }
   if (!studentId) {
     return res.status(404).json({ error: 'No student profile is linked to this account.' });
   }

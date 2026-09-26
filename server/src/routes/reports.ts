@@ -79,9 +79,16 @@ reportsRouter.post('/generate', authenticate, async (req: AuthRequest, res: Resp
     return res.status(400).json({ error: 'student_id and exam_id are required.' });
   }
 
-  // Server-side Authorization check
+  // Server-side authorization check — never trust a client-supplied
+  // student_id for a STUDENT or PARENT caller.
   if (req.user!.role === 'STUDENT' && req.user!.student_id !== student_id) {
     return res.status(403).json({ error: 'Access denied: You can only generate your own report card.' });
+  }
+  if (req.user!.role === 'PARENT') {
+    const child = await queryOne(`SELECT id FROM student_profiles WHERE parent_user_id = ? AND id = ?`, [req.user!.id, student_id]);
+    if (!child) {
+      return res.status(403).json({ error: "Access denied: You can only generate your own child's report card." });
+    }
   }
 
   // Fetch Student Profile
