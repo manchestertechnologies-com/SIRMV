@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 import {
@@ -33,6 +33,37 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const roleSwitcherRef = useRef<HTMLDivElement>(null);
+
+  // Close either dropdown the moment the person clicks/taps anywhere else
+  // on the page (or presses Escape), same as any standard menu.
+  useEffect(() => {
+    if (!showNotifications && !showRoleSwitcher) return;
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (showNotifications && notificationsRef.current && !notificationsRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
+      if (showRoleSwitcher && roleSwitcherRef.current && !roleSwitcherRef.current.contains(target)) {
+        setShowRoleSwitcher(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowNotifications(false);
+        setShowRoleSwitcher(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showNotifications, showRoleSwitcher]);
 
   const loadNotifications = async () => {
     try {
@@ -147,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 
           {/* Notification Bell */}
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
@@ -162,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-80 sm:w-80 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
+              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 max-w-full sm:max-w-80 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
                 <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
                   {unreadCount > 0 && (
@@ -171,7 +202,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                     </button>
                   )}
                 </div>
-                <div className="max-h-96 overflow-y-auto py-1">
+                <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto py-1">
                   {notifications.length === 0 ? (
                     <p className="px-3.5 py-6 text-xs text-slate-400 text-center">No notifications yet.</p>
                   ) : (
@@ -198,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           </div>
 
           {/* Active User Role Badge & Switcher Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={roleSwitcherRef}>
             <button
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
               className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
@@ -219,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
 
             {/* Dropdown Menu */}
             {showRoleSwitcher && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-72 sm:w-72 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
+              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 max-w-full sm:max-w-72 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
                 <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-blue-600" />
@@ -228,7 +259,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                   <span className="text-[10px] font-mono text-slate-400">Pass: 123456</span>
                 </div>
 
-                <div className="max-h-80 overflow-y-auto py-1">
+                <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto py-1">
                   {institutionalRoles.map((roleItem) => {
                     const isCurrent = user?.role === roleItem.role;
                     return (
