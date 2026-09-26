@@ -62,7 +62,21 @@ export const ExamFloor3D: React.FC<{
   onSelectRoom: (roomId: string) => void;
 }> = ({ roomsByFloor, selectedRoomId, onSelectRoom }) => {
   const floors = useMemo(() => Object.keys(roomsByFloor).map(Number).sort((a, b) => a - b), [roomsByFloor]);
-  const [activeFloor, setActiveFloor] = useState<number>(floors[0] || 1);
+  // Ground floor may be numbered 0 — `floors[0] || 1` would wrongly fall
+  // through to 1 in that case since 0 is falsy. Check length instead.
+  const [activeFloor, setActiveFloor] = useState<number>(floors.length > 0 ? floors[0] : 1);
+
+  // If the room list arrives after mount (e.g. an async fetch resolving
+  // later) and the previously-picked floor no longer exists in the new
+  // data, snap back to the first real floor rather than showing an
+  // empty room grid.
+  React.useEffect(() => {
+    if (floors.length > 0 && !floors.includes(activeFloor)) {
+      setActiveFloor(floors[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floors]);
+
   const [mode, setMode] = useState<'3D' | '2D'>('3D');
 
   const activeRooms = roomsByFloor[activeFloor] || [];
@@ -92,7 +106,7 @@ export const ExamFloor3D: React.FC<{
                   activeFloor === f ? 'bg-violet-600 text-white' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Floor {f}
+                {f === 0 ? 'Ground Floor' : `Floor ${f}`}
               </button>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/LoginPage';
@@ -20,7 +20,14 @@ import { BoardMarksPage } from './pages/BoardMarksPage';
 import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
 import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
-import { ExamManagementModule } from './pages/ExamManagementModule';
+// Lazy-loaded: pulls in three.js / @react-three (~1.1MB) for the 3D floor
+// view, which most users (students, parents, teachers, staff) never open.
+// Splitting it into its own chunk keeps that weight off everyone else's
+// initial page load — this was making the whole app feel heavy/laggy on
+// mobile, since previously every visitor downloaded and parsed it upfront.
+const ExamManagementModule = React.lazy(() =>
+  import('./pages/ExamManagementModule').then((m) => ({ default: m.ExamManagementModule }))
+);
 import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
 import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
 import { ExamSeatingPage } from './pages/ExamSeatingPage';
@@ -318,7 +325,9 @@ export function App() {
             </div>
           ) : activeTab === 'exam-management' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
-              <ExamManagementModule />
+              <Suspense fallback={<div className="text-center text-slate-400 text-sm py-10">Loading Exam Management...</div>}>
+                <ExamManagementModule />
+              </Suspense>
             </div>
           ) : activeTab === 'my-exam-duty' ? (
             <div className="space-y-6 max-w-7xl mx-auto">

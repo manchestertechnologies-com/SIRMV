@@ -1,36 +1,42 @@
--- Exam Management module (PU-level examinations: 1 PU / 2 PU).
--- Additive migration — reuses existing branches, academic_years, classes,
--- sections, subjects, departments, teacher_profiles, student_profiles,
--- rooms and timetable_entries. Creates only the new entities the spec
--- calls for: exams, exam sessions (one per date/subject/time so an exam
--- can span multiple papers), room exam-configs (benches/seats), room and
--- student seat allocations, and the invigilator + HOD-request workflow.
+-- CORRECTIVE MIGRATION — fixes a table-name collision in the Exam
+-- Management module (Phase 1). Apply this ONLY IF you already ran
+-- add-exam-management-schema.sql before this fix existed.
 --
--- Apply with: psql "$DATABASE_URL" -f add-exam-management-schema.sql
+-- What went wrong: add-exam-management-schema.sql originally created a
+-- table named "exams". This repo already had a DIFFERENT, unrelated
+-- "exams" table (used by Unit Tests / Board Marks: exam_subjects,
+-- student_marks, evaluated_papers, exam_remarks). Because the migration
+-- used CREATE TABLE IF NOT EXISTS, it silently did nothing — no new
+-- columns (academic_year_id, pu_level, status, ...) were ever added to
+-- any table, and exam_batches/exam_sessions ended up with foreign keys
+-- pointing at the WRONG (old board-exam) "exams" table. Symptom:
+-- "column e.academic_year_id does not exist".
+--
+-- The fix (already applied in code): the new module's table is now
+-- called "pu_exams" everywhere, so it can never collide with the old
+-- board-exam "exams" table again.
+--
+-- This migration creates pu_exams and repoints every dependent table's
+-- exam_id foreign key at it. It is safe to drop and recreate the
+-- dependent tables because the original bug meant no exam could ever be
+-- successfully created — there is no real data to lose in them.
+--
+-- Apply with: psql "$DATABASE_URL" -f fix-exam-management-table-collision.sql
 
--- 1. New role for a dedicated Exam Management department, alongside the
---    existing roles. ADMIN/PRINCIPAL keep full access too (see routes).
-ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (
-  role IN (
-    'ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'FLOOR_ATTENDER',
-    'NON_TEACHING_STAFF', 'GATE_STAFF', 'WARDEN', 'HEAD_WARDEN',
-    'STUDENT', 'PARENT', 'EXAM_DEPARTMENT'
-  )
-);
+BEGIN;
 
--- 2. Exam-specific bench/seat configuration for an existing room.
---    total capacity is always benches * seats_per_bench — computed in
---    application code, never stored, so it can't drift out of sync.
-CREATE TABLE IF NOT EXISTS exam_room_configs (
-  room_id VARCHAR(64) PRIMARY KEY REFERENCES rooms(id) ON DELETE CASCADE,
-  benches INTEGER NOT NULL DEFAULT 15,
-  seats_per_bench INTEGER NOT NULL DEFAULT 2,
-  is_available_for_exams INTEGER NOT NULL DEFAULT 1,
-  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+-- 1. Drop the dependent tables (created empty/broken by the old
+--    migration, pointing at the wrong "exams" table). CASCADE also
+--    drops exam_room_allocations, exam_student_allocations,
+--    exam_invigilator_requests, exam_invigilator_assignments, and
+--    exam_invigilator_request_selections, which all descend from these.
+DROP TABLE IF EXISTS exam_batches CASCADE;
+DROP TABLE IF EXISTS exam_sessions CASCADE;
 
--- 3. An exam (may span several dates/subjects — see exam_sessions).
+-- 2. Create the correctly-named table for this module. (If your DB
+--    somehow already has a broken "exams" table from this module with
+--    the new columns on it — unlikely, since CREATE TABLE IF NOT EXISTS
+--    would have no-op'd — this is still safe: pu_exams is brand new.)
 CREATE TABLE IF NOT EXISTS pu_exams (
   id VARCHAR(64) PRIMARY KEY,
   branch_id VARCHAR(64) NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
@@ -49,8 +55,7 @@ CREATE TABLE IF NOT EXISTS pu_exams (
   published_at TIMESTAMPTZ
 );
 
--- 4. Which class+section combinations ("batches" in the spec's sense —
---    e.g. "2 PU PCMB A") are writing this exam.
+-- 3. Recreate the dependent tables, now referencing pu_exams(id).
 CREATE TABLE IF NOT EXISTS exam_batches (
   id VARCHAR(64) PRIMARY KEY,
   exam_id VARCHAR(64) NOT NULL REFERENCES pu_exams(id) ON DELETE CASCADE,
@@ -59,8 +64,6 @@ CREATE TABLE IF NOT EXISTS exam_batches (
   UNIQUE(exam_id, class_id, section_id)
 );
 
--- 5. One paper: a subject on a specific date/time within the exam.
---    "Do not assume one exam consists of only one paper."
 CREATE TABLE IF NOT EXISTS exam_sessions (
   id VARCHAR(64) PRIMARY KEY,
   exam_id VARCHAR(64) NOT NULL REFERENCES pu_exams(id) ON DELETE CASCADE,
@@ -72,9 +75,6 @@ CREATE TABLE IF NOT EXISTS exam_sessions (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Rooms selected for a session (automatic or manual), with a flag for
---    whether this room was chosen because it's the batch's own regular
---    classroom (Priority 1 in the allocation algorithm).
 CREATE TABLE IF NOT EXISTS exam_room_allocations (
   id VARCHAR(64) PRIMARY KEY,
   exam_session_id VARCHAR(64) NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
@@ -86,7 +86,6 @@ CREATE TABLE IF NOT EXISTS exam_room_allocations (
   UNIQUE(exam_session_id, room_id)
 );
 
--- 7. One row per student per session: their seat.
 CREATE TABLE IF NOT EXISTS exam_student_allocations (
   id VARCHAR(64) PRIMARY KEY,
   exam_session_id VARCHAR(64) NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
@@ -103,7 +102,6 @@ CREATE TABLE IF NOT EXISTS exam_student_allocations (
   UNIQUE(exam_session_id, room_id, seat_number)
 );
 
--- 8. Exam Department -> HOD invigilator requests.
 CREATE TABLE IF NOT EXISTS exam_invigilator_requests (
   id VARCHAR(64) PRIMARY KEY,
   exam_session_id VARCHAR(64) NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
@@ -114,8 +112,6 @@ CREATE TABLE IF NOT EXISTS exam_invigilator_requests (
   requested_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Final invigilator-per-room assignments (auto, manual, or via an HOD
---    request). One primary invigilator per room per session.
 CREATE TABLE IF NOT EXISTS exam_invigilator_assignments (
   id VARCHAR(64) PRIMARY KEY,
   exam_session_id VARCHAR(64) NOT NULL REFERENCES exam_sessions(id) ON DELETE CASCADE,
@@ -127,6 +123,19 @@ CREATE TABLE IF NOT EXISTS exam_invigilator_assignments (
   UNIQUE(exam_session_id, room_id)
 );
 
+-- 4. Phase 2's invigilator-pool-selection table also descends from
+--    exam_invigilator_requests, which was just dropped and recreated —
+--    so it needs recreating too (it's a no-op if it was never applied).
+CREATE TABLE IF NOT EXISTS exam_invigilator_request_selections (
+  id VARCHAR(64) PRIMARY KEY,
+  request_id VARCHAR(64) NOT NULL REFERENCES exam_invigilator_requests(id) ON DELETE CASCADE,
+  teacher_id VARCHAR(64) NOT NULL REFERENCES teacher_profiles(id) ON DELETE CASCADE,
+  selected_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+  selected_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(request_id, teacher_id)
+);
+
+-- 5. Recreate the indexes.
 CREATE INDEX IF NOT EXISTS idx_exam_sessions_exam ON exam_sessions(exam_id);
 CREATE INDEX IF NOT EXISTS idx_exam_room_allocations_session ON exam_room_allocations(exam_session_id);
 CREATE INDEX IF NOT EXISTS idx_exam_student_allocations_session ON exam_student_allocations(exam_session_id);
@@ -134,3 +143,9 @@ CREATE INDEX IF NOT EXISTS idx_exam_student_allocations_student ON exam_student_
 CREATE INDEX IF NOT EXISTS idx_exam_invigilator_assignments_session ON exam_invigilator_assignments(exam_session_id);
 CREATE INDEX IF NOT EXISTS idx_exam_invigilator_assignments_teacher ON exam_invigilator_assignments(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_exam_batches_exam ON exam_batches(exam_id);
+
+COMMIT;
+
+-- Note: exam_room_configs (the benches/seats-per-bench config table) did
+-- NOT reference "exams" at all, so it was never affected and is left
+-- untouched by this migration.
