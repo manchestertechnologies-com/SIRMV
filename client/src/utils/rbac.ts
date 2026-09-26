@@ -161,6 +161,12 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'attendance', label: 'Night Roll-Call & Study', icon: IconAttendance, targetTab: 'attendance', description: 'Night attendance & study tracking' },
           { id: 'gate-pass', label: 'Hostel Outpasses', icon: IconGatePass, targetTab: 'gate-pass', description: 'Review hosteller check-in/out' },
           { id: 'students', label: 'Hosteller Registry & Admission', icon: IconStudents, targetTab: 'students', description: 'Resident student profile & emergency contacts' },
+          { id: 'discipline', label: 'Student Discipline', icon: ShieldAlert, targetTab: 'discipline', description: 'Log & track hosteller discipline incidents' },
+          // Announcements are a Head Warden privilege only — a regular
+          // Warden doesn't get to broadcast hostel-wide notices.
+          ...(role === 'HEAD_WARDEN'
+            ? [{ id: 'noticeboard', label: 'Announcements & Hostel Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Mess schedule & hostel rules' }]
+            : []),
           { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: []
@@ -212,7 +218,6 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'questions', label: 'Questions', icon: IconQuestions, targetTab: 'questions' },
           { id: 'reports', label: 'Reports', icon: IconReports, targetTab: 'reports' },
           { id: 'attendance', label: 'Attendance', icon: IconAttendance, targetTab: 'attendance' },
-          { id: 'fee', label: 'Fee', icon: IconFee, targetTab: 'fee' },
           { id: 'timetable', label: 'Timetable', icon: IconTimetable, targetTab: 'timetable' },
           { id: 'timetable-generator', label: 'Timetable Generator', icon: IconTimetable, targetTab: 'timetable-generator' },
           { id: 'exam-management', label: 'Exam Management', icon: IconExamManagement, targetTab: 'exam-management' },
@@ -229,9 +234,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard, targetTab: 'leaderboard' },
           { id: 'settings', label: 'Settings', icon: IconSettings, targetTab: 'settings' },
         ],
-        otherTools: [
-          { id: 'report-card', label: 'Report Card', icon: IconReportCard, targetTab: 'report-card' }
-        ]
+        otherTools: []
       };
   }
 }

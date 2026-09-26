@@ -18,7 +18,7 @@ interface RoomRow {
   room_id: string; room_number: string; floor: number; building?: string;
   benches: number; seats_per_bench: number; is_available_for_exams: boolean; total_capacity: number;
   home_class_id?: string | null; home_section_id?: string | null; home_class_label?: string | null;
-  assigned_class_id?: string | null; assigned_section_id?: string | null; is_assigned?: boolean;
+  assigned_class_id?: string | null; assigned_section_id?: string | null; is_assigned?: boolean; is_auto_detected?: boolean;
 }
 interface ExamRow {
   id: string; name: string; pu_level: string; status: string; academic_year_name: string;
@@ -482,6 +482,9 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
                         ))}
                       </select>
                     </div>
+                    {r.is_auto_detected && (
+                      <span className="text-[10px] text-emerald-600 font-semibold">Auto-detected from Classes page</span>
+                    )}
                   </td>
                   <td className="py-2 px-4">
                     <input type="number" min={1} value={r.benches} onChange={(e) => updateRoom(r.room_id, { benches: Number(e.target.value) || 1 })} className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1" />

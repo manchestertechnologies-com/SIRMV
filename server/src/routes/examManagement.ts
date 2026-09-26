@@ -47,9 +47,23 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
       [branchId]
     );
 
+    // Auto-detect: a room already assigned to a section as its regular
+    // classroom (set on the Classes page, sections.room_id) — this is the
+    // most reliable source, since it's ground truth the college already
+    // maintains, not a guess. Used whenever a room hasn't been explicitly
+    // (re-)assigned on this Room Configuration screen.
+    const autoRooms = await query<any>(
+      `SELECT sec.room_id, sec.class_id, sec.id as section_id, c.name as class_name, sec.name as section_name
+       FROM sections sec
+       JOIN classes c ON c.id = sec.class_id
+       WHERE sec.room_id IS NOT NULL AND c.branch_id = $1`,
+      [branchId]
+    );
+    const autoRoomByRoomId = new Map(autoRooms.map((a: any) => [a.room_id, a]));
+
     // Fallback: the class/section that regularly occupies each room, per the
-    // normal teaching timetable (its "home" class) — used only for rooms
-    // that haven't been explicitly assigned a class/section above.
+    // normal teaching timetable (its "home" class) — used only when neither
+    // of the above two sources has an answer for this room.
     const homeRooms = await query<any>(
       `SELECT room_id, class_id, section_id, class_name, section_name FROM (
          SELECT te.room_id, te.class_id, te.section_id, c.name as class_name, sec.name as section_name,
@@ -65,26 +79,56 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
     const homeRoomByRoomId = new Map(homeRooms.map((h: any) => [h.room_id, h]));
 
     const withCapacity = rooms.map((r: any) => {
-      // An explicit assignment (set on the Room Configuration screen) always
-      // wins over the timetable-derived guess, since staff may set it up
-      // before any timetable exists, or to override a stale/ambiguous one.
+      // An explicit assignment (manually set on this screen) always wins;
+      // otherwise fall back to the auto-detected section room, then to the
+      // timetable-derived guess as a last resort.
+      const auto = autoRoomByRoomId.get(r.room_id);
       const home = homeRoomByRoomId.get(r.room_id);
-      const classId = r.assigned_class_id || home?.class_id || null;
-      const sectionId = r.assigned_section_id || home?.section_id || null;
-      const className = r.assigned_class_id ? r.assigned_class_name : home?.class_name;
-      const sectionName = r.assigned_section_id ? r.assigned_section_name : home?.section_name;
+      const classId = r.assigned_class_id || auto?.class_id || home?.class_id || null;
+      const sectionId = r.assigned_section_id || auto?.section_id || home?.section_id || null;
+      const className = r.assigned_class_id ? r.assigned_class_name : (auto?.class_name || home?.class_name);
+      const sectionName = r.assigned_section_id ? r.assigned_section_name : (auto?.section_name || home?.section_name);
       return {
         ...r,
         benches: Number(r.benches),
         seats_per_bench: Number(r.seats_per_bench),
         is_available_for_exams: !!Number(r.is_available_for_exams),
         total_capacity: Number(r.benches) * Number(r.seats_per_bench),
+        // The effective class/section (manual assignment, or else the
+        // auto-detected one) — this is what the Class/Section dropdowns bind
+        // to, so an auto-detected room shows correctly pre-selected even
+        // before its first save round-trips through the database.
+        assigned_class_id: classId,
+        assigned_section_id: sectionId,
         home_class_id: classId,
         home_section_id: sectionId,
         home_class_label: className && sectionName ? `${className} - ${sectionName}` : null,
-        is_assigned: !!r.assigned_class_id
+        is_assigned: !!r.assigned_class_id,
+        is_auto_detected: !r.assigned_class_id && !!auto
       };
     });
+
+    // Store the auto-detected assignment on the room's exam config, so it
+    // shows up (and can be overridden) in the Class/Section dropdowns
+    // instead of only being computed on the fly, and so automatic exam-room
+    // allocation (which reads assigned_class_id directly) picks it up too.
+    // Never overwrites an existing explicit assignment.
+    for (const r of withCapacity) {
+      if (r.is_auto_detected) {
+        const auto = autoRoomByRoomId.get(r.room_id);
+        await execute(
+          `INSERT INTO exam_room_configs (room_id, assigned_class_id, assigned_section_id, updated_at)
+           VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+           ON CONFLICT (room_id) DO UPDATE SET
+             assigned_class_id = COALESCE(exam_room_configs.assigned_class_id, $2),
+             assigned_section_id = COALESCE(exam_room_configs.assigned_section_id, $3),
+             updated_at = CURRENT_TIMESTAMP
+           WHERE exam_room_configs.assigned_class_id IS NULL`,
+          [r.room_id, auto.class_id, auto.section_id]
+        ).catch((err) => console.error('Auto-store exam room assignment failed:', err.message));
+      }
+    }
+
     return res.json({ rooms: withCapacity });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

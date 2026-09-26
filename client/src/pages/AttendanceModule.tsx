@@ -52,6 +52,7 @@ export const AttendanceModule: React.FC = () => {
 
   // Evening Study State
   const [eveningDate, setEveningDate] = useState(new Date().toISOString().split('T')[0]);
+  const [eveningSessionId, setEveningSessionId] = useState<string | null>(null);
   const [eveningRoster, setEveningRoster] = useState<any[]>([]);
   const [eveningLoading, setEveningLoading] = useState(false);
 
@@ -85,6 +86,7 @@ export const AttendanceModule: React.FC = () => {
     setEveningLoading(true);
     try {
       const res = await apiFetch<any>(`/evening-study/session?date=${eveningDate}&branch_id=${currentBranch?.id || ''}`);
+      setEveningSessionId(res.session?.id || null);
       setEveningRoster(res.students || []);
     } catch (err: any) {
       console.error('Failed to load evening study roster', err);
@@ -97,7 +99,7 @@ export const AttendanceModule: React.FC = () => {
   const loadHostelRollCall = async () => {
     setHostelLoading(true);
     try {
-      const res = await apiFetch<any>(`/hostel/roll-call?date=${hostelDate}&branch_id=${currentBranch?.id || ''}`);
+      const res = await apiFetch<any>(`/hostel/attendance?date=${hostelDate}&branch_id=${currentBranch?.id || ''}`);
       setHostelRollCall(res.records || []);
     } catch (err: any) {
       console.error('Failed to load hostel roll call', err);
@@ -186,13 +188,16 @@ export const AttendanceModule: React.FC = () => {
 
   // Evening Study Status Change
   const handleEveningStatus = async (studentId: string, status: string) => {
+    if (!eveningSessionId) {
+      showToast('Evening study session is still loading — try again in a moment.', 'error');
+      return;
+    }
     try {
       await apiFetch('/evening-study/mark', {
         method: 'POST',
         body: JSON.stringify({
-          date: eveningDate,
-          student_id: studentId,
-          status
+          session_id: eveningSessionId,
+          records: [{ student_id: studentId, status }]
         })
       });
       setEveningRoster((prev) =>
@@ -204,15 +209,14 @@ export const AttendanceModule: React.FC = () => {
   };
 
   // Hostel Rollcall Status Change
-  const handleHostelStatus = async (allocationId: string, studentId: string, status: string) => {
+  const handleHostelStatus = async (roomId: string, studentId: string, status: string) => {
     try {
-      await apiFetch('/hostel/roll-call', {
+      await apiFetch('/hostel/mark', {
         method: 'POST',
         body: JSON.stringify({
           date: hostelDate,
-          student_id: studentId,
-          allocation_id: allocationId,
-          status
+          time: '21:30',
+          records: [{ student_id: studentId, room_id: roomId, status, remarks: '' }]
         })
       });
       setHostelRollCall((prev) =>
@@ -674,7 +678,7 @@ export const AttendanceModule: React.FC = () => {
                         {r.student_name || r.name}
                       </div>
                       <div className="text-[11px] text-slate-500">
-                        {r.hostel_block_name || 'Block A'} • Room {r.room_number} (Bed {r.bed_number || '1'})
+                        {r.block_name || 'Block A'} • Room {r.room_number} (Bed {r.bed_number || '1'})
                       </div>
                     </div>
 
@@ -682,7 +686,7 @@ export const AttendanceModule: React.FC = () => {
                       {['PRESENT', 'OUTPASS', 'MEDICAL', 'LATE_RETURN'].map((st) => (
                         <button
                           key={st}
-                          onClick={() => handleHostelStatus(r.allocation_id, r.student_id, st)}
+                          onClick={() => handleHostelStatus(r.room_id, r.student_id, st)}
                           className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition ${
                             r.status === st
                               ? st === 'PRESENT'

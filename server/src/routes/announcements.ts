@@ -6,8 +6,11 @@ import crypto from 'crypto';
 
 export const announcementsRouter = Router();
 
-// Roles allowed to post/delete announcements — staff-facing roles only, not students/parents
-const POSTER_ROLES = ['ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'WARDEN', 'HEAD_WARDEN', 'FLOOR_ATTENDER', 'NON_TEACHING_STAFF', 'GATE_STAFF'];
+// Roles allowed to post/delete announcements — staff-facing roles only, not
+// students/parents. A plain Warden does not get to broadcast hostel-wide
+// notices — only Head Warden does (the nav item is hidden for Warden too;
+// this is the server-side half of that same rule).
+const POSTER_ROLES = ['ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'HEAD_WARDEN', 'FLOOR_ATTENDER', 'NON_TEACHING_STAFF', 'GATE_STAFF'];
 
 // 1. List announcements visible to the current user — pinned first, then newest.
 //    An announcement with no target_roles is visible to everyone in the branch;
