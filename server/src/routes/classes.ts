@@ -6,14 +6,40 @@ import crypto from 'crypto';
 
 export const classesRouter = Router();
 
-// 1. List classes (with sections + student count) for a branch
+// Preset class names offered on the "Add Class" dropdown, so admins pick
+// from the college's real structure instead of free-typing a name that may
+// not match existing naming (e.g. "1st puc" vs "1 PUC").
+export const CLASS_NAME_PRESETS = ['1 PUC', '2 PUC', 'Long Term'];
+
+// 0. Rooms available for classroom assignment (for the section room dropdown)
+classesRouter.get('/rooms', authenticate, async (req: AuthRequest, res: Response) => {
+  const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+  const rooms = await query(`SELECT * FROM rooms WHERE branch_id = $1 ORDER BY floor ASC, room_number ASC`, [branchId]);
+  return res.json({ rooms });
+});
+
+// 0b. Class name presets not already in use for this branch (for the "Add Class" dropdown)
+classesRouter.get('/name-presets', authenticate, async (req: AuthRequest, res: Response) => {
+  const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+  const existing = await query<any>(`SELECT name FROM classes WHERE branch_id = $1`, [branchId]);
+  const existingNames = new Set(existing.map((c: any) => c.name));
+  return res.json({ presets: CLASS_NAME_PRESETS.filter((n) => !existingNames.has(n)) });
+});
+
+// 1. List classes (with sections + assigned classroom + student count) for a branch
 classesRouter.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
   const classes = await query(`SELECT * FROM classes WHERE branch_id = $1 ORDER BY name ASC`, [branchId]);
 
   const withDetails = await Promise.all(classes.map(async (c: any) => {
-    const sections = await query(`SELECT * FROM sections WHERE class_id = $1 ORDER BY name ASC`, [c.id]);
+    const sections = await query(`
+      SELECT s.*, r.room_number, r.floor as room_floor
+      FROM sections s
+      LEFT JOIN rooms r ON s.room_id = r.id
+      WHERE s.class_id = $1
+      ORDER BY s.name ASC
+    `, [c.id]);
     const studentCountRow = await queryOne<any>(`SELECT COUNT(*) as count FROM student_profiles WHERE class_id = $1`, [c.id]);
     const sectionsWithCounts = await Promise.all(sections.map(async (s: any) => {
       const countRow = await queryOne<any>(`SELECT COUNT(*) as count FROM student_profiles WHERE section_id = $1`, [s.id]);
@@ -68,10 +94,10 @@ classesRouter.delete('/:id', authenticate, requireRoles('ADMIN', 'PRINCIPAL'), a
   return res.json({ success: true, message: 'Class deleted successfully.' });
 });
 
-// 5. Add section to a class
+// 5. Add section to a class — optionally assigning a classroom right away
 classesRouter.post('/:id/sections', authenticate, requireRoles('ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, room_id } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: 'name is required.' });
@@ -83,10 +109,25 @@ classesRouter.post('/:id/sections', authenticate, requireRoles('ADMIN', 'PRINCIP
   }
 
   const sectionId = 'sec-' + crypto.randomUUID();
-  await execute(`INSERT INTO sections (id, class_id, name) VALUES ($1, $2, $3)`, [sectionId, id, name]);
+  await execute(`INSERT INTO sections (id, class_id, name, room_id) VALUES ($1, $2, $3, $4)`, [sectionId, id, name, room_id || null]);
 
-  await logAudit(req, 'SECTION_CREATED', 'sections', sectionId, { class_id: id, name });
+  await logAudit(req, 'SECTION_CREATED', 'sections', sectionId, { class_id: id, name, room_id: room_id || null });
   return res.status(201).json({ success: true, id: sectionId, message: 'Section added successfully.' });
+});
+
+// 5b. Assign / change / clear a section's classroom
+classesRouter.put('/sections/:sectionId/room', authenticate, requireRoles('ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const { sectionId } = req.params;
+  const { room_id } = req.body;
+
+  const section = await queryOne(`SELECT id FROM sections WHERE id = $1`, [sectionId]);
+  if (!section) {
+    return res.status(404).json({ error: 'Section not found.' });
+  }
+
+  await execute(`UPDATE sections SET room_id = $1 WHERE id = $2`, [room_id || null, sectionId]);
+  await logAudit(req, 'SECTION_ROOM_ASSIGNED', 'sections', sectionId, { room_id: room_id || null });
+  return res.json({ success: true, message: room_id ? 'Classroom assigned successfully.' : 'Classroom unassigned.' });
 });
 
 // 6. Delete a section

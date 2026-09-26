@@ -82,6 +82,11 @@ CREATE TABLE IF NOT EXISTS rooms (
   capacity INTEGER DEFAULT 60
 );
 
+-- Assigned classroom for a section (added here, after `rooms`, since
+-- `sections` is declared earlier in this file and can't forward-reference it
+-- in its own CREATE TABLE).
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS room_id VARCHAR(64) REFERENCES rooms(id) ON DELETE SET NULL;
+
 -- 4. Teacher Profiles & Academic Assignments
 CREATE TABLE IF NOT EXISTS teacher_profiles (
   id VARCHAR(64) PRIMARY KEY,
