@@ -9,13 +9,49 @@ export const teachersRouter = Router();
 
 export const TEACHER_DESIGNATIONS = ['Professor & HOD', 'Senior Faculty', 'Faculty', 'Lab Faculty'];
 
+// The full set of subject/department dropdowns the registration form should
+// always be able to offer. Kept in sync with DEFAULT_DEPTS on the client.
+const REQUIRED_DEPARTMENTS: Array<{ name: string; code: string }> = [
+  { name: 'Physics Department', code: 'PHY' },
+  { name: 'Chemistry Department', code: 'CHEM' },
+  { name: 'Mathematics Department', code: 'MATH' },
+  { name: 'Biology Department', code: 'BIO' },
+  { name: 'Computer Science Department', code: 'CS' },
+  { name: 'Electronics Department', code: 'ELEC' },
+  { name: 'Kannada Department', code: 'KAN' },
+  { name: 'Sanskrit Department', code: 'SANS' },
+  { name: 'Hindi Department', code: 'HIN' },
+  { name: 'English Department', code: 'ENG' }
+];
+
+// Ensures every branch always has all of the above departments, even if the
+// standalone add-teacher-staff-fixes-schema.sql migration hasn't been run
+// against this database yet — so the registration dropdown never silently
+// drops a subject just because its department row is missing.
+async function ensureRequiredDepartments(branchId: string): Promise<void> {
+  for (const dept of REQUIRED_DEPARTMENTS) {
+    await execute(`
+      INSERT INTO departments (id, branch_id, name, code)
+      SELECT $1, $2, $3, $4
+      WHERE NOT EXISTS (
+        SELECT 1 FROM departments WHERE branch_id = $2 AND code = $4
+      )
+    `, [`dept-${dept.code.toLowerCase()}-${branchId}`, branchId, dept.name, dept.code]);
+  }
+}
+
 // 1. Get Departments List
 teachersRouter.get('/departments', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+    await ensureRequiredDepartments(branchId).catch((err) => {
+      // Self-healing is best-effort — if it fails (e.g. permissions), still
+      // return whatever departments already exist rather than erroring out.
+      console.error('ensureRequiredDepartments failed:', err.message);
+    });
     const departments = await query(`
-      SELECT * FROM departments 
-      WHERE branch_id = $1 OR branch_id IS NULL 
+      SELECT * FROM departments
+      WHERE branch_id = $1 OR branch_id IS NULL
       ORDER BY name ASC
     `, [branchId]);
     return res.json({ departments });

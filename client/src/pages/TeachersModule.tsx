@@ -723,6 +723,50 @@ export const TeachersModule: React.FC = () => {
             </div>
           </div>
 
+          {/* Absent Faculty List — always shows every absentee for the date,
+              even when they have no timetable periods scheduled today, so
+              the count above the fold always matches a visible name. */}
+          {substitutionData?.absences && substitutionData.absences.length > 0 && (
+            <div className="bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] overflow-hidden">
+              <div className="p-4 border-b border-[#ded9cf]">
+                <span className="text-xs font-bold text-slate-800">
+                  Absent Faculty Today ({substitutionData.absences.length})
+                </span>
+              </div>
+              <div className="divide-y divide-[#f2eee6]">
+                {substitutionData.absences.map((abs: any) => {
+                  const periodCount = (substitutionData.requirements || []).filter(
+                    (r: any) => r.absence?.teacher_id === abs.teacher_id
+                  ).length;
+                  return (
+                    <div key={abs.teacher_id} className="p-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-800 font-bold text-xs shrink-0">
+                          {abs.teacher_name
+                            ?.split(' ')
+                            .map((n: string) => n[0])
+                            .slice(0, 2)
+                            .join('')}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-900">
+                            {abs.teacher_name} <span className="text-slate-400 font-mono font-normal">({abs.employee_id})</span>
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            {abs.department_name || 'Unassigned Department'} • <span className="italic">{abs.reason}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
+                        {periodCount > 0 ? `${periodCount} period(s) today` : 'No periods scheduled today'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Requirements List */}
           <div className="bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] overflow-hidden">
             <div className="p-4 border-b border-[#ded9cf] flex items-center justify-between">
@@ -737,7 +781,9 @@ export const TeachersModule: React.FC = () => {
             {(!substitutionData?.requirements || substitutionData.requirements.length === 0) ? (
               <div className="p-12 text-center text-slate-400 text-sm">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
-                No teacher absences reported for {subDate}. All regular classes are in order.
+                {substitutionData?.absences && substitutionData.absences.length > 0
+                  ? 'None of today\'s absent faculty have any timetable periods scheduled for this day.'
+                  : `No teacher absences reported for ${subDate}. All regular classes are in order.`}
               </div>
             ) : (
               <div className="divide-y divide-[#f2eee6]">
