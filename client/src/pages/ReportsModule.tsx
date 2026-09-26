@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Select } from '../components/Select';
 import {
   BarChart3,
   TrendingUp,
@@ -23,6 +22,7 @@ import { AuditLogsPage } from './AuditLogsPage';
 
 export const ReportsModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
+  const isHod = user?.role === 'HOD';
   const [activeTab, setActiveTab] = useState<'academic' | 'attendance' | 'outpass' | 'audit'>('academic');
 
   // Academic Summary State
@@ -82,7 +82,9 @@ export const ReportsModule: React.FC = () => {
               </span>
             </div>
             <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-              Academic performance metrics, campus attendance analytics, residential audits, and immutable security trails.
+              {isHod
+                ? 'Department academic performance metrics and attendance analytics.'
+                : 'Academic performance metrics, campus attendance analytics, residential audits, and immutable security trails.'}
             </p>
           </div>
         </div>
@@ -114,17 +116,19 @@ export const ReportsModule: React.FC = () => {
           Attendance Analytics
         </button>
 
-        <button
-          onClick={() => setActiveTab('audit')}
-          className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
-            activeTab === 'audit'
-              ? 'border-b-2 border-rose-600 text-rose-700'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          Security Audit Logs
-        </button>
+        {!isHod && (
+          <button
+            onClick={() => setActiveTab('audit')}
+            className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
+              activeTab === 'audit'
+                ? 'border-b-2 border-rose-600 text-rose-700'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            Security Audit Logs
+          </button>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -135,13 +139,17 @@ export const ReportsModule: React.FC = () => {
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-700">Select Examination:</span>
-              <Select
+              <select
                 value={selectedExamId}
-                onChange={setSelectedExamId}
-                sheetTitle="Select Examination"
-                options={exams.map((e) => ({ value: e.id, label: `${e.name} (${e.exam_type})` }))}
+                onChange={(e) => setSelectedExamId(e.target.value)}
                 className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-              />
+              >
+                {exams.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} ({e.exam_type})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <span className="text-xs text-slate-500 font-medium">
@@ -288,7 +296,7 @@ export const ReportsModule: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 3: AUDIT LOGS */}
       {/* ========================================================================= */}
-      {activeTab === 'audit' && (
+      {activeTab === 'audit' && !isHod && (
         <AuditLogsPage />
       )}
     </div>

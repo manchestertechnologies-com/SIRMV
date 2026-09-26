@@ -2,20 +2,10 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { resolveHodDepartmentId } from '../utils/hodScope';
 import crypto from 'crypto';
 
 export const substitutionsRouter = Router();
-
-// Resolves the calling HOD's own department (or null if not an HOD / no
-// department assigned). Reused to scope the substitution hub so an HOD only
-// ever sees their own department's faculty and absences — not the whole
-// branch. Mirrors the same pattern used for invigilator-request scoping in
-// examManagement.ts.
-async function resolveHodDepartmentId(req: AuthRequest): Promise<string | null> {
-  if (req.user!.role !== 'HOD') return null;
-  const dept = await queryOne<{ id: string }>(`SELECT id FROM departments WHERE hod_user_id = $1`, [req.user!.id]);
-  return dept ? dept.id : null;
-}
 
 // 1. Mark Teacher Absent (System auto-identifies affected timetable periods and creates substitution required entries)
 // A real upsert keyed on (teacher_id, date) — teacher_absences has a
@@ -233,9 +223,10 @@ substitutionsRouter.get('/available-teachers', authenticate, requireRoles('HOD',
     const dayOfWeek = (req.query.day_of_week as string) || 'Monday';
     const periodNumber = parseInt(req.query.period_number as string, 10) || 1;
     const hodDepartmentId = await resolveHodDepartmentId(req);
-    // An HOD's proxy pool defaults to their own department unless they
-    // explicitly ask for a different one.
-    const departmentId = (req.query.department_id as string) || hodDepartmentId || undefined;
+    // An HOD's proxy pool is hard-locked to their own department — never
+    // trust a client-supplied department_id to override it, or an HOD
+    // could browse another department's faculty by editing the query param.
+    const departmentId = hodDepartmentId || (req.query.department_id as string) || undefined;
     const excludeTeacherId = req.query.exclude_teacher_id as string;
 
     // 1. Get all active teachers in branch

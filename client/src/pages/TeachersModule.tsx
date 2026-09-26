@@ -414,22 +414,30 @@ export const TeachersModule: React.FC = () => {
         <div className="space-y-6">
           {/* Filter Bar */}
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-bold text-slate-700">Department:</span>
-              <select
-                value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
-                className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-              >
-                <option value="ALL">All Departments</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({d.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {user?.role !== 'HOD' && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Filter className="w-4 h-4 text-slate-400" />
+                <span className="text-xs font-bold text-slate-700">Department:</span>
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
+                >
+                  <option value="ALL">All Departments</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {user?.role === 'HOD' && (
+              <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
+                <Filter className="w-4 h-4 text-slate-400" />
+                Showing your department's faculty only.
+              </div>
+            )}
 
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />

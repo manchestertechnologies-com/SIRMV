@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { resolveHodDepartmentId } from '../utils/hodScope';
 import crypto from 'crypto';
 import multer from 'multer';
 import path from 'path';
@@ -28,21 +29,39 @@ const upload = multer({ storage });
 reportsRouter.get('/exams', authenticate, async (req: AuthRequest, res: Response) => {
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
-  const exams = await query(`
-    SELECT * FROM exams 
-    WHERE branch_id = ?
-    ORDER BY start_date DESC
-  `, [branchId]);
+  // An HOD's Reports & Analytics view is scoped to their own department's
+  // subjects only — never trust a client-supplied filter for this.
+  const hodDepartmentId = await resolveHodDepartmentId(req);
 
-  const examSubjects = await query(`
+  let examsSql = `SELECT * FROM exams WHERE branch_id = ?`;
+  const examsParams: any[] = [branchId];
+  if (hodDepartmentId) {
+    examsSql = `
+      SELECT DISTINCT e.* FROM exams e
+      JOIN exam_subjects es ON es.exam_id = e.id
+      JOIN subjects s ON es.subject_id = s.id
+      WHERE e.branch_id = ? AND s.department_id = ?
+    `;
+    examsParams.push(hodDepartmentId);
+  }
+  examsSql += hodDepartmentId ? ` ORDER BY e.start_date DESC` : ` ORDER BY start_date DESC`;
+  const exams = await query(examsSql, examsParams);
+
+  let examSubjectsSql = `
     SELECT es.*, s.name as subject_name, s.code as subject_code, c.name as class_name
     FROM exam_subjects es
     JOIN exams e ON es.exam_id = e.id
     JOIN subjects s ON es.subject_id = s.id
     JOIN classes c ON es.class_id = c.id
     WHERE e.branch_id = ?
-    ORDER BY es.exam_date ASC
-  `, [branchId]);
+  `;
+  const examSubjectsParams: any[] = [branchId];
+  if (hodDepartmentId) {
+    examSubjectsSql += ` AND s.department_id = ?`;
+    examSubjectsParams.push(hodDepartmentId);
+  }
+  examSubjectsSql += ` ORDER BY es.exam_date ASC`;
+  const examSubjects = await query(examSubjectsSql, examSubjectsParams);
 
   return res.json({ exams, examSubjects });
 });

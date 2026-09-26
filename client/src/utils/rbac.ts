@@ -74,7 +74,6 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'staffs', label: 'Department Faculty', icon: IconStaffs, targetTab: 'staffs', description: 'Teachers directory & profiles' },
           { id: 'timetable', label: 'Department Timetable', icon: IconTimetable, targetTab: 'timetable', description: 'Substitution center & lecture matrix' },
           { id: 'students', label: 'Department Students', icon: IconStudents, targetTab: 'students', description: 'All PUC students in department' },
-          { id: 'attendance', label: 'Attendance Audit', icon: IconAttendance, targetTab: 'attendance', description: 'Verified lecture records' },
           { id: 'tests', label: 'Department Tests', icon: IconTests, targetTab: 'tests', description: 'Test schedules & question banks' },
           { id: 'board-marks', label: 'Board Marks Matrix', icon: IconBoardMarks, targetTab: 'board-marks', description: 'Marks analysis' },
           { id: 'reports', label: 'Academic Reports', icon: IconReports, targetTab: 'reports', description: 'Performance & syllabus analytics' },

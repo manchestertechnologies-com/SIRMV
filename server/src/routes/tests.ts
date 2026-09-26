@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { resolveHodDepartmentId } from '../utils/hodScope';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -41,6 +42,16 @@ testsRouter.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   if (class_id) { params.push(class_id); sql += ` AND t.class_id = $${params.length}`; }
   if (batch_id) { params.push(batch_id); sql += ` AND t.batch_id = $${params.length}`; }
   if (status) { params.push(status); sql += ` AND t.status = $${params.length}`; }
+
+  // An HOD only ever sees tests for their own department's subjects — a
+  // test with no subject_id at all (subject_id IS NULL) is excluded too,
+  // since it can't be attributed to the HOD's department.
+  const hodDepartmentId = await resolveHodDepartmentId(req);
+  if (hodDepartmentId) {
+    params.push(hodDepartmentId);
+    sql += ` AND s.department_id = $${params.length}`;
+  }
+
   sql += ` ORDER BY t.scheduled_date DESC`;
 
   const tests = await query(sql, params);

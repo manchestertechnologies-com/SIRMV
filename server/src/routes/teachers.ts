@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute, transaction } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { resolveHodDepartmentId } from '../utils/hodScope';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -49,6 +50,18 @@ teachersRouter.get('/departments', authenticate, async (req: AuthRequest, res: R
       // return whatever departments already exist rather than erroring out.
       console.error('ensureRequiredDepartments failed:', err.message);
     });
+
+    // An HOD only ever needs (and should only ever see) their own
+    // department — the client no longer shows a department picker for HOD,
+    // so this hard-scopes the data too rather than relying on the UI alone.
+    const hodDepartmentId = await resolveHodDepartmentId(req);
+    if (hodDepartmentId) {
+      const departments = await query(`
+        SELECT * FROM departments WHERE id = $1
+      `, [hodDepartmentId]);
+      return res.json({ departments });
+    }
+
     const departments = await query(`
       SELECT * FROM departments
       WHERE branch_id = $1 OR branch_id IS NULL
@@ -259,8 +272,13 @@ teachersRouter.post('/substitutions/:id/acknowledge', authenticate, requireRoles
 teachersRouter.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const branchId = (req.query.branch_id as string) || req.user!.branch_id;
-    const departmentId = req.query.department_id as string;
     const search = req.query.search as string;
+
+    // An HOD's own department always wins over anything the client sends —
+    // never let a client-supplied department_id show an HOD another
+    // department's faculty.
+    const hodDepartmentId = await resolveHodDepartmentId(req);
+    const departmentId = hodDepartmentId || (req.query.department_id as string);
 
     let sql = `
       SELECT tp.*, u.name, u.email, u.phone, u.avatar_url, u.is_active,
