@@ -6,6 +6,7 @@ import {
   ArrowLeftRight, Rocket, ShieldCheck, Settings2, ArrowLeft
 } from 'lucide-react';
 import { ExamFloor3D, FloorRoom, RoomStatus } from '../components/ExamFloor3D';
+import { ExamReports } from './ExamReports';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,9 +122,28 @@ export const ExamManagementModule: React.FC = () => {
 // List view
 // ---------------------------------------------------------------------------
 
+interface DashboardStats {
+  upcomingExams: number; activeExams: number; draftExams: number; publishedExams: number; readyToPublishExams: number;
+  pendingHodRequests: number; invigilatorsRequired: number; invigilatorsAssigned: number;
+  studentsExpected: number; studentsAllocated: number; roomUtilizationPercent: number; conflicts: number;
+}
+
 const ExamListView: React.FC<{
   exams: ExamRow[]; isLoading: boolean; onNew: () => void; onOpen: (id: string) => void; onRooms: () => void;
-}> = ({ exams, isLoading, onNew, onOpen, onRooms }) => (
+}> = ({ exams, isLoading, onNew, onOpen, onRooms }) => {
+  const { currentBranch } = useAuth();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch<DashboardStats>(`/exam-management/dashboard?branch_id=${currentBranch?.id || ''}`);
+        setStats(res);
+      } catch { /* dashboard is a nice-to-have, don't block the list on it */ }
+    })();
+  }, [currentBranch]);
+
+  return (
   <div className="space-y-4">
     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -142,6 +162,30 @@ const ExamListView: React.FC<{
         </button>
       </div>
     </div>
+
+    {stats && (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        {[
+          { label: 'Upcoming Exams', value: stats.upcomingExams },
+          { label: 'Active Today', value: stats.activeExams },
+          { label: 'Draft', value: stats.draftExams },
+          { label: 'Published', value: stats.publishedExams },
+          { label: 'Pending HOD Requests', value: stats.pendingHodRequests },
+          { label: 'Conflicts', value: stats.conflicts, danger: stats.conflicts > 0 },
+          { label: 'Invigilators Required', value: stats.invigilatorsRequired },
+          { label: 'Invigilators Assigned', value: stats.invigilatorsAssigned },
+          { label: 'Students Expected', value: stats.studentsExpected },
+          { label: 'Students Allocated', value: stats.studentsAllocated },
+          { label: 'Room Utilization', value: `${stats.roomUtilizationPercent}%` },
+          { label: 'Ready to Publish', value: stats.readyToPublishExams }
+        ].map((k) => (
+          <div key={k.label} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+            <span className="text-[10px] text-slate-400 block font-medium leading-tight">{k.label}</span>
+            <span className={`text-lg font-bold mt-1 block ${k.danger ? 'text-rose-600' : 'text-slate-900'}`}>{k.value}</span>
+          </div>
+        ))}
+      </div>
+    )}
 
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="overflow-x-auto">
@@ -180,7 +224,8 @@ const ExamListView: React.FC<{
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Room configuration view
@@ -597,13 +642,19 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
 
       {/* Publish workflow */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-violet-600" /> Publishing locks the exam and (in a later phase) notifies students, parents and invigilators.</div>
+        <div className="text-xs text-slate-500 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-violet-600" /> Publishing locks the exam and notifies every invigilator, student and parent of their final room/seat.</div>
         <div className="flex gap-2">
           <button onClick={markReady} disabled={exam.status === 'PUBLISHED'} className="px-4 py-2 rounded-xl text-xs font-semibold text-violet-700 bg-violet-100 hover:bg-violet-200 disabled:opacity-50">Mark Ready to Publish</button>
           <button onClick={publish} disabled={exam.status !== 'READY_TO_PUBLISH'} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50">
             <Rocket className="w-3.5 h-3.5" /> Publish Exam
           </button>
         </div>
+      </div>
+
+      {/* Reports */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
+        <div className="font-bold text-sm text-slate-900 mb-3">Reports</div>
+        <ExamReports examId={examId} />
       </div>
     </div>
   );
@@ -621,22 +672,41 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
   const [summary, setSummary] = useState<{ totalStudents: number; allocated: number; unallocated: number; roomsUsed: number; seatsUsed: number; conflicts: string[] } | null>(null);
   const [swapA, setSwapA] = useState<string | null>(null);
   const [pickedRoomId, setPickedRoomId] = useState<string | null>(null);
+  const [invigilators, setInvigilators] = useState<any[]>([]);
+  const [invigilatorOptions, setInvigilatorOptions] = useState<{ teachers: any[]; roomsNeedingInvigilators: any[] } | null>(null);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [requestDeptId, setRequestDeptId] = useState('');
+  const [requestCount, setRequestCount] = useState(1);
 
   const loadAll = async () => {
     try {
-      const [opts, seat, sum] = await Promise.all([
+      const [opts, seat, sum, invig, invigOpts] = await Promise.all([
         apiFetch<any>(`/exam-management/sessions/${sessionId}/room-options`),
         apiFetch<any>(`/exam-management/sessions/${sessionId}/seating`),
-        apiFetch<any>(`/exam-management/sessions/${sessionId}/summary`)
+        apiFetch<any>(`/exam-management/sessions/${sessionId}/summary`),
+        apiFetch<any>(`/exam-management/sessions/${sessionId}/invigilators`),
+        apiFetch<any>(`/exam-management/sessions/${sessionId}/invigilator-options`)
       ]);
       setRoomOptions(opts);
       setSeating(seat.seating || []);
       setSummary(sum.summary);
+      setInvigilators(invig.assignments || []);
+      setInvigilatorOptions(invigOpts);
       setSelectedRoomIds(new Set([...opts.priorityRooms, ...opts.otherRooms].filter((r: any) => seat.seating?.some((s: any) => s.room_id === r.roomId)).map((r: any) => r.roomId)));
     } catch (err: any) {
       flash('error', err.message);
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch<{ departments: { id: string; name: string }[] }>('/teachers/departments');
+        setDepartments(res.departments || []);
+        if (res.departments?.length) setRequestDeptId(res.departments[0].id);
+      } catch { /* department picker is optional here */ }
+    })();
+  }, []);
 
   useEffect(() => { loadAll(); }, [sessionId]);
 
@@ -668,6 +738,42 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
       flash('success', `${res.seated} student(s) seated.`);
       loadAll();
       onChanged();
+    } catch (err: any) {
+      flash('error', err.message);
+    }
+  };
+
+  const autoAllocateInvigilators = async () => {
+    try {
+      const res = await apiFetch<any>(`/exam-management/sessions/${sessionId}/invigilators/auto`, { method: 'POST' });
+      flash('success', `${res.assigned} invigilator(s) assigned${res.unfilledRoomIds.length ? `, ${res.unfilledRoomIds.length} room(s) still need one` : ''}.`);
+      loadAll();
+      onChanged();
+    } catch (err: any) {
+      flash('error', err.message);
+    }
+  };
+
+  const assignInvigilatorManual = async (roomId: string, teacherId: string) => {
+    if (!teacherId) return;
+    try {
+      await apiFetch(`/exam-management/sessions/${sessionId}/invigilators/manual`, { method: 'PUT', body: JSON.stringify({ room_id: roomId, teacher_id: teacherId }) });
+      flash('success', 'Invigilator assigned.');
+      loadAll();
+      onChanged();
+    } catch (err: any) {
+      flash('error', err.message);
+    }
+  };
+
+  const sendInvigilatorRequest = async () => {
+    if (!requestDeptId || requestCount < 1) return;
+    try {
+      await apiFetch('/exam-management/invigilator-requests', {
+        method: 'POST',
+        body: JSON.stringify({ exam_session_id: sessionId, department_id: requestDeptId, required_count: requestCount })
+      });
+      flash('success', 'Invigilator request sent to the department HOD.');
     } catch (err: any) {
       flash('error', err.message);
     }
@@ -761,6 +867,60 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
                 <div className="text-violet-700 font-semibold mt-0.5">Room {s.room_number} · Bench {s.bench_number} · Seat {s.seat_number}</div>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {invigilatorOptions && (
+        <div className="bg-slate-50 rounded-xl p-3 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Invigilators</div>
+            <button onClick={autoAllocateInvigilators} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white">
+              <Wand2 className="w-3.5 h-3.5" /> Auto-Assign Invigilators
+            </button>
+          </div>
+
+          {invigilators.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {invigilators.map((i) => (
+                <div key={i.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs flex items-center justify-between">
+                  <span><span className="font-bold text-slate-900">{i.teacher_name}</span> — Room {i.room_number}, Floor {i.floor}</span>
+                  <span className="text-[10px] font-bold text-slate-400">{i.assigned_via}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {invigilatorOptions.roomsNeedingInvigilators.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-[11px] text-slate-500">Rooms still needing an invigilator:</div>
+              {invigilatorOptions.roomsNeedingInvigilators.map((r: any) => (
+                <div key={r.room_id} className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-700 w-24">Room {r.room_number}</span>
+                  <select
+                    defaultValue=""
+                    onChange={(e) => assignInvigilatorManual(r.room_id, e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none"
+                  >
+                    <option value="">Select lecturer...</option>
+                    {invigilatorOptions.teachers.filter((t: any) => t.isAvailable).map((t: any) => (
+                      <option key={t.teacherId} value={t.teacherId}>{t.name} ({t.departmentName}) — {t.currentInvigilationCount} duties today</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="border-t border-slate-200 pt-3">
+            <div className="text-[11px] font-bold text-slate-500 mb-1.5">Request invigilators from a department (HOD workflow)</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select value={requestDeptId} onChange={(e) => setRequestDeptId(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none">
+                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              <input type="number" min={1} value={requestCount} onChange={(e) => setRequestCount(Number(e.target.value) || 1)} className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none" />
+              <button onClick={sendInvigilatorRequest} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700">Send Request</button>
+            </div>
           </div>
         </div>
       )}

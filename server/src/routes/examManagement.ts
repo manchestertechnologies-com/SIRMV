@@ -2,6 +2,8 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute, transaction } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { createNotification } from './notifications';
+import { sendPushToUser } from '../services/pushService';
 import crypto from 'crypto';
 import {
   RoomInfo,
@@ -10,7 +12,10 @@ import {
   generateRoomSeatSlots,
   assignSeatsInRoom,
   summarizeAllocation,
-  roomCapacity
+  roomCapacity,
+  selectInvigilatorsAutomatic,
+  timeRangesOverlap,
+  TeacherAvailability
 } from '../services/examAllocationEngine';
 
 export const examManagementRouter = Router();
@@ -107,6 +112,97 @@ examManagementRouter.get('/academic-years', authenticate, requireRoles(...EXAM_R
   try {
     const academicYears = await query(`SELECT * FROM academic_years ORDER BY is_current DESC, name DESC`);
     return res.json({ academicYears });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.get('/dashboard', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const [statusCounts, upcomingRow, activeRow, requestRows, roomRow, invigilatorRow, seatRow, dupSeatRow, dupStudentRow] = await Promise.all([
+      query<any>(`SELECT status, COUNT(*) as count FROM exams WHERE branch_id = $1 GROUP BY status`, [branchId]),
+      queryOne<any>(
+        `SELECT COUNT(DISTINCT e.id) as count FROM exams e JOIN exam_sessions s ON s.exam_id = e.id WHERE e.branch_id = $1 AND s.exam_date > $2`,
+        [branchId, today]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(DISTINCT e.id) as count FROM exams e JOIN exam_sessions s ON s.exam_id = e.id WHERE e.branch_id = $1 AND s.exam_date = $2`,
+        [branchId, today]
+      ),
+      query<any>(
+        `SELECT r.status, COUNT(*) as count FROM exam_invigilator_requests r
+         JOIN exam_sessions s ON s.id = r.exam_session_id JOIN exams e ON e.id = s.exam_id
+         WHERE e.branch_id = $1 GROUP BY r.status`,
+        [branchId]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(*) as room_count, COALESCE(SUM(COALESCE(c.benches, 15) * COALESCE(c.seats_per_bench, 2)), 0) as total_capacity
+         FROM exam_room_allocations ra
+         JOIN exam_sessions s ON s.id = ra.exam_session_id JOIN exams e ON e.id = s.exam_id
+         LEFT JOIN exam_room_configs c ON c.room_id = ra.room_id
+         WHERE e.branch_id = $1`,
+        [branchId]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(*) as count FROM exam_invigilator_assignments ia JOIN exam_sessions s ON s.id = ia.exam_session_id JOIN exams e ON e.id = s.exam_id WHERE e.branch_id = $1`,
+        [branchId]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(*) as count FROM exam_student_allocations sa JOIN exam_sessions s ON s.id = sa.exam_session_id JOIN exams e ON e.id = s.exam_id WHERE e.branch_id = $1`,
+        [branchId]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(*) as count FROM (
+           SELECT sa.exam_session_id, sa.room_id, sa.seat_number FROM exam_student_allocations sa
+           JOIN exam_sessions s ON s.id = sa.exam_session_id JOIN exams e ON e.id = s.exam_id WHERE e.branch_id = $1
+           GROUP BY sa.exam_session_id, sa.room_id, sa.seat_number HAVING COUNT(*) > 1
+         ) dup`,
+        [branchId]
+      ),
+      queryOne<any>(
+        `SELECT COUNT(*) as count FROM (
+           SELECT sa.exam_session_id, sa.student_id FROM exam_student_allocations sa
+           JOIN exam_sessions s ON s.id = sa.exam_session_id JOIN exams e ON e.id = s.exam_id WHERE e.branch_id = $1
+           GROUP BY sa.exam_session_id, sa.student_id HAVING COUNT(*) > 1
+         ) dup`,
+        [branchId]
+      )
+    ]);
+
+    const byStatus: Record<string, number> = {};
+    for (const row of statusCounts) byStatus[row.status] = Number(row.count);
+
+    let pendingRequests = 0;
+    for (const row of requestRows) if (row.status === 'PENDING' || row.status === 'PARTIAL') pendingRequests += Number(row.count);
+
+    // Total students expected vs allocated, computed exam-by-exam since
+    // "expected" depends on each exam's own selected batches.
+    const exams = await query<any>(`SELECT id FROM exams WHERE branch_id = $1`, [branchId]);
+    let totalStudentsExpected = 0;
+    for (const e of exams) {
+      const batches = await loadSessionBatches(e.id);
+      totalStudentsExpected += batches.reduce((sum, b) => sum + b.studentIds.length, 0);
+    }
+    const seatsAllocated = Number(seatRow?.count || 0);
+    const totalCapacity = Number(roomRow?.total_capacity || 0);
+
+    return res.json({
+      upcomingExams: Number(upcomingRow?.count || 0),
+      activeExams: Number(activeRow?.count || 0),
+      draftExams: byStatus['DRAFT'] || 0,
+      publishedExams: byStatus['PUBLISHED'] || 0,
+      readyToPublishExams: byStatus['READY_TO_PUBLISH'] || 0,
+      pendingHodRequests: pendingRequests,
+      invigilatorsRequired: Number(roomRow?.room_count || 0),
+      invigilatorsAssigned: Number(invigilatorRow?.count || 0),
+      studentsExpected: totalStudentsExpected,
+      studentsAllocated: seatsAllocated,
+      roomUtilizationPercent: totalCapacity > 0 ? Math.round((seatsAllocated / totalCapacity) * 10000) / 100 : 0,
+      conflicts: Number(dupSeatRow?.count || 0) + Number(dupStudentRow?.count || 0)
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -694,6 +790,72 @@ examManagementRouter.get('/sessions/:sessionId/summary', authenticate, requireRo
   }
 });
 
+// ---------------------------------------------------------------------------
+// Reports (data for the client-side printable PDFs — Phase 3)
+// ---------------------------------------------------------------------------
+
+examManagementRouter.get('/exams/:id/invigilator-report', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const exam = await queryOne<any>(`SELECT * FROM exams WHERE id = $1`, [id]);
+    if (!exam) return res.status(404).json({ error: 'Exam not found.' });
+
+    const rows = await query(
+      `SELECT s.exam_date, s.start_time, s.end_time, s.reporting_time, sub.name as subject_name,
+              r.room_number, r.floor, u.name as teacher_name, d.name as department_name
+       FROM exam_invigilator_assignments ia
+       JOIN exam_sessions s ON s.id = ia.exam_session_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = ia.room_id
+       JOIN teacher_profiles tp ON tp.id = ia.teacher_id
+       JOIN users u ON u.id = tp.user_id
+       LEFT JOIN teacher_assignments ta ON ta.teacher_id = tp.id
+       LEFT JOIN departments d ON d.id = ta.department_id
+       WHERE s.exam_id = $1
+       GROUP BY s.exam_date, s.start_time, s.end_time, s.reporting_time, sub.name, r.room_number, r.floor, u.name, d.name
+       ORDER BY s.exam_date ASC, r.floor ASC, r.room_number ASC`,
+      [id]
+    );
+    return res.json({ exam, rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.get('/exams/:id/seating-report', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { room_id, class_id, section_id } = req.query as Record<string, string | undefined>;
+    const exam = await queryOne<any>(`SELECT * FROM exams WHERE id = $1`, [id]);
+    if (!exam) return res.status(404).json({ error: 'Exam not found.' });
+
+    const conditions = ['s.exam_id = $1'];
+    const params: any[] = [id];
+    if (room_id) { params.push(room_id); conditions.push(`sa.room_id = $${params.length}`); }
+    if (class_id) { params.push(class_id); conditions.push(`sa.class_id = $${params.length}`); }
+    if (section_id) { params.push(section_id); conditions.push(`sa.section_id = $${params.length}`); }
+
+    const rows = await query(
+      `SELECT s.exam_date, s.start_time, s.end_time, sub.name as subject_name,
+              r.room_number, r.floor, sa.bench_number, sa.seat_number,
+              sp.name as student_name, sp.register_number, c.name as class_name, sec.name as section_name
+       FROM exam_student_allocations sa
+       JOIN exam_sessions s ON s.id = sa.exam_session_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = sa.room_id
+       JOIN student_profiles sp ON sp.id = sa.student_id
+       JOIN classes c ON c.id = sa.class_id
+       JOIN sections sec ON sec.id = sa.section_id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY s.exam_date ASC, r.floor ASC, r.room_number ASC, sa.seat_number ASC`,
+      params
+    );
+    return res.json({ exam, rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 examManagementRouter.post('/exams/:id/mark-ready', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -710,6 +872,12 @@ examManagementRouter.post('/exams/:id/mark-ready', authenticate, requireRoles(..
       const summary = summarizeAllocation(expectedStudentIds, allocations.map((a) => ({ studentId: a.student_id, roomId: a.room_id, seatNumber: Number(a.seat_number) })));
       if (summary.unallocated > 0) problems.push(`Session ${s.id}: ${summary.unallocated} student(s) unallocated.`);
       if (summary.conflicts.length > 0) problems.push(...summary.conflicts.map((c) => `Session ${s.id}: ${c}`));
+
+      const roomCount = await queryOne<any>(`SELECT COUNT(*) as count FROM exam_room_allocations WHERE exam_session_id = $1`, [s.id]);
+      const invigilatorCount = await queryOne<any>(`SELECT COUNT(*) as count FROM exam_invigilator_assignments WHERE exam_session_id = $1`, [s.id]);
+      if (Number(roomCount?.count || 0) > Number(invigilatorCount?.count || 0)) {
+        problems.push(`Session ${s.id}: ${Number(roomCount.count) - Number(invigilatorCount.count)} room(s) still need an invigilator.`);
+      }
     }
 
     if (problems.length > 0) {
@@ -735,9 +903,521 @@ examManagementRouter.post('/exams/:id/publish', authenticate, requireRoles(...EX
 
     await execute(`UPDATE exams SET status = 'PUBLISHED', published_at = CURRENT_TIMESTAMP WHERE id = $1`, [id]);
     await logAudit(req, 'EXAM_PUBLISHED', 'exams', id, {});
-    // Student/Parent/Teacher portal visibility, PDF reports and push
-    // notifications for this module ship in the next phase.
+
+    // Notify every invigilator and every participating student/parent —
+    // only fires once the exam is actually published, per the workflow.
+    const sessions = await query<any>(
+      `SELECT s.*, sub.name as subject_name FROM exam_sessions s JOIN subjects sub ON sub.id = s.subject_id WHERE s.exam_id = $1`,
+      [id]
+    );
+    for (const session of sessions) {
+      const invigilators = await query<any>(
+        `SELECT ia.teacher_id, ia.room_id, tp.user_id, r.room_number, r.floor
+         FROM exam_invigilator_assignments ia
+         JOIN teacher_profiles tp ON tp.id = ia.teacher_id
+         JOIN rooms r ON r.id = ia.room_id
+         WHERE ia.exam_session_id = $1`,
+        [session.id]
+      );
+      for (const inv of invigilators) {
+        const message = `${exam.name} — ${session.subject_name} on ${session.exam_date} at ${session.start_time}. Room ${inv.room_number}, Floor ${inv.floor}. Reporting time: ${session.reporting_time || 'as per instructions'}.`;
+        await createNotification(inv.user_id, 'Exam Duty Assigned', message, 'my-exam-duty');
+        await sendPushToUser(inv.user_id, { title: `Exam Duty – Room ${inv.room_number}`, body: message, data: { type: 'exam_duty', id: session.id } });
+      }
+
+      const students = await query<any>(
+        `SELECT sa.student_id, sp.user_id as student_user_id, sp.parent_user_id, r.room_number, r.floor, sa.seat_number, sa.bench_number
+         FROM exam_student_allocations sa
+         JOIN student_profiles sp ON sp.id = sa.student_id
+         JOIN rooms r ON r.id = sa.room_id
+         WHERE sa.exam_session_id = $1`,
+        [session.id]
+      );
+      for (const st of students) {
+        const message = `${exam.name} — ${session.subject_name} on ${session.exam_date} at ${session.start_time}. Room ${st.room_number}, Floor ${st.floor}, Seat ${st.seat_number}.`;
+        if (st.student_user_id) {
+          await createNotification(st.student_user_id, 'Exam Seating Published', message, 'exam-seating');
+          await sendPushToUser(st.student_user_id, { title: 'Exam Seating Published', body: message, data: { type: 'exam_seating', id: session.id } });
+        }
+        if (st.parent_user_id) {
+          await createNotification(st.parent_user_id, 'Exam Seating Published', message, 'exam-seating');
+          await sendPushToUser(st.parent_user_id, { title: 'Exam Seating Published', body: message, data: { type: 'exam_seating', id: session.id } });
+        }
+      }
+    }
+
     return res.json({ success: true, message: 'Exam published.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Re-publish after a change: if the exam department edits rooms/seats/
+// invigilators/time after a previous publish, this re-sends notifications
+// only to the sessions actually touched — callers pass the session ids
+// that changed so unrelated students/teachers aren't spammed.
+examManagementRouter.post('/exams/:id/notify-changes', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { session_ids } = req.body;
+    if (!Array.isArray(session_ids) || session_ids.length === 0) {
+      return res.status(400).json({ error: 'session_ids is required.' });
+    }
+    const exam = await queryOne<any>(`SELECT * FROM exams WHERE id = $1`, [id]);
+    if (!exam) return res.status(404).json({ error: 'Exam not found.' });
+
+    let notified = 0;
+    for (const sessionId of session_ids) {
+      const session = await queryOne<any>(
+        `SELECT s.*, sub.name as subject_name FROM exam_sessions s JOIN subjects sub ON sub.id = s.subject_id WHERE s.id = $1 AND s.exam_id = $2`,
+        [sessionId, id]
+      );
+      if (!session) continue;
+
+      const invigilators = await query<any>(
+        `SELECT tp.user_id, r.room_number, r.floor FROM exam_invigilator_assignments ia
+         JOIN teacher_profiles tp ON tp.id = ia.teacher_id JOIN rooms r ON r.id = ia.room_id
+         WHERE ia.exam_session_id = $1`,
+        [sessionId]
+      );
+      const students = await query<any>(
+        `SELECT sp.user_id as student_user_id, sp.parent_user_id, r.room_number, r.floor, sa.seat_number
+         FROM exam_student_allocations sa JOIN student_profiles sp ON sp.id = sa.student_id JOIN rooms r ON r.id = sa.room_id
+         WHERE sa.exam_session_id = $1`,
+        [sessionId]
+      );
+
+      for (const inv of invigilators) {
+        const message = `Allocation changed for ${exam.name} — ${session.subject_name} on ${session.exam_date}. You are now assigned to Room ${inv.room_number}, Floor ${inv.floor}.`;
+        await createNotification(inv.user_id, 'Exam Duty Changed', message, 'my-exam-duty');
+        notified++;
+      }
+      for (const st of students) {
+        const message = `Allocation changed for ${exam.name} — ${session.subject_name} on ${session.exam_date}. Your new seat: Room ${st.room_number}, Floor ${st.floor}, Seat ${st.seat_number}.`;
+        if (st.student_user_id) { await createNotification(st.student_user_id, 'Exam Seating Changed', message, 'exam-seating'); notified++; }
+        if (st.parent_user_id) { await createNotification(st.parent_user_id, 'Exam Seating Changed', message, 'exam-seating'); notified++; }
+      }
+    }
+
+    await logAudit(req, 'EXAM_CHANGE_NOTIFIED', 'exams', id, { session_ids, notified });
+    return res.json({ success: true, notified });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Invigilator allocation (Phase 2)
+// ---------------------------------------------------------------------------
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function weekdayName(dateStr: string): string {
+  return WEEKDAYS[new Date(dateStr + 'T00:00:00').getDay()];
+}
+
+async function loadTeacherAvailability(branchId: string, sessionId: string, departmentId?: string): Promise<TeacherAvailability[]> {
+  const session = await queryOne<any>(`SELECT * FROM exam_sessions WHERE id = $1`, [sessionId]);
+  const weekday = weekdayName(session.exam_date);
+
+  const teachers = await query<any>(
+    `SELECT DISTINCT tp.id as teacher_id, u.name, ta.department_id, d.name as department_name
+     FROM teacher_profiles tp
+     JOIN users u ON u.id = tp.user_id
+     JOIN teacher_assignments ta ON ta.teacher_id = tp.id
+     JOIN departments d ON d.id = ta.department_id
+     WHERE u.branch_id = $1 ${departmentId ? 'AND ta.department_id = $2' : ''}`,
+    departmentId ? [branchId, departmentId] : [branchId]
+  );
+
+  const result: TeacherAvailability[] = [];
+  for (const t of teachers as any[]) {
+    // Already seen (a teacher can have multiple assignments/departments) — skip dupes.
+    if (result.some((r) => r.teacherId === t.teacher_id)) continue;
+
+    const teachingConflict = await queryOne(
+      `SELECT 1 FROM timetable_entries WHERE teacher_id = $1 AND day_of_week = $2 AND start_time < $3 AND end_time > $4 LIMIT 1`,
+      [t.teacher_id, weekday, session.end_time, session.start_time]
+    );
+    const invigilationConflict = await queryOne(
+      `SELECT 1 FROM exam_invigilator_assignments ia JOIN exam_sessions es ON es.id = ia.exam_session_id
+       WHERE ia.teacher_id = $1 AND es.exam_date = $2 AND es.start_time < $3 AND es.end_time > $4 LIMIT 1`,
+      [t.teacher_id, session.exam_date, session.end_time, session.start_time]
+    );
+    const countRow = await queryOne<any>(
+      `SELECT COUNT(*) as count FROM exam_invigilator_assignments ia JOIN exam_sessions es ON es.id = ia.exam_session_id
+       WHERE ia.teacher_id = $1 AND es.exam_date = $2`,
+      [t.teacher_id, session.exam_date]
+    );
+
+    result.push({
+      teacherId: t.teacher_id,
+      name: t.name,
+      departmentId: t.department_id,
+      departmentName: t.department_name,
+      isAvailable: !teachingConflict && !invigilationConflict,
+      unavailableReason: teachingConflict ? 'Already teaching a regular class at this time' : invigilationConflict ? 'Already assigned as an invigilator at an overlapping time' : undefined,
+      currentInvigilationCount: Number(countRow?.count || 0)
+    });
+  }
+  return result;
+}
+
+examManagementRouter.get('/sessions/:sessionId/invigilator-options', authenticate, requireRoles(...EXAM_ROLES, 'HOD'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const departmentId = req.query.department_id as string | undefined;
+    const session = await queryOne<any>(`SELECT s.*, e.branch_id FROM exam_sessions s JOIN exams e ON e.id = s.exam_id WHERE s.id = $1`, [sessionId]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const teachers = await loadTeacherAvailability(session.branch_id, sessionId, departmentId);
+    const roomsNeedingInvigilators = await query<any>(
+      `SELECT ra.room_id, r.room_number, r.floor
+       FROM exam_room_allocations ra JOIN rooms r ON r.id = ra.room_id
+       LEFT JOIN exam_invigilator_assignments ia ON ia.exam_session_id = ra.exam_session_id AND ia.room_id = ra.room_id
+       WHERE ra.exam_session_id = $1 AND ia.id IS NULL`,
+      [sessionId]
+    );
+
+    return res.json({ teachers, roomsNeedingInvigilators });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.post('/sessions/:sessionId/invigilators/auto', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await queryOne<any>(`SELECT s.*, e.branch_id, e.id as exam_id FROM exam_sessions s JOIN exams e ON e.id = s.exam_id WHERE s.id = $1`, [sessionId]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const teachers = await loadTeacherAvailability(session.branch_id, sessionId);
+    const roomsNeedingInvigilators = await query<any>(
+      `SELECT ra.room_id, r.room_number
+       FROM exam_room_allocations ra JOIN rooms r ON r.id = ra.room_id
+       LEFT JOIN exam_invigilator_assignments ia ON ia.exam_session_id = ra.exam_session_id AND ia.room_id = ra.room_id
+       WHERE ra.exam_session_id = $1 AND ia.id IS NULL`,
+      [sessionId]
+    );
+
+    const { plan, unfilledRoomIds } = selectInvigilatorsAutomatic(
+      roomsNeedingInvigilators.map((r: any) => ({ roomId: r.room_id, roomNumber: r.room_number })),
+      teachers
+    );
+
+    for (const p of plan) {
+      await execute(
+        `INSERT INTO exam_invigilator_assignments (id, exam_session_id, room_id, teacher_id, assigned_via) VALUES ($1,$2,$3,$4,'AUTO')`,
+        ['exinvasn-' + crypto.randomUUID(), sessionId, p.roomId, p.teacherId]
+      );
+    }
+
+    const totalRooms = await queryOne<any>(`SELECT COUNT(*) as count FROM exam_room_allocations WHERE exam_session_id = $1`, [sessionId]);
+    const assignedRooms = await queryOne<any>(`SELECT COUNT(*) as count FROM exam_invigilator_assignments WHERE exam_session_id = $1`, [sessionId]);
+    if (Number(totalRooms?.count) > 0 && Number(totalRooms?.count) === Number(assignedRooms?.count)) {
+      await execute(`UPDATE exams SET status = 'INVIGILATORS_ALLOCATED' WHERE id = $1 AND status != 'PUBLISHED'`, [session.exam_id]);
+    }
+
+    await logAudit(req, 'EXAM_INVIGILATORS_AUTO_ASSIGNED', 'exam_sessions', sessionId, { assigned: plan.length, unfilled: unfilledRoomIds.length });
+    return res.json({ success: true, assigned: plan.length, unfilledRoomIds });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.put('/sessions/:sessionId/invigilators/manual', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { room_id, teacher_id } = req.body;
+    if (!room_id || !teacher_id) return res.status(400).json({ error: 'room_id and teacher_id are required.' });
+
+    const session = await queryOne<any>(`SELECT * FROM exam_sessions WHERE id = $1`, [sessionId]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const allocated = await queryOne(`SELECT id FROM exam_room_allocations WHERE exam_session_id = $1 AND room_id = $2`, [sessionId, room_id]);
+    if (!allocated) return res.status(400).json({ error: 'That room is not allocated to this exam session.' });
+
+    const conflict = await queryOne(
+      `SELECT 1 FROM exam_invigilator_assignments ia JOIN exam_sessions es ON es.id = ia.exam_session_id
+       WHERE ia.teacher_id = $1 AND es.exam_date = $2 AND es.start_time < $3 AND es.end_time > $4 AND NOT (ia.exam_session_id = $5 AND ia.room_id = $6)`,
+      [teacher_id, session.exam_date, session.end_time, session.start_time, sessionId, room_id]
+    );
+    if (conflict) return res.status(400).json({ error: 'This lecturer is already assigned elsewhere at an overlapping time.' });
+
+    await execute(`DELETE FROM exam_invigilator_assignments WHERE exam_session_id = $1 AND room_id = $2`, [sessionId, room_id]);
+    await execute(
+      `INSERT INTO exam_invigilator_assignments (id, exam_session_id, room_id, teacher_id, assigned_via) VALUES ($1,$2,$3,$4,'MANUAL')`,
+      ['exinvasn-' + crypto.randomUUID(), sessionId, room_id, teacher_id]
+    );
+
+    await logAudit(req, 'EXAM_INVIGILATOR_MANUALLY_ASSIGNED', 'exam_sessions', sessionId, { room_id, teacher_id });
+    return res.json({ success: true, message: 'Invigilator assigned.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.get('/sessions/:sessionId/invigilators', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const assignments = await query(
+      `SELECT ia.*, u.name as teacher_name, r.room_number, r.floor
+       FROM exam_invigilator_assignments ia
+       JOIN teacher_profiles tp ON tp.id = ia.teacher_id
+       JOIN users u ON u.id = tp.user_id
+       JOIN rooms r ON r.id = ia.room_id
+       WHERE ia.exam_session_id = $1`,
+      [sessionId]
+    );
+    return res.json({ assignments });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// HOD invigilator-request workflow
+// ---------------------------------------------------------------------------
+
+examManagementRouter.post('/invigilator-requests', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { exam_session_id, department_id, required_count } = req.body;
+    if (!exam_session_id || !department_id || !required_count || required_count < 1) {
+      return res.status(400).json({ error: 'exam_session_id, department_id and a positive required_count are required.' });
+    }
+    const session = await queryOne<any>(`SELECT s.*, e.name as exam_name FROM exam_sessions s JOIN exams e ON e.id = s.exam_id WHERE s.id = $1`, [exam_session_id]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const dept = await queryOne<any>(`SELECT * FROM departments WHERE id = $1`, [department_id]);
+    if (!dept) return res.status(404).json({ error: 'Department not found.' });
+
+    const requestId = 'exinvreq-' + crypto.randomUUID();
+    await execute(
+      `INSERT INTO exam_invigilator_requests (id, exam_session_id, department_id, required_count, status, requested_by)
+       VALUES ($1,$2,$3,$4,'PENDING',$5)`,
+      [requestId, exam_session_id, department_id, required_count, req.user!.id]
+    );
+
+    if (dept.hod_user_id) {
+      const message = `${session.exam_name} — ${required_count} invigilator(s) needed from your department for the session on ${session.exam_date} at ${session.start_time}.`;
+      await createNotification(dept.hod_user_id, 'Invigilator Request', message, 'invigilator-requests');
+      await sendPushToUser(dept.hod_user_id, { title: 'Invigilator Request', body: message, data: { type: 'invigilator_request', id: requestId } });
+    }
+
+    await logAudit(req, 'EXAM_INVIGILATOR_REQUEST_CREATED', 'exam_invigilator_requests', requestId, { department_id, required_count });
+    return res.status(201).json({ success: true, id: requestId, message: 'Invigilator request sent to the department HOD.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Requests for the calling HOD's own department (or any, for Exam Dept/Admin review).
+examManagementRouter.get('/invigilator-requests', authenticate, requireRoles(...EXAM_ROLES, 'HOD'), async (req: AuthRequest, res: Response) => {
+  try {
+    let departmentFilter = '';
+    const params: any[] = [];
+    if (req.user!.role === 'HOD') {
+      const dept = await queryOne<any>(`SELECT id FROM departments WHERE hod_user_id = $1`, [req.user!.id]);
+      if (!dept) return res.json({ requests: [] });
+      departmentFilter = 'WHERE r.department_id = $1';
+      params.push(dept.id);
+    }
+
+    const requests = await query(
+      `SELECT r.*, d.name as department_name, s.exam_date, s.start_time, s.end_time, sub.name as subject_name, e.name as exam_name,
+              (SELECT COUNT(*) FROM exam_invigilator_request_selections sel WHERE sel.request_id = r.id) as selected_count
+       FROM exam_invigilator_requests r
+       JOIN departments d ON d.id = r.department_id
+       JOIN exam_sessions s ON s.id = r.exam_session_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN exams e ON e.id = s.exam_id
+       ${departmentFilter}
+       ORDER BY r.requested_at DESC`,
+      params
+    );
+    return res.json({ requests: requests.map((r: any) => ({ ...r, selected_count: Number(r.selected_count), remaining: Number(r.required_count) - Number(r.selected_count) })) });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Candidate lecturers for a request (HOD's own department, with availability flagged).
+examManagementRouter.get('/invigilator-requests/:id/candidates', authenticate, requireRoles(...EXAM_ROLES, 'HOD'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const req2 = await queryOne<any>(
+      `SELECT r.*, e.branch_id, r.exam_session_id FROM exam_invigilator_requests r
+       JOIN exam_sessions s ON s.id = r.exam_session_id
+       JOIN exams e ON e.id = s.exam_id
+       WHERE r.id = $1`,
+      [id]
+    );
+    if (!req2) return res.status(404).json({ error: 'Request not found.' });
+
+    const candidates = await loadTeacherAvailability(req2.branch_id, req2.exam_session_id, req2.department_id);
+    const alreadySelected = await query<any>(`SELECT teacher_id FROM exam_invigilator_request_selections WHERE request_id = $1`, [id]);
+    const selectedIds = new Set(alreadySelected.map((s: any) => s.teacher_id));
+
+    return res.json({
+      request: req2,
+      candidates: candidates.map((c) => ({ ...c, isSelected: selectedIds.has(c.teacherId) }))
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// HOD submits their chosen lecturers for a request.
+examManagementRouter.put('/invigilator-requests/:id/fulfill', authenticate, requireRoles('HOD', ...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { teacher_ids } = req.body;
+    if (!Array.isArray(teacher_ids)) return res.status(400).json({ error: 'teacher_ids must be an array.' });
+
+    const request = await queryOne<any>(`SELECT * FROM exam_invigilator_requests WHERE id = $1`, [id]);
+    if (!request) return res.status(404).json({ error: 'Request not found.' });
+
+    const session = await queryOne<any>(`SELECT * FROM exam_sessions WHERE id = $1`, [request.exam_session_id]);
+
+    for (const teacherId of teacher_ids) {
+      const conflict = await queryOne(
+        `SELECT 1 FROM exam_invigilator_assignments ia JOIN exam_sessions es ON es.id = ia.exam_session_id
+         WHERE ia.teacher_id = $1 AND es.exam_date = $2 AND es.start_time < $3 AND es.end_time > $4`,
+        [teacherId, session.exam_date, session.end_time, session.start_time]
+      );
+      if (conflict) {
+        return res.status(400).json({ error: `One of the selected lecturers is already unavailable at this time. Refresh candidates and try again.` });
+      }
+    }
+
+    await transaction(async (client) => {
+      await client.query(`DELETE FROM exam_invigilator_request_selections WHERE request_id = $1`, [id]);
+      for (const teacherId of teacher_ids) {
+        await client.query(
+          `INSERT INTO exam_invigilator_request_selections (id, request_id, teacher_id, selected_by) VALUES ($1,$2,$3,$4)`,
+          ['exinvsel-' + crypto.randomUUID(), id, teacherId, req.user!.id]
+        );
+      }
+      const status = teacher_ids.length >= request.required_count ? 'FULFILLED' : teacher_ids.length > 0 ? 'PARTIAL' : 'PENDING';
+      await client.query(`UPDATE exam_invigilator_requests SET status = $1 WHERE id = $2`, [status, id]);
+    });
+
+    await logAudit(req, 'EXAM_INVIGILATOR_REQUEST_FULFILLED', 'exam_invigilator_requests', id, { teacher_ids });
+    return res.json({ success: true, message: 'Selection submitted to the Exam Department.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Exam Department assigns an HOD-approved teacher from the pool to a specific room.
+examManagementRouter.post('/invigilator-requests/:id/assign-room', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { teacher_id, room_id } = req.body;
+    if (!teacher_id || !room_id) return res.status(400).json({ error: 'teacher_id and room_id are required.' });
+
+    const request = await queryOne<any>(`SELECT * FROM exam_invigilator_requests WHERE id = $1`, [id]);
+    if (!request) return res.status(404).json({ error: 'Request not found.' });
+
+    const inPool = await queryOne(`SELECT 1 FROM exam_invigilator_request_selections WHERE request_id = $1 AND teacher_id = $2`, [id, teacher_id]);
+    if (!inPool) return res.status(400).json({ error: 'That lecturer was not approved by the HOD for this request.' });
+
+    const allocated = await queryOne(`SELECT id FROM exam_room_allocations WHERE exam_session_id = $1 AND room_id = $2`, [request.exam_session_id, room_id]);
+    if (!allocated) return res.status(400).json({ error: 'That room is not allocated to this exam session.' });
+
+    await execute(`DELETE FROM exam_invigilator_assignments WHERE exam_session_id = $1 AND room_id = $2`, [request.exam_session_id, room_id]);
+    await execute(
+      `INSERT INTO exam_invigilator_assignments (id, exam_session_id, room_id, teacher_id, assigned_via, request_id) VALUES ($1,$2,$3,$4,'HOD',$5)`,
+      ['exinvasn-' + crypto.randomUUID(), request.exam_session_id, room_id, teacher_id, id]
+    );
+
+    await logAudit(req, 'EXAM_INVIGILATOR_ASSIGNED_FROM_POOL', 'exam_invigilator_requests', id, { teacher_id, room_id });
+    return res.json({ success: true, message: 'Invigilator assigned from the HOD-approved pool.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Lecturer-facing: "My Exam Duties"
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Student / Parent portal: exam seating (Phase 3)
+// ---------------------------------------------------------------------------
+
+// A student sees only their own seating — student_id is resolved from the
+// authenticated user, never taken from the request body/query.
+examManagementRouter.get('/my-seating', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const studentProfile = await queryOne<any>(`SELECT id FROM student_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!studentProfile) return res.json({ seating: [] });
+
+    const seating = await query(
+      `SELECT e.name as exam_name, e.pu_level, e.instructions, s.exam_date, s.start_time, s.end_time, s.reporting_time,
+              sub.name as subject_name, r.room_number, r.floor, sa.bench_number, sa.seat_number
+       FROM exam_student_allocations sa
+       JOIN exam_sessions s ON s.id = sa.exam_session_id
+       JOIN exams e ON e.id = s.exam_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = sa.room_id
+       WHERE sa.student_id = $1 AND e.status = 'PUBLISHED'
+       ORDER BY s.exam_date ASC, s.start_time ASC`,
+      [studentProfile.id]
+    );
+    return res.json({ seating });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// A parent sees only their linked child's seating — resolved from
+// student_profiles.parent_user_id = the authenticated parent, never from a
+// student_id the frontend supplies.
+examManagementRouter.get('/child-seating', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const children = await query<any>(`SELECT id, name FROM student_profiles WHERE parent_user_id = $1`, [req.user!.id]);
+    if (children.length === 0) return res.json({ seating: [] });
+
+    const childIds = children.map((c: any) => c.id);
+    const placeholders = childIds.map((_: any, i: number) => `$${i + 1}`).join(',');
+    const seating = await query(
+      `SELECT sa.student_id, sp.name as student_name, e.name as exam_name, e.pu_level, e.instructions,
+              s.exam_date, s.start_time, s.end_time, s.reporting_time, sub.name as subject_name,
+              r.room_number, r.floor, sa.bench_number, sa.seat_number
+       FROM exam_student_allocations sa
+       JOIN student_profiles sp ON sp.id = sa.student_id
+       JOIN exam_sessions s ON s.id = sa.exam_session_id
+       JOIN exams e ON e.id = s.exam_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = sa.room_id
+       WHERE e.status = 'PUBLISHED' AND sa.student_id IN (${placeholders})
+       ORDER BY s.exam_date ASC, s.start_time ASC`,
+      childIds
+    );
+    return res.json({ seating });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+examManagementRouter.get('/my-duties', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const teacherProfile = await queryOne<any>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!teacherProfile) return res.json({ duties: [] });
+
+    const duties = await query(
+      `SELECT ia.room_id, r.room_number, r.floor, s.exam_date, s.start_time, s.end_time, s.reporting_time,
+              sub.name as subject_name, e.name as exam_name, e.pu_level, e.instructions, s.id as session_id
+       FROM exam_invigilator_assignments ia
+       JOIN exam_sessions s ON s.id = ia.exam_session_id
+       JOIN exams e ON e.id = s.exam_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = ia.room_id
+       WHERE ia.teacher_id = $1 AND e.status = 'PUBLISHED'
+       ORDER BY s.exam_date ASC, s.start_time ASC`,
+      [teacherProfile.id]
+    );
+    return res.json({ duties });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

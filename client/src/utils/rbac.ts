@@ -53,6 +53,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'tests', label: 'Tests & Assessments', icon: IconTests, targetTab: 'tests', description: 'Unit tests & internal assessments' },
           { id: 'board-marks', label: 'Board Marks', icon: IconBoardMarks, targetTab: 'board-marks', description: 'PU board examination scores' },
           { id: 'live-class', label: 'Class Recordings', icon: IconLiveClass, targetTab: 'live-class', description: 'Upload lecture streams for absent students' },
+          { id: 'my-exam-duty', label: 'My Exam Duties', icon: IconExamManagement, targetTab: 'my-exam-duty', description: 'Invigilation assignments & student seating' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Campus circulars & academic notices' }
         ],
         otherTools: [
@@ -73,6 +74,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'tests', label: 'Department Tests', icon: IconTests, targetTab: 'tests', description: 'Test schedules & question banks' },
           { id: 'board-marks', label: 'Board Marks Matrix', icon: IconBoardMarks, targetTab: 'board-marks', description: 'Marks analysis' },
           { id: 'reports', label: 'Academic Reports', icon: IconReports, targetTab: 'reports', description: 'Performance & syllabus analytics' },
+          { id: 'invigilator-requests', label: 'Invigilator Requests', icon: IconExamManagement, targetTab: 'invigilator-requests', description: 'Approve invigilators for exams' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Institutional circulars' }
         ],
         otherTools: [
@@ -91,6 +93,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'live-class', label: 'Missed Class Videos', icon: IconLiveClass, targetTab: 'live-class', description: 'Catch up on recorded lectures' },
           { id: 'tests', label: 'Tests & Marks', icon: IconTests, targetTab: 'tests', description: 'Scores in Unit Tests & NEET/JEE mocks' },
           { id: 'gate-pass', label: 'My Outpass Requests', icon: IconGatePass, targetTab: 'gate-pass', description: 'Apply for gate pass & view OTP status' },
+          { id: 'exam-seating', label: 'Exam Seating', icon: IconExamManagement, targetTab: 'exam-seating', description: 'Room, floor and seat for upcoming exams' },
           { id: 'hostel', label: 'Hostel Info', icon: IconHostel, targetTab: 'hostel', description: 'Room, floor & mess details' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Exam dates & college announcements' }
         ],
@@ -107,6 +110,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'dashboard', label: 'Ward Overview', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Academic score, attendance & notices' },
           { id: 'attendance', label: 'Daily Attendance', icon: IconAttendance, targetTab: 'attendance', description: 'Subject-wise class attendance log' },
           { id: 'gate-pass', label: 'Outpass Approvals (OTP)', icon: IconGatePass, targetTab: 'gate-pass', description: 'Verify pickup person & approve outpass' },
+          { id: 'exam-seating', label: 'Exam Seating', icon: IconExamManagement, targetTab: 'exam-seating', description: "Your ward's room, floor and seat for upcoming exams" },
           { id: 'fee', label: 'Fee & Dues', icon: IconFee, targetTab: 'fee', description: 'Fee receipts & payment breakdown' },
           { id: 'noticeboard', label: 'College Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Circulars from Principal office' }
         ],

@@ -21,6 +21,9 @@ import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
 import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
 import { ExamManagementModule } from './pages/ExamManagementModule';
+import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
+import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
+import { ExamSeatingPage } from './pages/ExamSeatingPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
@@ -79,6 +82,9 @@ export function App() {
     timetable: 'Timetable',
     'timetable-generator': 'Timetable Generator',
     'exam-management': 'Exam Management',
+    'my-exam-duty': 'My Exam Duties',
+    'invigilator-requests': 'Invigilator Requests',
+    'exam-seating': 'Exam Seating',
     'live-class': 'Live Class',
     sms: 'Sms',
     noticeboard: 'Noticeboard',
@@ -313,6 +319,18 @@ export function App() {
           ) : activeTab === 'exam-management' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <ExamManagementModule />
+            </div>
+          ) : activeTab === 'my-exam-duty' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <MyExamDutiesPage />
+            </div>
+          ) : activeTab === 'invigilator-requests' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <InvigilatorRequestsPage />
+            </div>
+          ) : activeTab === 'exam-seating' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <ExamSeatingPage />
             </div>
           ) : activeTab === 'classes' ? (
             <div className="space-y-6 max-w-7xl mx-auto">

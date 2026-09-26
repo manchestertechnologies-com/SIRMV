@@ -336,6 +336,70 @@ export interface AllocationSummary {
   conflicts: string[];
 }
 
+// ---------------------------------------------------------------------
+// Invigilator allocation (Phase 2)
+// ---------------------------------------------------------------------
+
+export interface TeacherAvailability {
+  teacherId: string;
+  name: string;
+  departmentId: string;
+  departmentName: string;
+  isAvailable: boolean;
+  unavailableReason?: string;
+  currentInvigilationCount: number; // load-balancing signal, e.g. today's assignments so far
+}
+
+export interface RoomInvigilatorNeed {
+  roomId: string;
+  roomNumber: string;
+}
+
+export interface InvigilatorAssignmentPlan {
+  roomId: string;
+  teacherId: string;
+}
+
+/**
+ * Assigns one invigilator per room from the pool of already-filtered
+ * available teachers (availability/conflict checks happen in the route
+ * layer, which has the DB). Picks the least-loaded eligible teacher first
+ * so invigilation duty is spread out ("maximum workload if configured").
+ * The result stays fully editable — callers persist it, the exam
+ * department can override any assignment before publishing.
+ */
+export function selectInvigilatorsAutomatic(
+  rooms: RoomInvigilatorNeed[],
+  availableTeachers: TeacherAvailability[]
+): { plan: InvigilatorAssignmentPlan[]; unfilledRoomIds: string[] } {
+  const pool = availableTeachers
+    .filter((t) => t.isAvailable)
+    .sort((a, b) => a.currentInvigilationCount - b.currentInvigilationCount)
+    .map((t) => ({ ...t }));
+
+  const plan: InvigilatorAssignmentPlan[] = [];
+  const unfilledRoomIds: string[] = [];
+  const usedThisSession = new Set<string>();
+
+  for (const room of rooms) {
+    const next = pool.find((t) => !usedThisSession.has(t.teacherId));
+    if (!next) {
+      unfilledRoomIds.push(room.roomId);
+      continue;
+    }
+    plan.push({ roomId: room.roomId, teacherId: next.teacherId });
+    usedThisSession.add(next.teacherId);
+    next.currentInvigilationCount += 1;
+    pool.sort((a, b) => a.currentInvigilationCount - b.currentInvigilationCount);
+  }
+
+  return { plan, unfilledRoomIds };
+}
+
+export function timeRangesOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
+  return startA < endB && endA > startB;
+}
+
 export function summarizeAllocation(
   expectedStudentIds: string[],
   allocations: { studentId: string; roomId: string; seatNumber: number }[]
