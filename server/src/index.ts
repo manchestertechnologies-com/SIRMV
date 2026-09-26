@@ -24,6 +24,7 @@ import { auditRouter } from './routes/audit';
 import { announcementsRouter } from './routes/announcements';
 import { notificationsRouter } from './routes/notifications';
 import { timetableGeneratorRouter } from './routes/timetableGenerator';
+import { examManagementRouter } from './routes/examManagement';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -67,6 +68,7 @@ app.use('/api/audit', auditRouter);
 app.use('/api/announcements', announcementsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/timetable-generator', timetableGeneratorRouter);
+app.use('/api/exam-management', examManagementRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

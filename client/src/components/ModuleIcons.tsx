@@ -359,3 +359,17 @@ export const IconDashboard: React.FC<IconProps> = ({ className = 'w-12 h-12', si
 
 // Backward compatibility alias
 export const IconTeachers = IconStaffs;
+
+// Exam Management Icon — a seating hall with rows of desks and a board.
+export const IconExamManagement: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <rect x="8" y="8" width="48" height="48" rx="6" fill="#F5F3FF" stroke="#7C3AED" strokeWidth="2.5" />
+    <rect x="16" y="14" width="32" height="6" rx="2" fill="#7C3AED" />
+    <rect x="14" y="28" width="10" height="6" rx="1.5" fill="#A78BFA" />
+    <rect x="27" y="28" width="10" height="6" rx="1.5" fill="#A78BFA" />
+    <rect x="40" y="28" width="10" height="6" rx="1.5" fill="#A78BFA" />
+    <rect x="14" y="40" width="10" height="6" rx="1.5" fill="#C4B5FD" />
+    <rect x="27" y="40" width="10" height="6" rx="1.5" fill="#C4B5FD" />
+    <rect x="40" y="40" width="10" height="6" rx="1.5" fill="#C4B5FD" />
+  </svg>
+);

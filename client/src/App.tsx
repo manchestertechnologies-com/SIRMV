@@ -20,6 +20,7 @@ import { BoardMarksPage } from './pages/BoardMarksPage';
 import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
 import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
+import { ExamManagementModule } from './pages/ExamManagementModule';
 import { SettingsPage } from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
@@ -77,6 +78,7 @@ export function App() {
     fee: 'Fee',
     timetable: 'Timetable',
     'timetable-generator': 'Timetable Generator',
+    'exam-management': 'Exam Management',
     'live-class': 'Live Class',
     sms: 'Sms',
     noticeboard: 'Noticeboard',
@@ -307,6 +309,10 @@ export function App() {
           ) : activeTab === 'timetable-generator' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <TimetableGeneratorModule />
+            </div>
+          ) : activeTab === 'exam-management' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <ExamManagementModule />
             </div>
           ) : activeTab === 'classes' ? (
             <div className="space-y-6 max-w-7xl mx-auto">

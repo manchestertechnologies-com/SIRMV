@@ -15,7 +15,8 @@ export type UserRole =
   | 'WARDEN'
   | 'HEAD_WARDEN'
   | 'STUDENT'
-  | 'PARENT';
+  | 'PARENT'
+  | 'EXAM_DEPARTMENT';
 
 export interface AuthUser {
   id: string;

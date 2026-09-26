@@ -12,7 +12,8 @@ export type UserRole =
   | 'WARDEN'
   | 'HEAD_WARDEN'
   | 'STUDENT'
-  | 'PARENT';
+  | 'PARENT'
+  | 'EXAM_DEPARTMENT';
 
 export interface User {
   id: string;
@@ -146,7 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'warden@sirmv.edu.in': { role: 'WARDEN', name: 'Hostel Block Warden' },
         'headwarden@sirmv.edu.in': { role: 'HEAD_WARDEN', name: 'Chief Warden' },
         'student@sirmv.edu.in': { role: 'STUDENT', name: 'Student Portal Account' },
-        'parent@sirmv.edu.in': { role: 'PARENT', name: 'Parent Portal Account' }
+        'parent@sirmv.edu.in': { role: 'PARENT', name: 'Parent Portal Account' },
+        'examdept@sirmv.edu.in': { role: 'EXAM_DEPARTMENT', name: 'Exam Department Officer' }
       };
 
       const match = roleMap[identifier] || roleMap[`${identifier}@sirmv.edu.in`];

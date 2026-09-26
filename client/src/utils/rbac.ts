@@ -1,4 +1,4 @@
-import {
+﻿import {
   IconDashboard,
   IconStaffs,
   IconStudents,
@@ -20,7 +20,8 @@ import {
   IconAdmission,
   IconLeaderboard,
   IconSettings,
-  IconReportCard
+  IconReportCard,
+  IconExamManagement
 } from '../components/ModuleIcons';
 import { UserRole } from '../context/AuthContext';
 
@@ -172,6 +173,19 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         ]
       };
 
+    case 'EXAM_DEPARTMENT':
+      return {
+        roleTitle: 'Exam Department Workspace',
+        roleSubtitle: 'PU-level examination scheduling, seating and invigilation for SIR MV PU College.',
+        menuItems: [
+          { id: 'dashboard', label: 'Dashboard', icon: IconDashboard, targetTab: 'dashboard-home' },
+          { id: 'exam-management', label: 'Exam Management', icon: IconExamManagement, targetTab: 'exam-management', description: 'Exams, rooms, seating & invigilation' },
+          { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard' },
+          { id: 'settings', label: 'Settings', icon: IconSettings, targetTab: 'settings' }
+        ],
+        otherTools: []
+      };
+
     case 'ADMIN':
     case 'PRINCIPAL':
     default:
@@ -192,6 +206,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'fee', label: 'Fee', icon: IconFee, targetTab: 'fee' },
           { id: 'timetable', label: 'Timetable', icon: IconTimetable, targetTab: 'timetable' },
           { id: 'timetable-generator', label: 'Timetable Generator', icon: IconTimetable, targetTab: 'timetable-generator' },
+          { id: 'exam-management', label: 'Exam Management', icon: IconExamManagement, targetTab: 'exam-management' },
           { id: 'live-class', label: 'Live Class', icon: IconLiveClass, targetTab: 'live-class' },
           { id: 'sms', label: 'Sms', icon: IconSms, targetTab: 'sms' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard' },

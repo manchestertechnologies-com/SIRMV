@@ -540,6 +540,7 @@ export async function seedPostgresDatabase() {
     await upsert(userSql, ['usr-headwarden-smg', 'branch-smg', 'headwarden', passwordHash, 'HEAD_WARDEN', 'Dr. Chandrakala H (Chief Warden)', 'headwarden@sirmv.edu.in', '9900077777', '/avatars/warden.png', 1], 'users');
     await upsert(userSql, ['usr-student-smg', 'branch-smg', 'student', passwordHash, 'STUDENT', 'Bhoomika Naik (Student)', 'student@sirmv.edu.in', '9900088888', '/avatars/student_rahul.png', 1], 'users');
     await upsert(userSql, ['usr-parent-smg', 'branch-smg', 'parent', passwordHash, 'PARENT', 'Mr. Naveen Naik (Parent)', 'parent@sirmv.edu.in', '9900099999', '/avatars/parent.png', 1], 'users');
+    await upsert(userSql, ['usr-examdept-smg', 'branch-smg', 'examdept', passwordHash, 'EXAM_DEPARTMENT', 'Mrs. Anitha Rao (Exam Department)', 'examdept@sirmv.edu.in', '9900010101', '/avatars/admin.png', 1], 'users');
 
     // Teacher profiles for the two teaching-role accounts above, so they can be
     // used in teacher_assignments and appear in the Timetable Generator.
