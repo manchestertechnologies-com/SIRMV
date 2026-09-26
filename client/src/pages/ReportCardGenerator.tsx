@@ -418,23 +418,23 @@ export const ReportCardGenerator: React.FC = () => {
             </div>
           </div>
 
-          {/* MULTI-LEVEL INSTITUTIONAL REMARKS */}
-          <div className="space-y-3 pt-2">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Faculty & Leadership Feedback
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="font-bold text-slate-700 block mb-1">Class Teacher Remarks</span>
-                <p className="text-slate-600 italic">"{reportData.remarks?.class_teacher_remarks}"</p>
+          {/* MULTI-LEVEL INSTITUTIONAL REMARKS — visible only to the
+              student themselves and their parent; staff viewing/generating
+              the report card don't need it surfaced here. HOD Departmental
+              Assessment has been dropped from the card entirely. */}
+          {(user?.role === 'STUDENT' || user?.role === 'PARENT') && (
+            <div className="space-y-3 pt-2">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Faculty & Leadership Feedback
               </div>
-
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="font-bold text-slate-700 block mb-1">HOD Departmental Assessment</span>
-                <p className="text-slate-600 italic">"{reportData.remarks?.hod_remarks}"</p>
+              <div className="grid grid-cols-1 gap-4 text-xs">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                  <span className="font-bold text-slate-700 block mb-1">Class Teacher Remarks</span>
+                  <p className="text-slate-600 italic">"{reportData.remarks?.class_teacher_remarks}"</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* SIGNATURE BLOCKS */}
           <div className="pt-8 border-t border-slate-200">
