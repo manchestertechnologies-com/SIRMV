@@ -12,7 +12,7 @@ import * as THREE from 'three';
 // the wrapper element exists but is empty). `LabelOverlay` below reimplements
 // the same "project a 3D point onto the 2D canvas" idea as one normal
 // overlay in the outer React tree, so there's only ever one root involved.
-import { Building2, Grid3x3, RotateCcw, X } from 'lucide-react';
+import { Building2, Grid3x3, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
 
@@ -338,6 +338,20 @@ export const ExamFloor3D: React.FC<{
   }, [layout]);
   const [screenPositions, setScreenPositions] = useState<Record<string, ScreenPos>>({});
 
+  // Manual zoom, driven only by the magnifier buttons below — mouse-wheel /
+  // pinch zoom on the canvas is disabled (see OrbitControls' enableZoom
+  // prop) so the model doesn't jump in or out from an accidental scroll;
+  // it only moves when someone deliberately clicks +/-.
+  const zoomBy = (factor: number) => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    const camera = controls.object as THREE.PerspectiveCamera;
+    const offset = camera.position.clone().sub(controls.target);
+    offset.multiplyScalar(factor);
+    camera.position.copy(controls.target.clone().add(offset));
+    controls.update();
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
@@ -366,6 +380,16 @@ export const ExamFloor3D: React.FC<{
             <Grid3x3 className="w-3.5 h-3.5" />
             {mode === '3D' ? '2D List View' : '3D View'}
           </button>
+          {mode === '3D' && (
+            <div className="flex bg-slate-100 rounded-lg p-0.5">
+              <button onClick={() => zoomBy(0.8)} title="Zoom in" className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-white">
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={() => zoomBy(1.25)} title="Zoom out" className="p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-white">
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -392,7 +416,8 @@ export const ExamFloor3D: React.FC<{
               <LabelProjector points={labelPoints} onUpdate={setScreenPositions} />
               <OrbitControls
                 ref={controlsRef}
-                enablePan enableZoom enableRotate makeDefault
+                enablePan enableRotate makeDefault
+                enableZoom={false}
                 minPolarAngle={0.3}
                 maxPolarAngle={Math.PI / 2.3}
               />
