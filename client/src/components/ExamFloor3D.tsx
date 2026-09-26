@@ -75,22 +75,27 @@ const CORRIDOR_DEPTH = 1.3;
 const WING_WIDTH = CUBE_SIZE * 0.62;
 const WING_GAP = 0.3;
 
-interface RoomLayout { room: FloorRoom; x: number; z: number; }
+// A row holds at most this many rooms before a new row starts, leaving a
+// corridor gap behind it — matches a real floor plan, where a corridor run
+// only stays legible up to so many doors before it needs a cross-aisle.
+const ROOMS_PER_ROW = 6;
+
+interface RoomLayout { room: FloorRoom; x: number; z: number; rowIndex: number; }
 interface SceneLayout {
   rooms: RoomLayout[];
   rows: number;
   totalWidth: number;
   plazaDepth: number;
   hasCorridor: boolean;
+  rowZs: number[];
 }
 
 // Shared by BuildingScene (to place the actual meshes) and by the label
 // overlay (to know where to project the "TOILET"/"COLLEGE BUILDING" tags) —
 // kept in one place so the two never drift apart.
 function computeWings(layout: SceneLayout) {
-  const zValues = layout.rooms.map((r) => r.z);
-  const minZ = Math.min(...zValues);
-  const maxZ = Math.max(...zValues);
+  const minZ = layout.rowZs[0];
+  const maxZ = layout.rowZs[layout.rowZs.length - 1];
   const wingCenterZ = (minZ + maxZ) / 2;
   const wingDepth = (maxZ - minZ) + CUBE_SIZE;
   const leftX = -(layout.totalWidth / 2) - WING_GAP - WING_WIDTH / 2;
@@ -100,27 +105,33 @@ function computeWings(layout: SceneLayout) {
   return { minZ, maxZ, wingCenterZ, wingDepth, leftX, rightX, extendedWidth, facadeZ };
 }
 
+// Chunks rooms into rows of up to ROOMS_PER_ROW, stacking additional rows
+// further back (in +z) with a corridor gap between every adjacent pair —
+// so a 7th, 13th, 19th... room starts a new row instead of just widening
+// the existing one indefinitely.
 function computeLayout(rooms: FloorRoom[]): SceneLayout {
-  const rows = rooms.length > 4 ? 2 : 1;
-  const perRow = Math.ceil(rooms.length / rows);
-  const rowA = rooms.slice(0, perRow);
-  const rowB = rooms.slice(perRow);
+  const rowCount = Math.max(1, Math.ceil(rooms.length / ROOMS_PER_ROW));
+  const rowRooms: FloorRoom[][] = [];
+  for (let i = 0; i < rowCount; i++) rowRooms.push(rooms.slice(i * ROOMS_PER_ROW, (i + 1) * ROOMS_PER_ROW));
 
   const cellW = CUBE_SIZE + CUBE_GAP;
-  const rowAWidth = rowA.length * cellW - CUBE_GAP;
-  const rowBWidth = rowB.length * cellW - CUBE_GAP;
-  const totalWidth = Math.max(rowAWidth, rowBWidth, CUBE_SIZE);
+  const totalWidth = Math.max(...rowRooms.map((r) => r.length * cellW - CUBE_GAP), CUBE_SIZE);
 
-  const zA = rows === 2 ? -(CORRIDOR_DEPTH / 2 + CUBE_SIZE / 2) : 0;
-  const zB = rows === 2 ? CORRIDOR_DEPTH / 2 + CUBE_SIZE / 2 : 0;
-  const plazaDepth = rows === 2 ? CUBE_SIZE * 2 + CORRIDOR_DEPTH + 2 : CUBE_SIZE + 2;
+  const rowPitch = CUBE_SIZE + CORRIDOR_DEPTH;
+  const startZ = rowCount === 1 ? 0 : -((rowCount - 1) * rowPitch) / 2;
+  const rowZs = rowRooms.map((_, i) => (rowCount === 1 ? 0 : startZ + i * rowPitch));
 
-  const placed: RoomLayout[] = [
-    ...rowA.map((r, i) => ({ room: r, x: -((rowA.length * cellW - CUBE_GAP) / 2) + cellW * i + CUBE_SIZE / 2, z: zA })),
-    ...rowB.map((r, i) => ({ room: r, x: -((rowB.length * cellW - CUBE_GAP) / 2) + cellW * i + CUBE_SIZE / 2, z: zB }))
-  ];
+  const placed: RoomLayout[] = [];
+  rowRooms.forEach((rs, ri) => {
+    const w = rs.length * cellW - CUBE_GAP;
+    rs.forEach((r, i) => {
+      placed.push({ room: r, x: -(w / 2) + cellW * i + CUBE_SIZE / 2, z: rowZs[ri], rowIndex: ri });
+    });
+  });
 
-  return { rooms: placed, rows, totalWidth, plazaDepth, hasCorridor: rows === 2 };
+  const plazaDepth = rowCount * CUBE_SIZE + (rowCount - 1) * CORRIDOR_DEPTH + 2;
+
+  return { rooms: placed, rows: rowCount, totalWidth, plazaDepth, hasCorridor: rowCount > 1, rowZs };
 }
 
 // ---------------------------------------------------------------------------
@@ -345,16 +356,24 @@ function BuildingScene({ layout, onSelectRoom, isGroundFloor }: { layout: SceneL
         <meshStandardMaterial color="#e7e9ee" />
       </mesh>
 
-      {/* Corridor strip — runs the full width, connecting the stairs to the washrooms */}
-      {layout.hasCorridor && (
-        <mesh position={[0, 0.005, 0]} receiveShadow>
+      {/* One corridor strip between every adjacent pair of rows — runs the
+          full width, connecting the stairs to the washrooms */}
+      {layout.rowZs.slice(0, -1).map((z, i) => (
+        <mesh key={i} position={[0, 0.005, (z + layout.rowZs[i + 1]) / 2]} receiveShadow>
           <boxGeometry args={[wings.extendedWidth, 0.01, CORRIDOR_DEPTH]} />
           <meshStandardMaterial color="#f1f5f9" />
         </mesh>
-      )}
+      ))}
 
-      {layout.rooms.map(({ room, x, z }) => (
-        <ClassroomBlock key={room.roomId} room={room} x={x} z={z} facing={z <= 0 ? 1 : -1} onClick={() => onSelectRoom(room.roomId)} />
+      {layout.rooms.map(({ room, x, z, rowIndex }) => (
+        <ClassroomBlock
+          key={room.roomId}
+          room={room}
+          x={x}
+          z={z}
+          facing={rowIndex === layout.rows - 1 && layout.rows > 1 ? -1 : 1}
+          onClick={() => onSelectRoom(room.roomId)}
+        />
       ))}
 
       <StairsWing x={wings.leftX} zCenter={wings.wingCenterZ} depth={wings.wingDepth} />
@@ -412,6 +431,24 @@ function LabelProjector({ points, onUpdate }: { points: LabelPoint[]; onUpdate: 
     if (changed) {
       lastRef.current = next;
       onUpdate(next);
+    }
+  });
+  return null;
+}
+
+// OrbitControls sets the canvas's CSS touch-action to 'none' the moment it
+// connects (three.js does this itself, to guarantee it gets every touch
+// event uncontested) — which as a side effect stops a one-finger swipe over
+// the model from ever reaching the page as a scroll. Since the touches prop
+// above already makes a one-finger touch a no-op for the controls, there's
+// nothing left that needs 'none' here; re-assert 'pan-y' every frame so a
+// single finger scrolls the page while two fingers still reach the canvas
+// for pinch-to-zoom.
+function TouchActionFix() {
+  const { gl } = useThree();
+  useFrame(() => {
+    if (gl.domElement.style.touchAction !== 'pan-y') {
+      gl.domElement.style.touchAction = 'pan-y';
     }
   });
   return null;
@@ -544,7 +581,11 @@ export const ExamFloor3D: React.FC<{
     const points: LabelPoint[] = layout.rooms.map(({ room, x, z }) => ({
       id: room.roomId, position: [x, CUBE_HEIGHT + 0.32, z]
     }));
-    if (layout.hasCorridor) points.push({ id: '__corridor', position: [0, 0.02, 0] });
+    // One "CORRIDOR" label per corridor gap — there's one whenever there's
+    // more than one row, and more than one gap once there are 3+ rows.
+    layout.rowZs.slice(0, -1).forEach((z, i) => {
+      points.push({ id: `__corridor_${i}`, position: [0, 0.02, (z + layout.rowZs[i + 1]) / 2] });
+    });
     if (activeRooms.length > 0) {
       const wings = computeWings(layout);
       if (layout.hasCorridor) {
@@ -561,10 +602,9 @@ export const ExamFloor3D: React.FC<{
   }, [layout, isGroundFloor, activeRooms.length]);
   const [screenPositions, setScreenPositions] = useState<Record<string, ScreenPos>>({});
 
-  // Manual zoom, driven only by the magnifier buttons below — mouse-wheel /
-  // pinch zoom on the canvas is disabled (see OrbitControls' enableZoom
-  // prop) so the model doesn't jump in or out from an accidental scroll;
-  // it only moves when someone deliberately clicks +/-.
+  // Manual zoom via the magnifier buttons — mouse-wheel scroll is blocked
+  // separately (onWheelCapture below) so it never zooms the model; touch
+  // pinch is handled by OrbitControls itself (see the touches prop).
   const zoomBy = (factor: number) => {
     const controls = controlsRef.current;
     if (!controls) return;
@@ -622,7 +662,16 @@ export const ExamFloor3D: React.FC<{
       </div>
 
       {mode === '3D' ? (
-        <div style={{ height: 380 }} className="bg-gradient-to-b from-slate-100 to-slate-200 relative">
+        <div
+          style={{ height: 380, touchAction: 'pan-y' }}
+          className="bg-gradient-to-b from-slate-100 to-slate-200 relative"
+          // Mouse-wheel / trackpad scroll over the model must not zoom or
+          // pan it — it should just keep scrolling the page underneath,
+          // same as anywhere else. Only stopping propagation (never
+          // preventDefault) means the browser's native scroll still
+          // happens; only OrbitControls' own wheel-zoom handler is skipped.
+          onWheelCapture={(e) => e.stopPropagation()}
+        >
           {activeRooms.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">No rooms on this floor yet.</div>
           ) : (
@@ -637,10 +686,17 @@ export const ExamFloor3D: React.FC<{
               </Suspense>
               <FitCameraToScene groupRef={groupRef} controlsRef={controlsRef} signature={sceneSignature} />
               <LabelProjector points={labelPoints} onUpdate={setScreenPositions} />
+              <TouchActionFix />
               <OrbitControls
                 ref={controlsRef}
                 enablePan enableRotate makeDefault
-                enableZoom={false}
+                enableZoom
+                // A one-finger touch does nothing at all (no ROTATE/PAN
+                // mapping), so a swipe over the model just scrolls the
+                // page like normal. Two fingers still pinch to zoom
+                // (DOLLY) or drag to pan — that's the only touch gesture
+                // that moves the model.
+                touches={{ ONE: undefined as any, TWO: THREE.TOUCH.DOLLY_PAN }}
                 minPolarAngle={0.3}
                 maxPolarAngle={Math.PI / 2.3}
               />
@@ -674,17 +730,22 @@ export const ExamFloor3D: React.FC<{
                   </div>
                 );
               })}
-              {layout.hasCorridor && screenPositions.__corridor && !screenPositions.__corridor.behind && (
-                <div
-                  style={{
-                    position: 'absolute', left: 0, top: 0,
-                    transform: `translate3d(${screenPositions.__corridor.x}px, ${screenPositions.__corridor.y}px, 0) translate(-50%, -50%)`,
-                    fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: 2, whiteSpace: 'nowrap'
-                  }}
-                >
-                  CORRIDOR
-                </div>
-              )}
+              {layout.rowZs.slice(0, -1).map((_, i) => {
+                const pos = screenPositions[`__corridor_${i}`];
+                if (!pos || pos.behind) return null;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      position: 'absolute', left: 0, top: 0,
+                      transform: `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`,
+                      fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: 2, whiteSpace: 'nowrap'
+                    }}
+                  >
+                    CORRIDOR
+                  </div>
+                );
+              })}
               {(['__toilet_boys', '__toilet_girls', '__toilet'] as const).map((id) => {
                 const pos = screenPositions[id];
                 if (!pos || pos.behind) return null;
