@@ -220,10 +220,12 @@ export const TeachersModule: React.FC = () => {
     }
   };
 
-  // Open Assign Substitute Modal
-  const handleOpenAssignModal = async (req: any) => {
+  // Open Assign Substitute Modal. Passing a teacher id pre-selects it (used
+  // by the inline "Recommended" quick-assign action) instead of leaving the
+  // list unselected.
+  const handleOpenAssignModal = async (req: any, presetSubstituteId?: string) => {
     setSelectedReq(req);
-    setSelectedSubstituteId('');
+    setSelectedSubstituteId(presetSubstituteId || '');
     setAssignRemarks('');
     try {
       const res = await apiFetch<any>(
@@ -686,7 +688,7 @@ export const TeachersModule: React.FC = () => {
                 Live Substitution & Proxy Hub
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Automatically identifies absent faculty timetable conflicts and recommends available proxy teachers.
+                Automatically identifies absent faculty timetable conflicts and recommends an available proxy teacher for each affected period.
               </p>
               {user?.role === 'HOD' && (
                 <p className="text-[10px] text-blue-600 font-semibold mt-1">
@@ -835,10 +837,16 @@ export const TeachersModule: React.FC = () => {
                               Proxy Substitute: <strong>{sub.substitute_teacher_name}</strong> (
                               {sub.substitute_employee_id}) • Status: {sub.status}
                             </div>
+                          ) : req.recommendedSubstitute ? (
+                            <div className="mt-2 text-xs text-blue-700 font-semibold flex items-center gap-1.5">
+                              <UserCheck2 className="w-3.5 h-3.5" />
+                              Recommended Proxy: <strong>{req.recommendedSubstitute.teacher_name}</strong> (
+                              {req.recommendedSubstitute.employee_id}) — {req.recommendedSubstitute.department_name || 'free this period'}
+                            </div>
                           ) : (
                             <div className="mt-2 text-xs text-amber-700 font-semibold flex items-center gap-1.5">
                               <AlertCircle className="w-3.5 h-3.5" />
-                              SUBSTITUTION REQUIRED
+                              SUBSTITUTION REQUIRED — no faculty currently free for this period
                             </div>
                           )}
                         </div>
@@ -846,6 +854,15 @@ export const TeachersModule: React.FC = () => {
 
                       {isManagement && (
                         <div className="shrink-0 flex items-center gap-2">
+                          {!sub && req.recommendedSubstitute && (
+                            <button
+                              onClick={() => handleOpenAssignModal(req, req.recommendedSubstitute.teacher_id)}
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                            >
+                              Quick Assign
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleOpenAssignModal(req)}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${

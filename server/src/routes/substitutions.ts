@@ -166,12 +166,45 @@ substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL'
           WHERE sa.timetable_entry_id = $1 AND sa.date = $2
         `, [entry.id, date]);
 
+        // Auto-recommend a free proxy teacher for this exact period when none
+        // has been assigned yet: anyone in the branch who isn't teaching a
+        // class this period, isn't already covering another substitution
+        // this period, and isn't themselves marked absent today — same
+        // department faculty are preferred, but any free teacher qualifies.
+        let recommendedSubstitute = null;
+        if (!existingSub) {
+          const busyThisPeriod = (await query(`
+            SELECT DISTINCT teacher_id FROM timetable_entries
+            WHERE branch_id = $1 AND day_of_week = $2 AND period_number = $3
+          `, [branchId, dayOfWeek, entry.period_number])).map((r: any) => r.teacher_id);
+
+          const busySubsThisPeriod = (await query(`
+            SELECT sa.substitute_teacher_id FROM substitution_assignments sa
+            JOIN timetable_entries tt ON sa.timetable_entry_id = tt.id
+            WHERE tt.branch_id = $1 AND sa.date = $2 AND tt.period_number = $3
+          `, [branchId, date, entry.period_number])).map((r: any) => r.substitute_teacher_id);
+
+          const excludeIds = Array.from(new Set([...busyThisPeriod, ...busySubsThisPeriod, ...absentTeacherIds]));
+
+          recommendedSubstitute = await queryOne(`
+            SELECT tp.id as teacher_id, u.name as teacher_name, tp.employee_id, d.name as department_name
+            FROM teacher_profiles tp
+            JOIN users u ON tp.user_id = u.id
+            LEFT JOIN departments d ON tp.department_id = d.id
+            WHERE u.branch_id = $1 AND u.is_active = 1
+              AND NOT (tp.id = ANY($2::text[]))
+            ORDER BY (tp.department_id = $3) DESC, u.name ASC
+            LIMIT 1
+          `, [branchId, excludeIds.length > 0 ? excludeIds : ['__none__'], abs.department_id]);
+        }
+
         substitutionRequirements.push({
           absence: abs,
           timetableEntry: entry,
           dayOfWeek,
           date,
           substitutionAssignment: existingSub || null,
+          recommendedSubstitute: recommendedSubstitute || null,
           status: existingSub ? existingSub.status : 'SUBSTITUTION REQUIRED'
         });
       }
