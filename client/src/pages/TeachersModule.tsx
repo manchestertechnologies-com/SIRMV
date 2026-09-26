@@ -87,7 +87,6 @@ export const TeachersModule: React.FC = () => {
     department_id: '',
     designation: 'Faculty',
     qualification: 'M.Sc., B.Ed',
-    specialization: '',
     experience_years: 3
   });
 
@@ -279,7 +278,6 @@ export const TeachersModule: React.FC = () => {
         department_id: '',
         designation: 'Faculty',
         qualification: 'M.Sc., B.Ed',
-        specialization: '',
         experience_years: 3
       });
       setNotification({ type: 'success', message: 'New faculty member registered successfully.' });
@@ -1229,22 +1227,6 @@ export const TeachersModule: React.FC = () => {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Specialization</label>
-                <select
-                  value={formData.specialization}
-                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                  className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                >
-                  <option value="">-- Choose Specialization --</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.name.replace(/ Department$/, '')}>
-                      {d.name.replace(/ Department$/, '')}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
