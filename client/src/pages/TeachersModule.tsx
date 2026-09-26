@@ -35,9 +35,14 @@ const DEFAULT_DEPTS = [
   { id: 'dept-math', name: 'Mathematics Department', code: 'MATH' },
   { id: 'dept-bio', name: 'Biology Department', code: 'BIO' },
   { id: 'dept-cs', name: 'Computer Science Department', code: 'CS' },
+  { id: 'dept-elec', name: 'Electronics Department', code: 'ELEC' },
   { id: 'dept-kan', name: 'Kannada Department', code: 'KAN' },
+  { id: 'dept-sans', name: 'Sanskrit Department', code: 'SANS' },
+  { id: 'dept-hin', name: 'Hindi Department', code: 'HIN' },
   { id: 'dept-eng', name: 'English Department', code: 'ENG' }
 ];
+
+const DEFAULT_DESIGNATIONS = ['Professor & HOD', 'Senior Faculty', 'Faculty', 'Lab Faculty'];
 
 export const TeachersModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
@@ -46,6 +51,7 @@ export const TeachersModule: React.FC = () => {
   // Directory state
   const [teachers, setTeachers] = useState<any[]>(INITIAL_TEACHERS);
   const [departments, setDepartments] = useState<any[]>(DEFAULT_DEPTS);
+  const [designations, setDesignations] = useState<string[]>(DEFAULT_DESIGNATIONS);
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +85,7 @@ export const TeachersModule: React.FC = () => {
     phone: '',
     employee_id: '',
     department_id: '',
-    designation: 'Lecturer',
+    designation: 'Faculty',
     qualification: 'M.Sc., B.Ed',
     specialization: '',
     experience_years: 3
@@ -93,12 +99,16 @@ export const TeachersModule: React.FC = () => {
   // Load Directory & Departments
   const loadDirectory = async () => {
     try {
-      const [deptRes, teachersRes] = await Promise.all([
+      const [deptRes, teachersRes, desigRes] = await Promise.all([
         apiFetch<any>(`/teachers/departments?branch_id=${currentBranch?.id || ''}`).catch(() => null),
-        apiFetch<any>(`/teachers?branch_id=${currentBranch?.id || ''}`).catch(() => null)
+        apiFetch<any>(`/teachers?branch_id=${currentBranch?.id || ''}`).catch(() => null),
+        apiFetch<any>('/teachers/designations').catch(() => null)
       ]);
       if (deptRes && deptRes.departments?.length > 0) {
         setDepartments(deptRes.departments);
+      }
+      if (desigRes && desigRes.designations?.length > 0) {
+        setDesignations(desigRes.designations);
       }
       if (teachersRes && teachersRes.teachers && teachersRes.teachers.length > 0) {
         setTeachers(teachersRes.teachers);
@@ -267,7 +277,7 @@ export const TeachersModule: React.FC = () => {
         phone: '',
         employee_id: '',
         department_id: '',
-        designation: 'Lecturer',
+        designation: 'Faculty',
         qualification: 'M.Sc., B.Ed',
         specialization: '',
         experience_years: 3
@@ -453,19 +463,38 @@ export const TeachersModule: React.FC = () => {
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-base font-heading shrink-0">
-                          {t.name
-                            ?.split(' ')
-                            .map((n: string) => n[0])
-                            .slice(0, 2)
-                            .join('')}
+                        <div className="relative w-12 h-12 shrink-0">
+                          {(t.avatar_url || t.photo_url) ? (
+                            <img
+                              src={t.avatar_url || t.photo_url}
+                              alt={t.name}
+                              className="w-12 h-12 rounded-2xl object-cover border border-blue-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-base font-heading">
+                              {t.name
+                                ?.split(' ')
+                                .map((n: string) => n[0])
+                                .slice(0, 2)
+                                .join('')}
+                            </div>
+                          )}
+                          <span
+                            title={t.is_absent_today ? 'Absent today' : 'Present today'}
+                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                              t.is_absent_today ? 'bg-rose-500' : 'bg-emerald-500'
+                            }`}
+                          />
                         </div>
                         <div>
                           <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">
                             {t.name}
                           </h3>
                           <span className="text-[11px] font-semibold text-slate-500">
-                            {t.designation || 'Lecturer'} • {t.department_name || 'Physics'}
+                            {t.designation || 'Faculty'} • {t.department_name || 'Physics'}
+                          </span>
+                          <span className={`ml-2 text-[10px] font-bold ${t.is_absent_today ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            {t.is_absent_today ? 'Absent' : 'Present'}
                           </span>
                         </div>
                       </div>
@@ -661,6 +690,11 @@ export const TeachersModule: React.FC = () => {
               <p className="text-xs text-slate-500 mt-0.5">
                 Automatically identifies absent faculty timetable conflicts and recommends available proxy teachers.
               </p>
+              {user?.role === 'HOD' && (
+                <p className="text-[10px] text-blue-600 font-semibold mt-1">
+                  Showing your department's faculty only.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -674,13 +708,18 @@ export const TeachersModule: React.FC = () => {
                 />
               </div>
 
-              {isManagement && (
+              {(isManagement || isFaculty) && (
                 <button
-                  onClick={() => setShowMarkAbsentModal(true)}
+                  onClick={() => {
+                    if (!isManagement && myProfileData?.profile?.id) {
+                      setAbsentTeacherId(myProfileData.profile.id);
+                    }
+                    setShowMarkAbsentModal(true);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-xs transition whitespace-nowrap"
                 >
                   <UserX className="w-4 h-4" />
-                  Mark Teacher Absent
+                  {isManagement ? 'Mark Teacher Absent' : 'Mark Myself Absent'}
                 </button>
               )}
             </div>
@@ -897,12 +936,22 @@ export const TeachersModule: React.FC = () => {
                                 return (
                                   <td key={pNum} className="py-2.5 px-3">
                                     {match ? (
-                                      <div className="bg-blue-50 border border-blue-200 p-1.5 rounded-xl text-[10px]">
-                                        <div className="font-bold text-blue-900">{match.subject_name}</div>
-                                        <div className="text-blue-700">
+                                      <div className={`p-1.5 rounded-xl text-[10px] border ${match.substitute_teacher_name ? 'bg-amber-50 border-amber-300' : 'bg-blue-50 border-blue-200'}`}>
+                                        <div className={`font-bold ${match.substitute_teacher_name ? 'text-amber-900' : 'text-blue-900'}`}>{match.subject_name}</div>
+                                        <div className={match.substitute_teacher_name ? 'text-amber-700' : 'text-blue-700'}>
                                           {match.class_name} {match.section_name}
                                         </div>
-                                        <div className="text-slate-400">Rm {match.room_number}</div>
+                                        <div className="text-slate-400">
+                                          {match.start_time}–{match.end_time} • Rm {match.room_number} (Fl {match.floor})
+                                        </div>
+                                        {match.substitute_teacher_name && (
+                                          <div className="mt-1 pt-1 border-t border-amber-200 font-bold text-amber-800">
+                                            Replaced by {match.substitute_teacher_name}
+                                            <span className="block font-normal text-amber-600">
+                                              {match.substitution_status === 'ACKNOWLEDGED' ? 'Confirmed' : 'Pending confirmation'}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
                                     ) : (
                                       <span className="text-slate-300 text-[10px]">--</span>
@@ -944,17 +993,30 @@ export const TeachersModule: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Select Faculty Member</label>
                 <select
                   required
+                  disabled={!isManagement}
                   value={absentTeacherId}
                   onChange={(e) => setAbsentTeacherId(e.target.value)}
-                  className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none disabled:opacity-70"
                 >
-                  <option value="">-- Choose Faculty --</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.employee_id}) - {t.department_name}
-                    </option>
-                  ))}
+                  {isManagement && <option value="">-- Choose Faculty --</option>}
+                  {isManagement
+                    ? (substitutionData?.presentTeachers && substitutionData.presentTeachers.length > 0
+                        ? substitutionData.presentTeachers.map((t: any) => ({ id: t.teacher_id, name: t.teacher_name, employee_id: t.employee_id, department_name: t.department_name }))
+                        : teachers.filter((t) => !substitutionData?.absentTeacherIds?.includes(t.id))
+                      ).map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.employee_id}) - {t.department_name}
+                        </option>
+                      ))
+                    : (
+                        <option value={absentTeacherId}>
+                          {myProfileData?.profile?.name || 'Myself'}
+                        </option>
+                      )}
                 </select>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {isManagement ? 'Only faculty currently marked present are listed.' : 'Faculty can only mark themselves absent.'}
+                </p>
               </div>
 
               <div>
@@ -1156,13 +1218,33 @@ export const TeachersModule: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Designation</label>
-                  <input
-                    type="text"
+                  <select
+                    required
                     value={formData.designation}
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    {designations.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Specialization</label>
+                <select
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                  className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                >
+                  <option value="">-- Choose Specialization --</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.name.replace(/ Department$/, '')}>
+                      {d.name.replace(/ Department$/, '')}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

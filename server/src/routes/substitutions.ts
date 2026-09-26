@@ -6,12 +6,38 @@ import crypto from 'crypto';
 
 export const substitutionsRouter = Router();
 
+// Resolves the calling HOD's own department (or null if not an HOD / no
+// department assigned). Reused to scope the substitution hub so an HOD only
+// ever sees their own department's faculty and absences — not the whole
+// branch. Mirrors the same pattern used for invigilator-request scoping in
+// examManagement.ts.
+async function resolveHodDepartmentId(req: AuthRequest): Promise<string | null> {
+  if (req.user!.role !== 'HOD') return null;
+  const dept = await queryOne<{ id: string }>(`SELECT id FROM departments WHERE hod_user_id = $1`, [req.user!.id]);
+  return dept ? dept.id : null;
+}
+
 // 1. Mark Teacher Absent (System auto-identifies affected timetable periods and creates substitution required entries)
+// A real upsert keyed on (teacher_id, date) — teacher_absences has a
+// UNIQUE(teacher_id, date) constraint, so marking the same teacher absent
+// on the same date more than once (double-click, resubmission, re-marking
+// after a refresh) updates the same row instead of silently inserting a
+// duplicate. Duplicates were the root cause of the "N faculty absent" stat
+// and the "Affected Timetable Periods" list both inflating/duplicating.
 substitutionsRouter.post('/absence', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN', 'TEACHER'), async (req: AuthRequest, res: Response) => {
   const { teacher_id, date, reason } = req.body;
 
   if (!teacher_id || !date) {
     return res.status(400).json({ error: 'teacher_id and date are required.' });
+  }
+
+  // A plain TEACHER can only mark themselves absent, never another faculty
+  // member.
+  if (req.user!.role === 'TEACHER') {
+    const own = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!own || own.id !== teacher_id) {
+      return res.status(403).json({ error: 'You can only mark yourself absent.' });
+    }
   }
 
   try {
@@ -24,7 +50,7 @@ substitutionsRouter.post('/absence', authenticate, requireRoles('HOD', 'PRINCIPA
     await execute(`
       INSERT INTO teacher_absences (id, teacher_id, date, reason, status)
       VALUES ($1, $2, $3, $4, 'RECORDED')
-      ON CONFLICT (id) DO UPDATE SET reason = EXCLUDED.reason, status = EXCLUDED.status
+      ON CONFLICT (teacher_id, date) DO UPDATE SET reason = EXCLUDED.reason, status = 'RECORDED'
     `, [absenceId, teacher_id, date, reason || 'Absent/Leave']);
 
     // Find all affected timetable periods for this teacher on this day of week
@@ -63,6 +89,9 @@ substitutionsRouter.post('/absence', authenticate, requireRoles('HOD', 'PRINCIPA
 });
 
 // 2. Substitution Center (HOD & Principal view: list affected periods & find available teachers)
+// An HOD only ever sees their own department here — never the whole branch,
+// and never non-teaching staff (this endpoint only ever touches
+// teacher_profiles, so non-teaching staff were never included).
 substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   try {
     const branchId = (req.query.branch_id as string) || req.user!.branch_id;
@@ -70,16 +99,44 @@ substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL'
     const targetDate = new Date(date);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = dayNames[targetDate.getDay()] === 'Sunday' ? 'Monday' : dayNames[targetDate.getDay()];
+    const hodDepartmentId = await resolveHodDepartmentId(req);
 
-    // Get all absent teachers for this date
-    const absences = await query(`
+    // All teaching staff visible in this scope (branch, or just the HOD's
+    // department) — used both to list who is currently present/eligible to
+    // be marked absent, and to compute the absent count/list below.
+    const scopedTeachersParams: any[] = [branchId];
+    let scopedTeachersSql = `
+      SELECT tp.id as teacher_id, u.name as teacher_name, tp.employee_id, d.name as department_name, d.id as department_id
+      FROM teacher_profiles tp
+      JOIN users u ON tp.user_id = u.id
+      LEFT JOIN departments d ON tp.department_id = d.id
+      WHERE u.branch_id = $1 AND u.is_active = 1
+    `;
+    if (hodDepartmentId) {
+      scopedTeachersParams.push(hodDepartmentId);
+      scopedTeachersSql += ` AND tp.department_id = $${scopedTeachersParams.length}`;
+    }
+    scopedTeachersSql += ` ORDER BY u.name ASC`;
+    const scopedTeachers = await query(scopedTeachersSql, scopedTeachersParams);
+
+    // Get all absent teachers for this date (scoped to the HOD's department
+    // when the caller is an HOD).
+    const absenceParams: any[] = [date, branchId];
+    let absenceSql = `
       SELECT ta.*, u.name as teacher_name, u.phone as teacher_phone, tp.employee_id, d.name as department_name, d.id as department_id
       FROM teacher_absences ta
       JOIN teacher_profiles tp ON ta.teacher_id = tp.id
       JOIN users u ON tp.user_id = u.id
       LEFT JOIN departments d ON tp.department_id = d.id
       WHERE ta.date = $1 AND ta.status = 'RECORDED' AND u.branch_id = $2
-    `, [date, branchId]);
+    `;
+    if (hodDepartmentId) {
+      absenceParams.push(hodDepartmentId);
+      absenceSql += ` AND tp.department_id = $${absenceParams.length}`;
+    }
+    const absences = await query(absenceSql, absenceParams);
+    const absentTeacherIds = absences.map((a: any) => a.teacher_id);
+    const presentTeachers = scopedTeachers.filter((t: any) => !absentTeacherIds.includes(t.teacher_id));
 
     // For each absent teacher, find their timetable entries and check if already assigned a substitute
     const substitutionRequirements: any[] = [];
@@ -124,6 +181,10 @@ substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL'
       date,
       dayOfWeek,
       absentTeacherCount: absences.length,
+      absences,
+      absentTeacherIds,
+      presentTeachers,
+      scopedToDepartment: hodDepartmentId,
       requirements: substitutionRequirements
     });
   } catch (err: any) {
@@ -138,7 +199,10 @@ substitutionsRouter.get('/available-teachers', authenticate, requireRoles('HOD',
     const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
     const dayOfWeek = (req.query.day_of_week as string) || 'Monday';
     const periodNumber = parseInt(req.query.period_number as string, 10) || 1;
-    const departmentId = req.query.department_id as string;
+    const hodDepartmentId = await resolveHodDepartmentId(req);
+    // An HOD's proxy pool defaults to their own department unless they
+    // explicitly ask for a different one.
+    const departmentId = (req.query.department_id as string) || hodDepartmentId || undefined;
     const excludeTeacherId = req.query.exclude_teacher_id as string;
 
     // 1. Get all active teachers in branch

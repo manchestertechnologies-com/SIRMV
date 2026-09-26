@@ -106,7 +106,10 @@ export async function seedPostgresDatabase() {
         { id: `dept-bio-${bId}`, name: 'Biology Department', code: 'BIO', subName: 'Biology', subCode: 'BIO101' },
         { id: `dept-cs-${bId}`, name: 'Computer Science Department', code: 'CS', subName: 'Computer Science', subCode: 'CS101' },
         { id: `dept-eng-${bId}`, name: 'English Department', code: 'ENG', subName: 'English', subCode: 'ENG101' },
-        { id: `dept-kan-${bId}`, name: 'Kannada Department', code: 'KAN', subName: 'Kannada', subCode: 'KAN101' }
+        { id: `dept-kan-${bId}`, name: 'Kannada Department', code: 'KAN', subName: 'Kannada', subCode: 'KAN101' },
+        { id: `dept-elec-${bId}`, name: 'Electronics Department', code: 'ELEC', subName: 'Electronics', subCode: 'ELE101' },
+        { id: `dept-sans-${bId}`, name: 'Sanskrit Department', code: 'SANS', subName: 'Sanskrit', subCode: 'SAN101' },
+        { id: `dept-hin-${bId}`, name: 'Hindi Department', code: 'HIN', subName: 'Hindi', subCode: 'HIN101' }
       ];
 
       for (const d of depts) {
@@ -167,6 +170,14 @@ export async function seedPostgresDatabase() {
     await upsert(userSql, ['usr-teacher-chem1', 'branch-dvg', 'teacher_chem1', passwordHash, 'TEACHER', 'Dr. Ramesh B', 'ramesh.chem@sirmv.edu.in', '9845100111', '/avatars/teacher_chem.png', 1], 'users');
     await upsert(userSql, ['usr-teacher-bio1', 'branch-dvg', 'teacher_bio1', passwordHash, 'TEACHER', 'Mrs. Shwetha N', 'shwetha.bio@sirmv.edu.in', '9845111222', '/avatars/teacher_bio.png', 1], 'users');
 
+    // Demo faculty (rounds out the branch to 10 teaching staff, for the
+    // Live Substitution & Proxy Hub demo — 5 of these are marked absent on
+    // 2026-09-26 below).
+    await upsert(userSql, ['usr-demo-cs', 'branch-dvg', 'demo_cs', passwordHash, 'TEACHER', 'Mr. Vinay Gowda (CS Faculty)', 'vinay.cs@sirmv.edu.in', '9845122001', '/avatars/teacher_abc.png', 1], 'users');
+    await upsert(userSql, ['usr-demo-kan', 'branch-dvg', 'demo_kan', passwordHash, 'TEACHER', 'Mrs. Lakshmi Devi (Kannada Faculty)', 'lakshmi.kan@sirmv.edu.in', '9845122002', '/avatars/teacher_xyz.png', 1], 'users');
+    await upsert(userSql, ['usr-demo-elec', 'branch-dvg', 'demo_elec', passwordHash, 'TEACHER', 'Mr. Naveen Kumar (Electronics Faculty)', 'naveen.elec@sirmv.edu.in', '9845122003', '/avatars/teacher_pqr.png', 1], 'users');
+    await upsert(userSql, ['usr-demo-eng', 'branch-dvg', 'demo_eng', passwordHash, 'TEACHER', 'Mrs. Ananya Rao (English Faculty)', 'ananya.eng@sirmv.edu.in', '9845122004', '/avatars/teacher_bio.png', 1], 'users');
+
     // Floor Attenders
     await upsert(userSql, ['usr-attender-fl2', 'branch-dvg', 'floor.demo@college.test', passwordHash, 'FLOOR_ATTENDER', 'Ramesh Kumar (Floor Attender)', 'floor.demo@college.test', '9740011223', '/avatars/attender.png', 1], 'users');
     await upsert(userSql, ['usr-attender-fl3', 'branch-dvg', 'attender_floor3', passwordHash, 'FLOOR_ATTENDER', 'Manjunath S (Floor 3 Attender)', 'manjunath.attender@sirmv.edu.in', '9740022334', '/avatars/attender.png', 1], 'users');
@@ -201,6 +212,10 @@ export async function seedPostgresDatabase() {
     await upsert(tpSql, ['tp-teacher-pqr', 'usr-teacher-pqr', 'EMP-MAT-001', '/avatars/teacher_pqr.png', '1984-03-25', '9845099000', 'prashanth.pqr@sirmv.edu.in', '#15, PJ Extension, Davangere', 'dept-math-branch-dvg', 'Senior Mathematics Lecturer', '2017-06-10', 'M.Sc. Mathematics', 0], 'teacher_profiles');
     await upsert(tpSql, ['tp-teacher-chem1', 'usr-teacher-chem1', 'EMP-CHE-001', '/avatars/teacher_chem.png', '1982-12-05', '9845100111', 'ramesh.chem@sirmv.edu.in', '#54, SS Layout, Davangere', 'dept-chem-branch-dvg', 'Senior Chemistry Lecturer', '2016-05-20', 'M.Sc., Ph.D. Chemistry', 0], 'teacher_profiles');
     await upsert(tpSql, ['tp-teacher-bio1', 'usr-teacher-bio1', 'EMP-BIO-001', '/avatars/teacher_bio.png', '1990-04-18', '9845111222', 'shwetha.bio@sirmv.edu.in', '#31, KB Extension, Davangere', 'dept-bio-branch-dvg', 'Biology Lecturer', '2021-06-15', 'M.Sc. Biotechnology, B.Ed', 0], 'teacher_profiles');
+    await upsert(tpSql, ['tp-demo-cs', 'usr-demo-cs', 'EMP-CS-001', '/avatars/teacher_abc.png', '1991-02-11', '9845122001', 'vinay.cs@sirmv.edu.in', '#7, Nehru Road, Davangere', 'dept-cs-branch-dvg', 'Faculty', '2022-06-01', 'M.Tech Computer Science', 0], 'teacher_profiles');
+    await upsert(tpSql, ['tp-demo-kan', 'usr-demo-kan', 'EMP-KAN-001', '/avatars/teacher_xyz.png', '1987-07-19', '9845122002', 'lakshmi.kan@sirmv.edu.in', '#22, Shamanur Road, Davangere', 'dept-kan-branch-dvg', 'Senior Faculty', '2019-06-01', 'M.A. Kannada, B.Ed', 0], 'teacher_profiles');
+    await upsert(tpSql, ['tp-demo-elec', 'usr-demo-elec', 'EMP-ELEC-001', '/avatars/teacher_pqr.png', '1993-01-30', '9845122003', 'naveen.elec@sirmv.edu.in', '#9, MCC B Block, Davangere', 'dept-elec-branch-dvg', 'Faculty', '2023-06-01', 'M.Tech Electronics', 0], 'teacher_profiles');
+    await upsert(tpSql, ['tp-demo-eng', 'usr-demo-eng', 'EMP-ENG-001', '/avatars/teacher_bio.png', '1986-10-08', '9845122004', 'ananya.eng@sirmv.edu.in', '#3, Shivaji Nagar, Davangere', 'dept-eng-branch-dvg', 'Lab Faculty', '2020-06-01', 'M.A. English', 0], 'teacher_profiles');
 
     // 6. Teacher Assignments
     const taSql = `
@@ -297,6 +312,12 @@ export async function seedPostgresDatabase() {
       await upsert(ttSql, [`tt-${day}-p3-xyz`, 'branch-dvg', day, 3, '10:30', '11:15', 'sub-phy-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-A-branch-dvg', 'batch-neet-branch-dvg', 'rm-201-branch-dvg', 'tp-teacher-xyz'], 'timetable_entries');
       await upsert(ttSql, [`tt-${day}-p4-bio`, 'branch-dvg', day, 4, '11:15', '12:00', 'sub-bio-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-A-branch-dvg', 'batch-neet-branch-dvg', 'rm-204-branch-dvg', 'tp-teacher-bio1'], 'timetable_entries');
       await upsert(ttSql, [`tt-${day}-p5-abc`, 'branch-dvg', day, 5, '12:45', '13:30', 'sub-phy-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-B-branch-dvg', 'batch-jee-branch-dvg', 'rm-301-branch-dvg', 'tp-teacher-abc'], 'timetable_entries');
+      // Demo faculty periods (rooms 101/102 are otherwise unused in this
+      // seed, so these never clash with the entries above)
+      await upsert(ttSql, [`tt-${day}-p1-cs`, 'branch-dvg', day, 1, '08:45', '09:30', 'sub-cs-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-A-branch-dvg', 'batch-reg-branch-dvg', 'rm-101-branch-dvg', 'tp-demo-cs'], 'timetable_entries');
+      await upsert(ttSql, [`tt-${day}-p2-kan`, 'branch-dvg', day, 2, '09:30', '10:15', 'sub-kan-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-B-branch-dvg', 'batch-reg-branch-dvg', 'rm-102-branch-dvg', 'tp-demo-kan'], 'timetable_entries');
+      await upsert(ttSql, [`tt-${day}-p3-elec`, 'branch-dvg', day, 3, '10:30', '11:15', 'sub-elec-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-A-branch-dvg', 'batch-reg-branch-dvg', 'rm-101-branch-dvg', 'tp-demo-elec'], 'timetable_entries');
+      await upsert(ttSql, [`tt-${day}-p4-eng`, 'branch-dvg', day, 4, '11:15', '12:00', 'sub-eng-branch-dvg', 'cls-2puc-branch-dvg', 'sec-2PUC-B-branch-dvg', 'batch-reg-branch-dvg', 'rm-102-branch-dvg', 'tp-demo-eng'], 'timetable_entries');
     }
 
     // 11. Absences & Substitutions
@@ -307,6 +328,18 @@ export async function seedPostgresDatabase() {
       ON CONFLICT (id) DO UPDATE SET reason = EXCLUDED.reason, status = EXCLUDED.status;
     `;
     await upsert(absSql, ['abs-abc-today', 'tp-teacher-abc', today, 'Medical Leave (Viral fever)', 'RECORDED'], 'teacher_absences');
+
+    // Live Substitution & Proxy Hub demo data: 5 of the 10 branch-dvg
+    // faculty marked absent on 2026-09-26, each with a real timetable
+    // period that day so the hub actually has affected periods to show
+    // (previously "5 absent" but 0 affected periods happened when the
+    // absent teacher had no timetable entry at all for that day).
+    const demoAbsenceDate = '2026-09-26';
+    await upsert(absSql, ['abs-demo-abc', 'tp-teacher-abc', demoAbsenceDate, 'Medical Leave / Personal Emergency', 'RECORDED'], 'teacher_absences');
+    await upsert(absSql, ['abs-demo-pqr', 'tp-teacher-pqr', demoAbsenceDate, 'Attending a family function', 'RECORDED'], 'teacher_absences');
+    await upsert(absSql, ['abs-demo-cs', 'tp-demo-cs', demoAbsenceDate, 'Medical Leave / Personal Emergency', 'RECORDED'], 'teacher_absences');
+    await upsert(absSql, ['abs-demo-kan', 'tp-demo-kan', demoAbsenceDate, 'On official college duty', 'RECORDED'], 'teacher_absences');
+    await upsert(absSql, ['abs-demo-elec', 'tp-demo-elec', demoAbsenceDate, 'Medical Leave / Personal Emergency', 'RECORDED'], 'teacher_absences');
 
     const subAssignSql = `
       INSERT INTO substitution_assignments (id, timetable_entry_id, date, original_teacher_id, substitute_teacher_id, assigned_by, status, acknowledged_at, remarks)

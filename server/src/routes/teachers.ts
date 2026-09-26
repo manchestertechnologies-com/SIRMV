@@ -7,6 +7,8 @@ import crypto from 'crypto';
 
 export const teachersRouter = Router();
 
+export const TEACHER_DESIGNATIONS = ['Professor & HOD', 'Senior Faculty', 'Faculty', 'Lab Faculty'];
+
 // 1. Get Departments List
 teachersRouter.get('/departments', authenticate, async (req: AuthRequest, res: Response) => {
   try {
@@ -20,6 +22,11 @@ teachersRouter.get('/departments', authenticate, async (req: AuthRequest, res: R
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
+});
+
+// 1b. Get allowed Designations list (for the registration/edit dropdown)
+teachersRouter.get('/designations', authenticate, async (_req: AuthRequest, res: Response) => {
+  return res.json({ designations: TEACHER_DESIGNATIONS });
 });
 
 // 2. Get Classes, Sections, Batches, and Subjects for assignment dropdowns
@@ -224,7 +231,11 @@ teachersRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
              d.name as department_name, d.code as department_code,
              b.name as branch_name,
              (SELECT COUNT(*) FROM teacher_assignments ta WHERE ta.teacher_id = tp.id) as assignment_count,
-             (SELECT COUNT(*) FROM timetable_entries tt WHERE tt.teacher_id = tp.id) as period_count
+             (SELECT COUNT(*) FROM timetable_entries tt WHERE tt.teacher_id = tp.id) as period_count,
+             EXISTS(
+               SELECT 1 FROM teacher_absences ab
+               WHERE ab.teacher_id = tp.id AND ab.status = 'RECORDED' AND ab.date = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')
+             ) as is_absent_today
       FROM teacher_profiles tp
       JOIN users u ON tp.user_id = u.id
       JOIN branches b ON u.branch_id = b.id
@@ -284,18 +295,30 @@ teachersRouter.get('/:id', authenticate, async (req: AuthRequest, res: Response)
       WHERE ta.teacher_id = $1
     `, [id]);
 
+    // Today's date, used only to surface a substitution against the row
+    // whose day_of_week matches today — substitution_assignments are keyed
+    // by a specific calendar date, while this grid is the static weekly
+    // template, so "today" is the only date a cell can unambiguously show
+    // a live replacement for.
+    const todayDateStr = new Date().toISOString().split('T')[0];
+
     const timetable = await query(`
       SELECT tt.*, s.name as subject_name, s.code as subject_code,
              c.name as class_name, sec.name as section_name, b.name as batch_name,
-             r.room_number, r.floor
+             r.room_number, r.floor,
+             sa.status as substitution_status, sa.date as substitution_date,
+             sub_u.name as substitute_teacher_name, sub_tp.employee_id as substitute_employee_id
       FROM timetable_entries tt
       JOIN subjects s ON tt.subject_id = s.id
       JOIN classes c ON tt.class_id = c.id
       JOIN sections sec ON tt.section_id = sec.id
       JOIN batches b ON tt.batch_id = b.id
       JOIN rooms r ON tt.room_id = r.id
+      LEFT JOIN substitution_assignments sa ON sa.timetable_entry_id = tt.id AND sa.date = $2
+      LEFT JOIN teacher_profiles sub_tp ON sa.substitute_teacher_id = sub_tp.id
+      LEFT JOIN users sub_u ON sub_tp.user_id = sub_u.id
       WHERE tt.teacher_id = $1
-      ORDER BY 
+      ORDER BY
         CASE tt.day_of_week
           WHEN 'Monday' THEN 1
           WHEN 'Tuesday' THEN 2
@@ -306,7 +329,7 @@ teachersRouter.get('/:id', authenticate, async (req: AuthRequest, res: Response)
           ELSE 7
         END,
         tt.period_number ASC
-    `, [id]);
+    `, [id, todayDateStr]);
 
     return res.json({ profile, assignments, timetable });
   } catch (err: any) {
@@ -333,6 +356,10 @@ teachersRouter.post('/', authenticate, requireRoles('ADMIN', 'PRINCIPAL', 'HOD')
     return res.status(400).json({ error: 'Name, employee ID, and department are required.' });
   }
 
+  if (designation && !TEACHER_DESIGNATIONS.includes(designation)) {
+    return res.status(400).json({ error: `Invalid designation. Allowed: ${TEACHER_DESIGNATIONS.join(', ')}` });
+  }
+
   try {
     const branchId = req.user!.branch_id;
     const userId = 'usr-' + crypto.randomUUID();
@@ -357,7 +384,7 @@ teachersRouter.post('/', authenticate, requireRoles('ADMIN', 'PRINCIPAL', 'HOD')
         userId,
         department_id,
         employee_id,
-        designation || 'Lecturer',
+        designation || 'Faculty',
         qualification || 'M.Sc., B.Ed',
         specialization || '',
         experience_years || 2
@@ -391,6 +418,10 @@ teachersRouter.put('/:id', authenticate, requireRoles('ADMIN', 'PRINCIPAL', 'HOD
     experience_years,
     is_active
   } = req.body;
+
+  if (designation && !TEACHER_DESIGNATIONS.includes(designation)) {
+    return res.status(400).json({ error: `Invalid designation. Allowed: ${TEACHER_DESIGNATIONS.join(', ')}` });
+  }
 
   try {
     const teacher = await queryOne<{ user_id: string }>(`SELECT user_id FROM teacher_profiles WHERE id = $1`, [id]);

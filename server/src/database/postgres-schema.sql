@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(64),
   avatar_url TEXT,
   is_active INTEGER DEFAULT 1,
+  staff_category VARCHAR(64), -- Non-teaching staff job category: Floor In Charge / Cleaning / Bus / Warden / Mess
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -95,6 +96,8 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
   designation VARCHAR(128) NOT NULL,
   joining_date VARCHAR(64),
   qualification VARCHAR(255),
+  specialization VARCHAR(255),
+  experience_years INTEGER DEFAULT 0,
   is_hod INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -107,6 +110,7 @@ CREATE TABLE IF NOT EXISTS teacher_assignments (
   class_id VARCHAR(64) NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
   section_id VARCHAR(64) NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
   batch_id VARCHAR(64) NOT NULL REFERENCES batches(id) ON DELETE CASCADE,
+  academic_year_id VARCHAR(64) REFERENCES academic_years(id) ON DELETE SET NULL,
   is_class_teacher INTEGER DEFAULT 0
 );
 
@@ -186,7 +190,21 @@ CREATE TABLE IF NOT EXISTS teacher_absences (
   date VARCHAR(32) NOT NULL,
   reason TEXT,
   status VARCHAR(32) DEFAULT 'RECORDED', -- RECORDED, CANCELLED
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (teacher_id, date)
+);
+
+-- Generic present/absent attendance marking for any staff member (teaching
+-- or non-teaching), one row per person per day.
+CREATE TABLE IF NOT EXISTS staff_attendance (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date VARCHAR(32) NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'PRESENT' CHECK (status IN ('PRESENT', 'ABSENT')),
+  marked_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, date)
 );
 
 CREATE TABLE IF NOT EXISTS substitution_assignments (

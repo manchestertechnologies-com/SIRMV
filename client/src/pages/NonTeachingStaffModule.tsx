@@ -29,12 +29,13 @@ export const NonTeachingStaffModule: React.FC = () => {
 
   // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [categories, setCategories] = useState<string[]>(['Floor In Charge', 'Cleaning', 'Bus', 'Warden', 'Mess']);
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     email: '',
     phone: '',
-    role: 'FLOOR_ATTENDER',
+    staff_category: 'Floor In Charge',
     password: ''
   });
 
@@ -44,11 +45,17 @@ export const NonTeachingStaffModule: React.FC = () => {
 
   const loadStaff = async () => {
     try {
-      const res = await apiFetch<any>(`/staff?branch_id=${currentBranch?.id || ''}`).catch(() => null);
-      if (res && res.staffMembers && res.staffMembers.length > 0) {
-        setStaffMembers(res.staffMembers);
+      const [staffRes, catRes] = await Promise.all([
+        apiFetch<any>(`/staff?branch_id=${currentBranch?.id || ''}`).catch(() => null),
+        apiFetch<any>('/staff/categories').catch(() => null)
+      ]);
+      if (staffRes && staffRes.staffMembers && staffRes.staffMembers.length > 0) {
+        setStaffMembers(staffRes.staffMembers);
       } else {
         setStaffMembers(INITIAL_NON_TEACHING_STAFF);
+      }
+      if (catRes?.categories?.length > 0) {
+        setCategories(catRes.categories);
       }
     } catch (err: any) {
       console.error('Using institutional non-teaching staff records', err);
@@ -61,6 +68,18 @@ export const NonTeachingStaffModule: React.FC = () => {
   useEffect(() => {
     loadStaff();
   }, [currentBranch]);
+
+  const handleMarkAttendance = async (staffId: string, status: 'PRESENT' | 'ABSENT') => {
+    try {
+      await apiFetch(`/staff/${staffId}/attendance`, {
+        method: 'POST',
+        body: JSON.stringify({ status })
+      });
+      setStaffMembers((prev) => prev.map((s) => (s.id === staffId ? { ...s, attendance_status: status } : s)));
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +94,7 @@ export const NonTeachingStaffModule: React.FC = () => {
         username: '',
         email: '',
         phone: '',
-        role: 'FLOOR_ATTENDER',
+        staff_category: 'Floor In Charge',
         password: ''
       });
       setNotification({ type: 'success', message: res.message || 'Staff account created successfully.' });
@@ -87,7 +106,7 @@ export const NonTeachingStaffModule: React.FC = () => {
   };
 
   const filteredStaff = staffMembers.filter((s) => {
-    const matchesRole = selectedRole === 'ALL' || s.role === selectedRole;
+    const matchesRole = selectedRole === 'ALL' || s.staff_category === selectedRole || s.role === selectedRole;
     const matchesSearch =
       searchQuery === '' ||
       s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,7 +116,17 @@ export const NonTeachingStaffModule: React.FC = () => {
     return matchesRole && matchesSearch;
   });
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (staffCategory: string | null | undefined, role: string) => {
+    if (staffCategory) {
+      const colors: Record<string, string> = {
+        'Floor In Charge': 'bg-orange-100 text-orange-900',
+        Cleaning: 'bg-sky-100 text-sky-900',
+        Bus: 'bg-amber-100 text-amber-900',
+        Warden: 'bg-teal-100 text-teal-900',
+        Mess: 'bg-lime-100 text-lime-900'
+      };
+      return <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${colors[staffCategory] || 'bg-indigo-100 text-indigo-900'}`}>{staffCategory}</span>;
+    }
     switch (role) {
       case 'FLOOR_ATTENDER':
         return <span className="px-2 py-0.5 bg-orange-100 text-orange-900 rounded-lg text-[10px] font-bold">Floor Attender</span>;
@@ -168,18 +197,16 @@ export const NonTeachingStaffModule: React.FC = () => {
       <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-bold text-slate-700">Role Designation:</span>
+          <span className="text-xs font-bold text-slate-700">Department:</span>
           <select
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
           >
-            <option value="ALL">All Roles</option>
-            <option value="FLOOR_ATTENDER">Floor Attenders</option>
-            <option value="WARDEN">Hostel Wardens</option>
-            <option value="HEAD_WARDEN">Head Wardens</option>
-            <option value="GATE_STAFF">Gate Staff / Security</option>
-            <option value="NON_TEACHING_STAFF">Non-Teaching Administrative</option>
+            <option value="ALL">All Departments</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
         </div>
 
@@ -214,16 +241,33 @@ export const NonTeachingStaffModule: React.FC = () => {
               <div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-900 font-bold text-base font-heading shrink-0">
-                      {s.name
-                        ?.split(' ')
-                        .map((n: string) => n[0])
-                        .slice(0, 2)
-                        .join('')}
+                    <div className="relative w-12 h-12 shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-900 font-bold text-base font-heading">
+                        {s.name
+                          ?.split(' ')
+                          .map((n: string) => n[0])
+                          .slice(0, 2)
+                          .join('')}
+                      </div>
+                      <span
+                        title={s.attendance_status === 'ABSENT' ? 'Absent today' : 'Present today'}
+                        className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                          s.attendance_status === 'ABSENT' ? 'bg-rose-500' : 'bg-emerald-500'
+                        }`}
+                      />
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">{s.name}</h3>
-                      <div className="mt-1">{getRoleBadge(s.role)}</div>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        {getRoleBadge(s.staff_category, s.role)}
+                        <span
+                          className={`text-[10px] font-bold ${
+                            s.attendance_status === 'ABSENT' ? 'text-rose-600' : 'text-emerald-700'
+                          }`}
+                        >
+                          {s.attendance_status === 'ABSENT' ? 'Absent' : 'Present'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono font-bold bg-[#ede9df] text-slate-700 px-2 py-0.5 rounded-lg">
@@ -255,6 +299,33 @@ export const NonTeachingStaffModule: React.FC = () => {
                   Institutional ERP
                 </span>
               </div>
+
+              {isManagement && (
+                <div className="mt-3 pt-3 border-t border-[#f2eee6] flex items-center gap-2">
+                  <button
+                    onClick={() => handleMarkAttendance(s.id, 'PRESENT')}
+                    disabled={s.attendance_status !== 'ABSENT'}
+                    className={`flex-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                      s.attendance_status !== 'ABSENT'
+                        ? 'bg-emerald-100 text-emerald-800 cursor-default'
+                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-800'
+                    }`}
+                  >
+                    Mark Present
+                  </button>
+                  <button
+                    onClick={() => handleMarkAttendance(s.id, 'ABSENT')}
+                    disabled={s.attendance_status === 'ABSENT'}
+                    className={`flex-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                      s.attendance_status === 'ABSENT'
+                        ? 'bg-rose-100 text-rose-800 cursor-default'
+                        : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-800'
+                    }`}
+                  >
+                    Mark Absent
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -293,15 +364,13 @@ export const NonTeachingStaffModule: React.FC = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Role / Department</label>
                 <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  value={formData.staff_category}
+                  onChange={(e) => setFormData({ ...formData, staff_category: e.target.value })}
                   className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                 >
-                  <option value="FLOOR_ATTENDER">Floor Attender</option>
-                  <option value="WARDEN">Hostel Warden</option>
-                  <option value="HEAD_WARDEN">Head Warden</option>
-                  <option value="GATE_STAFF">Gate Security Personnel</option>
-                  <option value="NON_TEACHING_STAFF">Non-Teaching Office Staff</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
               </div>
 
