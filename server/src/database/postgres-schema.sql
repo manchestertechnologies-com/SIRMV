@@ -158,6 +158,11 @@ CREATE TABLE IF NOT EXISTS student_profiles (
   batch_id VARCHAR(64) NOT NULL REFERENCES batches(id) ON DELETE RESTRICT,
   is_hostelite INTEGER DEFAULT 0,
   hostel_room_id VARCHAR(64) REFERENCES hostel_rooms(id) ON DELETE SET NULL,
+  category VARCHAR(64), -- caste category shown on the student's own profile (General/OBC/SC/ST/EWS etc.)
+  sslc_result VARCHAR(64),
+  residence_status VARCHAR(32) DEFAULT 'NON_RESIDENT' CHECK (residence_status IN ('RESIDENT', 'NON_RESIDENT')),
+  admission_type VARCHAR(32) DEFAULT '1ST_PU' CHECK (admission_type IN ('1ST_PU', '2ND_PU', 'LONG_TERM')),
+  is_active INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 

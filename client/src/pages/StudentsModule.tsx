@@ -3,40 +3,56 @@ import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
-  Users,
   Search,
   Plus,
-  Filter,
-  User,
   Phone,
-  Mail,
   Home,
-  BookOpen,
-  Award,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Sparkles,
-  GraduationCap,
-  Building2,
-  Calendar,
-  Layers,
   ChevronRight,
-  CheckCheck
+  CheckCheck,
+  Eye,
+  UploadCloud,
+  FileCheck2,
+  FileX2,
+  X
 } from 'lucide-react';
 import { IconStudents } from '../components/ModuleIcons';
 import { INITIAL_STUDENTS } from '../data/mockInstitutionalData';
+
+const DOC_TYPES = ['AADHAR', 'STUDY_CERTIFICATE', 'SSLC_MARKS_CARD', 'TC', 'CASTE_INCOME_CERTIFICATE', 'EWS', 'PWD'];
+const DOC_LABELS: Record<string, string> = {
+  AADHAR: 'Aadhar Card',
+  STUDY_CERTIFICATE: 'Study Certificate',
+  SSLC_MARKS_CARD: 'SSLC Marks Card',
+  TC: 'Transfer Certificate (TC)',
+  CASTE_INCOME_CERTIFICATE: 'Caste & Income Certificate',
+  EWS: 'EWS Certificate',
+  PWD: 'PWD Certificate'
+};
+const RESIDENCE_LABELS: Record<string, string> = {
+  RESIDENT: 'Resident (Hostel)',
+  NON_RESIDENT: 'Non-Resident (Day Scholar)'
+};
+const ADMISSION_TYPE_LABELS: Record<string, string> = {
+  '1ST_PU': '1st PU',
+  '2ND_PU': '2nd PU',
+  LONG_TERM: 'Long Term'
+};
+
+// Compatibility shim: real records use residence_status (RESIDENT/NON_RESIDENT);
+// the offline demo dataset only has the older residential_status
+// (HOSTELLER/DAY_SCHOLAR) field, so derive one from the other when needed.
+const residenceOf = (s: any): string =>
+  s?.residence_status || (s?.residential_status === 'HOSTELLER' ? 'RESIDENT' : 'NON_RESIDENT');
 
 export const StudentsModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
 
   // State
   const [students, setStudents] = useState<any[]>(INITIAL_STUDENTS);
-  const [options, setOptions] = useState<{ classes: any[]; sections: any[]; batches: any[]; hostelRooms: any[] }>({
-    classes: [{ id: 'cls-1puc-branch-smg', name: '1 PUC' }, { id: 'cls-2puc-branch-smg', name: '2 PUC' }],
-    sections: [{ id: 'sec-A', name: 'A' }, { id: 'sec-B', name: 'B' }, { id: 'sec-C', name: 'C' }],
-    batches: [{ id: 'batch-neet', name: 'NEET Batch' }, { id: 'batch-jee', name: 'JEE Batch' }, { id: 'batch-kcet', name: 'KCET Batch' }],
-    hostelRooms: []
+  const [options, setOptions] = useState<{ classes: any[]; sections: any[]; batches: any[] }>({
+    classes: [],
+    sections: [],
+    batches: []
   });
 
   // Filters
@@ -50,7 +66,15 @@ export const StudentsModule: React.FC = () => {
   // Student 360 Modal
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [studentDetail, setStudentDetail] = useState<any | null>(null);
+  const [theoryMarks, setTheoryMarks] = useState<any[]>([]);
+  const [competitiveMarks, setCompetitiveMarks] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+
+  // Marks card (the "view" drill-down on a single exam)
+  const [marksCard, setMarksCard] = useState<{ type: 'theory' | 'competitive'; examId: string } | null>(null);
+  const [marksCardData, setMarksCardData] = useState<any | null>(null);
+  const [marksCardLoading, setMarksCardLoading] = useState(false);
 
   // Personal Profile View for Student/Parent
   const [myProfileData, setMyProfileData] = useState<any | null>(null);
@@ -59,20 +83,22 @@ export const StudentsModule: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
-    admission_number: '',
-    roll_number: '',
+    register_number: '',
     class_id: '',
     section_id: '',
     batch_id: '',
+    admission_type: '1ST_PU',
+    residence_status: 'NON_RESIDENT',
+    category: '',
+    sslc_result: '',
+    date_of_birth: '',
     gender: 'Male',
-    date_of_birth: '2008-05-15',
-    blood_group: 'O+',
-    residential_status: 'DAY_SCHOLAR',
-    father_name: '',
-    mother_name: '',
+    phone: '',
+    email: '',
+    address: '',
+    parent_name: '',
     parent_phone: '',
-    parent_email: '',
-    parent_address: ''
+    parent_email: ''
   });
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -87,7 +113,7 @@ export const StudentsModule: React.FC = () => {
         apiFetch<any>(`/students/options/classes-batches?branch_id=${currentBranch?.id || ''}`).catch(() => null),
         apiFetch<any>(`/students?branch_id=${currentBranch?.id || ''}`).catch(() => null)
       ]);
-      if (optRes && optRes.classes?.length > 0) {
+      if (optRes && optRes.classes) {
         setOptions(optRes);
       }
       if (stdRes && stdRes.students && stdRes.students.length > 0) {
@@ -101,7 +127,7 @@ export const StudentsModule: React.FC = () => {
           const myRes = await apiFetch<any>('/students/me/profile');
           setMyProfileData(myRes);
         } catch (_) {
-          setMyProfileData({ profile: INITIAL_STUDENTS[0], attendanceStats: { total: 50, present: 48, absent: 2, late: 0, percentage: 96 } });
+          setMyProfileData({ profile: INITIAL_STUDENTS[0] });
         }
       }
     } catch (err: any) {
@@ -114,40 +140,70 @@ export const StudentsModule: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBranch, user]);
 
-  // Load Student 360 Detail
+  // Load Student 360 Detail — profile, documents, and both marks lists
   const handleViewStudent = async (id: string) => {
     setSelectedStudentId(id);
     setDetailLoading(true);
+    setTheoryMarks([]);
+    setCompetitiveMarks([]);
     try {
-      const res = await apiFetch<any>(`/students/${id}`);
-      setStudentDetail(res);
+      const [detailRes, theoryRes, competitiveRes] = await Promise.all([
+        apiFetch<any>(`/students/${id}`),
+        apiFetch<any>(`/students/${id}/marks/theory`).catch(() => ({ exams: [] })),
+        apiFetch<any>(`/students/${id}/marks/competitive`).catch(() => ({ exams: [] }))
+      ]);
+      setStudentDetail(detailRes);
+      setTheoryMarks(theoryRes.exams || []);
+      setCompetitiveMarks(competitiveRes.exams || []);
     } catch (err: any) {
       const found = students.find((s) => s.id === id) || INITIAL_STUDENTS.find((s) => s.id === id);
-      if (found) {
-        setStudentDetail({
-          profile: found,
-          hostelInfo: found.residential_status === 'HOSTELLER' ? { block_name: 'Kuvempu Block A', room_number: '204', floor_number: 2 } : null,
-          enrolledSubjects: [
-            { subject_name: 'Physics', subject_code: 'PHY101' },
-            { subject_name: 'Chemistry', subject_code: 'CHE101' },
-            { subject_name: 'Mathematics', subject_code: 'MAT101' },
-            { subject_name: 'Biology / CS', subject_code: 'BIO101' },
-            { subject_name: 'English', subject_code: 'ENG101' },
-            { subject_name: 'Kannada', subject_code: 'KAN101' }
-          ],
-          attendanceStats: {
-            total: 50,
-            present: Math.round(50 * (found.attendance_percentage || 90) / 100),
-            absent: 50 - Math.round(50 * (found.attendance_percentage || 90) / 100),
-            late: 1,
-            percentage: found.attendance_percentage || 90
-          }
-        });
-      }
+      setStudentDetail({ profile: found || null, documents: [] });
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const closeStudentDetail = () => {
+    setSelectedStudentId(null);
+    setStudentDetail(null);
+    setTheoryMarks([]);
+    setCompetitiveMarks([]);
+  };
+
+  // Open the subject-wise marks card for one exam
+  const handleOpenMarksCard = async (type: 'theory' | 'competitive', examId: string) => {
+    setMarksCard({ type, examId });
+    setMarksCardLoading(true);
+    try {
+      const res = await apiFetch<any>(`/students/${selectedStudentId}/marks/${type}/${examId}`);
+      setMarksCardData(res);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+      setMarksCard(null);
+    } finally {
+      setMarksCardLoading(false);
+    }
+  };
+
+  // Upload / replace one of the admission-department documents
+  const handleUploadDocument = async (docType: string, file: File) => {
+    if (!selectedStudentId) return;
+    setUploadingDoc(docType);
+    try {
+      const form = new FormData();
+      form.append('document', file);
+      form.append('doc_type', docType);
+      await apiFetch(`/students/${selectedStudentId}/documents/upload`, { method: 'POST', body: form });
+      const detailRes = await apiFetch<any>(`/students/${selectedStudentId}`);
+      setStudentDetail(detailRes);
+      showToast('Document uploaded successfully.', 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setUploadingDoc(null);
     }
   };
 
@@ -157,9 +213,28 @@ export const StudentsModule: React.FC = () => {
     try {
       await apiFetch('/students', {
         method: 'POST',
-        body: JSON.stringify(createForm)
+        body: JSON.stringify({ ...createForm, branch_id: currentBranch?.id })
       });
       setShowCreateModal(false);
+      setCreateForm({
+        name: '',
+        register_number: '',
+        class_id: '',
+        section_id: '',
+        batch_id: '',
+        admission_type: '1ST_PU',
+        residence_status: 'NON_RESIDENT',
+        category: '',
+        sslc_result: '',
+        date_of_birth: '',
+        gender: 'Male',
+        phone: '',
+        email: '',
+        address: '',
+        parent_name: '',
+        parent_phone: '',
+        parent_email: ''
+      });
       setNotification({ type: 'success', message: 'Student and guardian successfully enrolled.' });
       setTimeout(() => setNotification(null), 4000);
       loadData();
@@ -168,24 +243,26 @@ export const StudentsModule: React.FC = () => {
     }
   };
 
+  // Sections belonging to the currently selected class (cascading dropdown)
+  const sectionsForClass = (classId: string) => options.sections.filter((s: any) => !classId || s.class_id === classId);
+
   // Filter Logic
   const filteredStudents = students.filter((s) => {
     const matchClass = selectedClass === 'ALL' || s.class_id === selectedClass;
     const matchSec = selectedSection === 'ALL' || s.section_id === selectedSection;
     const matchBatch = selectedBatch === 'ALL' || s.batch_id === selectedBatch;
-    const matchRes = selectedResStatus === 'ALL' || s.residential_status === selectedResStatus;
+    const matchRes = selectedResStatus === 'ALL' || residenceOf(s) === selectedResStatus;
     const matchSearch =
       searchQuery === '' ||
       s.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.admission_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.roll_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.parent_phone?.includes(searchQuery);
+      s.register_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.phone?.includes(searchQuery);
     return matchClass && matchSec && matchBatch && matchRes && matchSearch;
   });
 
   const totalEnrolled = students.length;
-  const hostellerCount = students.filter((s) => s.residential_status === 'HOSTELLER').length;
-  const dayScholarCount = totalEnrolled - hostellerCount;
+  const residentCount = students.filter((s) => residenceOf(s) === 'RESIDENT').length;
+  const nonResidentCount = totalEnrolled - residentCount;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -214,12 +291,12 @@ export const StudentsModule: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex items-center gap-3">
             <div className="bg-[#ede9df] px-3.5 py-2 rounded-2xl text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Hostellers</div>
-              <div className="text-sm font-extrabold text-slate-900 font-heading">{hostellerCount}</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase">Residents</div>
+              <div className="text-sm font-extrabold text-slate-900 font-heading">{residentCount}</div>
             </div>
             <div className="bg-[#ede9df] px-3.5 py-2 rounded-2xl text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Day Scholars</div>
-              <div className="text-sm font-extrabold text-slate-900 font-heading">{dayScholarCount}</div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase">Non-Residents</div>
+              <div className="text-sm font-extrabold text-slate-900 font-heading">{nonResidentCount}</div>
             </div>
           </div>
 
@@ -250,7 +327,7 @@ export const StudentsModule: React.FC = () => {
       )}
 
       {/* PERSONAL PROFILE BANNER FOR STUDENT/PARENT ROLE */}
-      {isStudentOrParent && myProfileData && (
+      {isStudentOrParent && myProfileData?.profile && (
         <div className="bg-white rounded-3xl p-6 border border-[#ded9cf] shadow-2xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
@@ -262,22 +339,17 @@ export const StudentsModule: React.FC = () => {
                   .join('')}
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 font-heading">
-                  {myProfileData.profile.name}
-                </h2>
+                <h2 className="text-base font-bold text-slate-900 font-heading">{myProfileData.profile.name}</h2>
                 <div className="text-xs text-slate-500">
-                  Adm: <span className="font-mono font-bold text-slate-800">{myProfileData.profile.admission_number}</span> •{' '}
-                  {myProfileData.profile.class_name} Section {myProfileData.profile.section_name} ({myProfileData.profile.batch_name})
+                  Reg No: <span className="font-mono font-bold text-slate-800">{myProfileData.profile.register_number}</span>{' '}
+                  • {myProfileData.profile.class_name} Section {myProfileData.profile.section_name} ({myProfileData.profile.batch_name})
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold">
-                Attendance: {myProfileData.attendanceStats?.percentage || 100}%
-              </span>
               <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">
-                {myProfileData.profile.residential_status}
+                {RESIDENCE_LABELS[residenceOf(myProfileData.profile)]}
               </span>
             </div>
           </div>
@@ -285,22 +357,20 @@ export const StudentsModule: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
               <span className="text-slate-400 block font-medium">Guardian</span>
-              <span className="font-bold text-slate-800">{myProfileData.profile.father_name || 'Parent'}</span>
+              <span className="font-bold text-slate-800">{myProfileData.profile.parent_name || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Emergency Phone</span>
-              <span className="font-bold text-slate-800">{myProfileData.profile.parent_phone}</span>
+              <span className="text-slate-400 block font-medium">Guardian Phone</span>
+              <span className="font-bold text-slate-800">{myProfileData.profile.parent_phone || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Blood Group</span>
-              <span className="font-bold text-slate-800">{myProfileData.profile.blood_group}</span>
+              <span className="text-slate-400 block font-medium">Category</span>
+              <span className="font-bold text-slate-800">{myProfileData.profile.category || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Hostel Info</span>
+              <span className="text-slate-400 block font-medium">Admission Type</span>
               <span className="font-bold text-slate-800">
-                {myProfileData.hostelInfo
-                  ? `${myProfileData.hostelInfo.block_name} (Rm ${myProfileData.hostelInfo.room_number})`
-                  : 'Day Scholar'}
+                {ADMISSION_TYPE_LABELS[myProfileData.profile.admission_type] || myProfileData.profile.admission_type}
               </span>
             </div>
           </div>
@@ -313,7 +383,10 @@ export const StudentsModule: React.FC = () => {
           {/* Class Filter */}
           <select
             value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
+            onChange={(e) => {
+              setSelectedClass(e.target.value);
+              setSelectedSection('ALL');
+            }}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
           >
             <option value="ALL">All Classes</option>
@@ -324,14 +397,14 @@ export const StudentsModule: React.FC = () => {
             ))}
           </select>
 
-          {/* Section Filter */}
+          {/* Section Filter — cascades from the selected class */}
           <select
             value={selectedSection}
             onChange={(e) => setSelectedSection(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
           >
             <option value="ALL">All Sections</option>
-            {options.sections.map((s) => (
+            {sectionsForClass(selectedClass === 'ALL' ? '' : selectedClass).map((s) => (
               <option key={s.id} value={s.id}>
                 Section {s.name}
               </option>
@@ -347,7 +420,7 @@ export const StudentsModule: React.FC = () => {
             <option value="ALL">All Batches</option>
             {options.batches.map((b) => (
               <option key={b.id} value={b.id}>
-                Batch {b.name}
+                {b.name}
               </option>
             ))}
           </select>
@@ -359,8 +432,8 @@ export const StudentsModule: React.FC = () => {
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
           >
             <option value="ALL">All Residencies</option>
-            <option value="DAY_SCHOLAR">Day Scholar</option>
-            <option value="HOSTELLER">Hosteller</option>
+            <option value="RESIDENT">Resident</option>
+            <option value="NON_RESIDENT">Non-Resident</option>
           </select>
         </div>
 
@@ -371,13 +444,13 @@ export const StudentsModule: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search student, roll, parent..."
+            placeholder="Search register no., phone, name..."
             className="w-full pl-9 pr-4 py-1.5 bg-white border border-[#ded9cf] rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
-      {/* Students Grid / Table */}
+      {/* Students Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -388,72 +461,75 @@ export const StudentsModule: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredStudents.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => handleViewStudent(s.id)}
-              className="bg-[#fdfcfb] hover:bg-white rounded-3xl p-5 border border-[#ded9cf] hover:border-blue-300 transition-all duration-150 shadow-2xs hover:shadow-md cursor-pointer flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-sm font-heading shrink-0">
-                      {s.name
-                        ?.split(' ')
-                        .map((n: string) => n[0])
-                        .slice(0, 2)
-                        .join('')}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">
-                        {s.name}
-                      </h3>
-                      <div className="text-[11px] font-semibold text-slate-500">
-                        Roll: <span className="font-mono text-slate-800 font-bold">{s.roll_number}</span> •{' '}
-                        {s.class_name} {s.section_name}
+          {filteredStudents.map((s) => {
+            const residence = residenceOf(s);
+            return (
+              <div
+                key={s.id}
+                onClick={() => handleViewStudent(s.id)}
+                className="bg-[#fdfcfb] hover:bg-white rounded-3xl p-5 border border-[#ded9cf] hover:border-blue-300 transition-all duration-150 shadow-2xs hover:shadow-md cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-sm font-heading shrink-0 overflow-hidden">
+                        {s.photo_url ? (
+                          <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
+                        ) : (
+                          s.name
+                            ?.split(' ')
+                            .map((n: string) => n[0])
+                            .slice(0, 2)
+                            .join('')
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">
+                          {s.name}
+                        </h3>
+                        <div className="text-[11px] font-semibold text-slate-500">
+                          {s.class_name} {s.section_name && `Section ${s.section_name}`} • {s.batch_name}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <span
-                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                      s.residential_status === 'HOSTELLER'
-                        ? 'bg-amber-100 text-amber-900'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {s.residential_status === 'HOSTELLER' ? 'Hostel' : 'Day Scholar'}
-                  </span>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-[#f2eee6] space-y-1.5 text-xs text-slate-600">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Admission No:</span>
-                    <span className="font-mono font-bold text-slate-800">{s.admission_number}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Batch Stream:</span>
-                    <span className="font-semibold text-blue-700">{s.batch_name}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Parent / Phone:</span>
-                    <span className="font-medium text-slate-700">
-                      {s.father_name || 'Parent'} ({s.parent_phone || 'N/A'})
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                        residence === 'RESIDENT' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {residence === 'RESIDENT' ? 'Resident' : 'Non-Resident'}
                     </span>
                   </div>
+
+                  <div className="mt-4 pt-3 border-t border-[#f2eee6] space-y-1.5 text-xs text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Register No:</span>
+                      <span className="font-mono font-bold text-slate-800">{s.register_number}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Phone className="w-3 h-3" /> Phone:
+                      </span>
+                      <span className="font-semibold text-slate-700">{s.phone || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Admission:</span>
+                      <span className="font-semibold text-blue-700">
+                        {ADMISSION_TYPE_LABELS[s.admission_type] || s.admission_type || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[#f2eee6] flex items-center justify-between text-xs font-semibold text-blue-700">
+                  <span className="flex items-center gap-1 group-hover:underline">
+                    View Student 360° Profile
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </span>
                 </div>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-[#f2eee6] flex items-center justify-between text-xs font-semibold text-blue-700">
-                <span className="flex items-center gap-1 group-hover:underline">
-                  View Student 360° Profile
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-                <span className="text-[10px] font-bold text-slate-400">
-                  {s.hostel_room_number ? `Rm ${s.hostel_room_number}` : 'Day'}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -466,15 +542,15 @@ export const StudentsModule: React.FC = () => {
             <div className="bg-[#fdfcfb] p-6 border-b border-[#ded9cf] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-lg text-slate-900 font-heading">
-                  {studentDetail?.student?.name || 'Student Profile'}
+                  {studentDetail?.profile?.name || 'Student Profile'}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  {studentDetail?.student?.class_name} Section {studentDetail?.student?.section_name} •{' '}
-                  Batch {studentDetail?.student?.batch_name}
+                  {studentDetail?.profile?.class_name} Section {studentDetail?.profile?.section_name} • Batch{' '}
+                  {studentDetail?.profile?.batch_name}
                 </p>
               </div>
               <button
-                onClick={() => setSelectedStudentId(null)}
+                onClick={closeStudentDetail}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold"
               >
                 ✕
@@ -487,153 +563,335 @@ export const StudentsModule: React.FC = () => {
               </div>
             ) : (
               <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-                {/* 1. Academic & Personal Highlights */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-[#fdfcfb] border border-[#ded9cf] text-xs">
-                  <div>
-                    <span className="text-slate-400 block font-medium">Admission No</span>
-                    <span className="font-bold text-slate-800 font-mono">
-                      {studentDetail?.student?.admission_number}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Roll Number</span>
-                    <span className="font-bold text-slate-800 font-mono">
-                      {studentDetail?.student?.roll_number}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Gender / Blood</span>
-                    <span className="font-bold text-slate-800">
-                      {studentDetail?.student?.gender} • {studentDetail?.student?.blood_group}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Residency</span>
-                    <span className="font-bold text-slate-800">
-                      {studentDetail?.student?.residential_status}
-                    </span>
+                {/* 1. Student Academic Details — photo / register number / address / SSLC result / category */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
+                    Student Academic Details
+                  </h4>
+                  <div className="p-4 rounded-2xl bg-[#fdfcfb] border border-[#ded9cf] flex flex-col sm:flex-row gap-4">
+                    <div className="w-20 h-20 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-xl font-heading shrink-0 overflow-hidden">
+                      {studentDetail?.profile?.photo_url ? (
+                        <img src={studentDetail.profile.photo_url} alt={studentDetail.profile.name} className="w-full h-full object-cover" />
+                      ) : (
+                        studentDetail?.profile?.name
+                          ?.split(' ')
+                          .map((n: string) => n[0])
+                          .slice(0, 2)
+                          .join('')
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs flex-1">
+                      <div>
+                        <span className="text-slate-400 block font-medium">Register Number</span>
+                        <span className="font-bold text-slate-800 font-mono">{studentDetail?.profile?.register_number}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">SSLC Result</span>
+                        <span className="font-bold text-slate-800">{studentDetail?.profile?.sslc_result || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Category</span>
+                        <span className="font-bold text-slate-800">{studentDetail?.profile?.category || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Gender / DOB</span>
+                        <span className="font-bold text-slate-800">
+                          {studentDetail?.profile?.gender || 'N/A'} • {studentDetail?.profile?.date_of_birth || 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Admission Type</span>
+                        <span className="font-bold text-slate-800">
+                          {ADMISSION_TYPE_LABELS[studentDetail?.profile?.admission_type] || studentDetail?.profile?.admission_type}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block font-medium">Residency</span>
+                        <span className="font-bold text-slate-800">
+                          {RESIDENCE_LABELS[residenceOf(studentDetail?.profile)]}
+                        </span>
+                      </div>
+                      <div className="col-span-2 sm:col-span-3">
+                        <span className="text-slate-400 block font-medium">Address</span>
+                        <span className="font-semibold text-slate-800">{studentDetail?.profile?.address || 'N/A'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2. Guardian Details */}
+                {/* 2. Documents — Aadhar/Study Cert/SSLC Marks Card/TC/Caste & Income/EWS/PWD.
+                    Combined into the same profile view alongside the academic details above,
+                    since both describe the same student record even though the documents are
+                    entered by the admission department. */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
+                    Admission Documents
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {DOC_TYPES.map((docType) => {
+                      const doc = studentDetail?.documents?.find((d: any) => d.doc_type === docType);
+                      return (
+                        <div
+                          key={docType}
+                          className="p-3 rounded-xl border border-[#ded9cf] bg-[#fdfcfb] flex items-center justify-between gap-2 text-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {doc ? (
+                              <FileCheck2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            ) : (
+                              <FileX2 className="w-4 h-4 text-slate-300 shrink-0" />
+                            )}
+                            <span className="font-semibold text-slate-800 truncate">{DOC_LABELS[docType]}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {doc && (
+                              <a
+                                href={doc.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] font-bold text-blue-700 hover:underline"
+                              >
+                                View
+                              </a>
+                            )}
+                            {isManagement && (
+                              <label className="text-[10px] font-bold text-slate-500 hover:text-blue-700 cursor-pointer flex items-center gap-1">
+                                {uploadingDoc === docType ? (
+                                  <span className="animate-pulse">Uploading…</span>
+                                ) : (
+                                  <>
+                                    <UploadCloud className="w-3 h-3" />
+                                    {doc ? 'Replace' : 'Upload'}
+                                  </>
+                                )}
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleUploadDocument(docType, file);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Guardian Details */}
                 <div className="p-4 rounded-2xl border border-[#ded9cf] bg-white space-y-2 text-xs">
                   <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                     Parent / Guardian Information
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div>
-                      <span className="text-slate-400 block">Father Name</span>
-                      <span className="font-semibold text-slate-800">
-                        {studentDetail?.student?.father_name || 'N/A'}
-                      </span>
+                      <span className="text-slate-400 block">Guardian Name</span>
+                      <span className="font-semibold text-slate-800">{studentDetail?.profile?.parent_name || 'N/A'}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block">Primary Contact</span>
-                      <span className="font-semibold text-slate-800">
-                        {studentDetail?.student?.parent_phone || 'N/A'}
-                      </span>
+                      <span className="font-semibold text-slate-800">{studentDetail?.profile?.parent_phone || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Residential Address</span>
+                      <span className="text-slate-400 block">Guardian Email</span>
                       <span className="font-semibold text-slate-800 truncate block">
-                        {studentDetail?.student?.parent_address || 'Davangere, Karnataka'}
+                        {studentDetail?.profile?.parent_email || 'N/A'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* 3. Hostel Room Allocation (If Hosteller) */}
-                {studentDetail?.student?.residential_status === 'HOSTELLER' && (
+                {/* 4. Hostel Allocation (If Resident) */}
+                {studentDetail?.profile?.is_hostelite === 1 && (
                   <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-2 text-xs">
                     <h4 className="font-bold text-amber-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
                       <Home className="w-3.5 h-3.5 text-amber-700" />
                       Hostel Room Allocation
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                      <div>
-                        <span className="text-amber-700 block">Hostel Block</span>
-                        <span className="font-bold text-slate-900">
-                          {studentDetail?.student?.hostel_block_name || 'Cauvery Boys Hostel'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-amber-700 block">Room Number</span>
-                        <span className="font-bold text-slate-900">
-                          Room {studentDetail?.student?.hostel_room_number} (Floor {studentDetail?.student?.hostel_floor_number || 1})
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-amber-700 block">Bed Assignment</span>
-                        <span className="font-bold text-slate-900">
-                          Bed {studentDetail?.student?.bed_number || 'A'}
-                        </span>
-                      </div>
-                    </div>
+                    <p className="text-amber-700">
+                      This student is marked as a hostel resident. Room/bed allocation is managed from the Hostel module.
+                    </p>
                   </div>
                 )}
 
-                {/* 4. Enrolled Subjects */}
+                {/* 5. Theory Marks — Date / Exam Name / Total Marks / Class Rank / Overall Rank / View */}
                 <div>
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
-                    Enrolled Academic Subjects ({studentDetail?.enrolledSubjects?.length || 0})
+                    Theory Marks ({theoryMarks.length})
                   </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {studentDetail?.enrolledSubjects?.map((subj: any) => (
-                      <div
-                        key={subj.id}
-                        className="p-2.5 rounded-xl border border-[#ded9cf] bg-[#fdfcfb] text-xs font-semibold text-slate-800 flex items-center justify-between"
-                      >
-                        <span>{subj.subject_name}</span>
-                        <span className="text-[10px] font-mono text-slate-400">{subj.subject_code}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 5. Recent Exam Performance */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
-                    Recent Examination Scores
-                  </h4>
-                  {(!studentDetail?.marks || studentDetail.marks.length === 0) ? (
-                    <p className="text-slate-400 text-xs">No exam records uploaded yet.</p>
+                  {theoryMarks.length === 0 ? (
+                    <p className="text-slate-400 text-xs">No theory exam records uploaded yet.</p>
                   ) : (
-                    <div className="border border-[#ded9cf] rounded-2xl overflow-hidden">
-                      <div className="overflow-x-auto">
+                    <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead className="bg-[#fdfcfb] text-slate-600 font-bold border-b border-[#ded9cf]">
                           <tr>
-                            <th className="py-2.5 px-3">Exam</th>
-                            <th className="py-2.5 px-3">Subject</th>
-                            <th className="py-2.5 px-3">Marks Obtained</th>
-                            <th className="py-2.5 px-3">Percentage</th>
-                            <th className="py-2.5 px-3">Grade</th>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Exam Name</th>
+                            <th className="py-2.5 px-3">Total Marks</th>
+                            <th className="py-2.5 px-3">Class Rank</th>
+                            <th className="py-2.5 px-3">Overall Rank</th>
+                            <th className="py-2.5 px-3 text-right">View</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#f2eee6]">
-                          {studentDetail.marks.map((m: any) => {
-                            const pct = Math.round((m.marks_obtained / m.max_marks) * 100);
-                            return (
-                              <tr key={m.id} className="hover:bg-slate-50">
-                                <td className="py-2.5 px-3 font-bold text-slate-900">{m.exam_name}</td>
-                                <td className="py-2.5 px-3">{m.subject_name}</td>
-                                <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
-                                  {m.marks_obtained} / {m.max_marks}
-                                </td>
-                                <td className="py-2.5 px-3 font-semibold">{pct}%</td>
-                                <td className="py-2.5 px-3">
-                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold">
-                                    {m.grade || 'A+'}
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          {theoryMarks.map((e: any) => (
+                            <tr key={e.exam_id} className="hover:bg-slate-50">
+                              <td className="py-2.5 px-3 text-slate-600">{e.start_date}</td>
+                              <td className="py-2.5 px-3 font-bold text-slate-900">{e.exam_name}</td>
+                              <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
+                                {e.total_obtained} / {e.total_max}
+                              </td>
+                              <td className="py-2.5 px-3">{e.section_rank ?? '—'}</td>
+                              <td className="py-2.5 px-3">{e.overall_rank ?? '—'}</td>
+                              <td className="py-2.5 px-3 text-right">
+                                <button
+                                  onClick={() => handleOpenMarksCard('theory', e.exam_id)}
+                                  className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 font-bold"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
-                      </div>
                     </div>
                   )}
+                </div>
+
+                {/* 6. Competitive Marks — NEET/JEE/KCET, across 1st PU / 2nd PU / Long Term batches */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+                    Competitive Exam Marks ({competitiveMarks.length})
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mb-2.5">
+                    NEET / JEE / CET — {ADMISSION_TYPE_LABELS[studentDetail?.profile?.admission_type] || 'N/A'} • Batch{' '}
+                    {studentDetail?.profile?.batch_name}
+                  </p>
+                  {competitiveMarks.length === 0 ? (
+                    <p className="text-slate-400 text-xs">No competitive exam records uploaded yet.</p>
+                  ) : (
+                    <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-[#fdfcfb] text-slate-600 font-bold border-b border-[#ded9cf]">
+                          <tr>
+                            <th className="py-2.5 px-3">Date</th>
+                            <th className="py-2.5 px-3">Exam Name</th>
+                            <th className="py-2.5 px-3">Total Marks</th>
+                            <th className="py-2.5 px-3">Class Rank</th>
+                            <th className="py-2.5 px-3">Overall Rank</th>
+                            <th className="py-2.5 px-3 text-right">View</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#f2eee6]">
+                          {competitiveMarks.map((e: any) => (
+                            <tr key={e.exam_id} className="hover:bg-slate-50">
+                              <td className="py-2.5 px-3 text-slate-600">{e.start_date}</td>
+                              <td className="py-2.5 px-3 font-bold text-slate-900">{e.exam_name}</td>
+                              <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
+                                {e.total_obtained} / {e.total_max}
+                              </td>
+                              <td className="py-2.5 px-3">{e.section_rank ?? '—'}</td>
+                              <td className="py-2.5 px-3">{e.overall_rank ?? '—'}</td>
+                              <td className="py-2.5 px-3 text-right">
+                                <button
+                                  onClick={() => handleOpenMarksCard('competitive', e.exam_id)}
+                                  className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 font-bold"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 1b: MARKS CARD (subject-wise breakdown for one exam) */}
+      {/* ========================================================================= */}
+      {marksCard && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-[#ded9cf] my-8">
+            <div className="bg-[#fdfcfb] p-5 border-b border-[#ded9cf] flex items-center justify-between">
+              <h3 className="font-bold text-sm text-slate-900 font-heading">
+                {marksCardData?.exam?.name || 'Marks Card'}
+              </h3>
+              <button
+                onClick={() => {
+                  setMarksCard(null);
+                  setMarksCardData(null);
+                }}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {marksCardLoading ? (
+              <div className="p-10 text-center">
+                <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            ) : (
+              <div className="p-5 space-y-4">
+                <div className="text-xs text-slate-500">
+                  Exam Date: <span className="font-semibold text-slate-800">{marksCardData?.exam?.start_date}</span>
+                </div>
+
+                <div className="border border-[#ded9cf] rounded-2xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#fdfcfb] text-slate-600 font-bold border-b border-[#ded9cf]">
+                      <tr>
+                        <th className="py-2 px-3">Subject</th>
+                        <th className="py-2 px-3">Marks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f2eee6]">
+                      {marksCardData?.subjectMarks?.map((m: any) => (
+                        <tr key={m.id || m.subject_code}>
+                          <td className="py-2 px-3 font-semibold text-slate-800">{m.subject_name}</td>
+                          <td className="py-2 px-3 font-mono font-bold text-blue-700">
+                            {m.marks_obtained} / {m.max_marks}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block font-medium">Total Marks</span>
+                    <span className="font-bold text-slate-800">
+                      {marksCardData?.totalObtained} / {marksCardData?.totalMarks}
+                    </span>
+                  </div>
+                  {marksCard.type === 'theory' && (
+                    <div>
+                      <span className="text-slate-400 block font-medium">Percentage</span>
+                      <span className="font-bold text-slate-800">{marksCardData?.percentage}%</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-slate-400 block font-medium">Section Rank</span>
+                    <span className="font-bold text-slate-800">{marksCardData?.sectionRank ?? '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Overall Rank</span>
+                    <span className="font-bold text-slate-800">{marksCardData?.overallRank ?? '—'}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -678,13 +936,13 @@ export const StudentsModule: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Admission Number</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Register Number</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. SIRMV-2026-088"
-                    value={createForm.admission_number}
-                    onChange={(e) => setCreateForm({ ...createForm, admission_number: e.target.value })}
+                    placeholder="e.g. 2026PUC088"
+                    value={createForm.register_number}
+                    onChange={(e) => setCreateForm({ ...createForm, register_number: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   />
                 </div>
@@ -696,7 +954,7 @@ export const StudentsModule: React.FC = () => {
                   <select
                     required
                     value={createForm.class_id}
-                    onChange={(e) => setCreateForm({ ...createForm, class_id: e.target.value })}
+                    onChange={(e) => setCreateForm({ ...createForm, class_id: e.target.value, section_id: '' })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   >
                     <option value="">-- Select Class --</option>
@@ -717,7 +975,7 @@ export const StudentsModule: React.FC = () => {
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   >
                     <option value="">-- Select Section --</option>
-                    {options.sections.map((s) => (
+                    {sectionsForClass(createForm.class_id).map((s) => (
                       <option key={s.id} value={s.id}>
                         Section {s.name}
                       </option>
@@ -726,7 +984,7 @@ export const StudentsModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Competitive Batch</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Batch</label>
                   <select
                     required
                     value={createForm.batch_id}
@@ -736,7 +994,7 @@ export const StudentsModule: React.FC = () => {
                     <option value="">-- Select Batch --</option>
                     {options.batches.map((b) => (
                       <option key={b.id} value={b.id}>
-                        Batch {b.name}
+                        {b.name}
                       </option>
                     ))}
                   </select>
@@ -745,32 +1003,97 @@ export const StudentsModule: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Residential Status</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Admission Type</label>
                   <select
-                    value={createForm.residential_status}
-                    onChange={(e) => setCreateForm({ ...createForm, residential_status: e.target.value })}
+                    value={createForm.admission_type}
+                    onChange={(e) => setCreateForm({ ...createForm, admission_type: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   >
-                    <option value="DAY_SCHOLAR">Day Scholar</option>
-                    <option value="HOSTELLER">Hosteller</option>
+                    <option value="1ST_PU">1st PU</option>
+                    <option value="2ND_PU">2nd PU</option>
+                    <option value="LONG_TERM">Long Term</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Blood Group</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Residence Status</label>
+                  <select
+                    value={createForm.residence_status}
+                    onChange={(e) => setCreateForm({ ...createForm, residence_status: e.target.value })}
+                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  >
+                    <option value="NON_RESIDENT">Non-Resident (Day Scholar)</option>
+                    <option value="RESIDENT">Resident (Hostel)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                  <select
+                    value={createForm.category}
+                    onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  >
+                    <option value="">-- Select Category --</option>
+                    <option value="General">General</option>
+                    <option value="OBC">OBC</option>
+                    <option value="SC">SC</option>
+                    <option value="ST">ST</option>
+                    <option value="EWS">EWS</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">SSLC Result</label>
                   <input
                     type="text"
-                    value={createForm.blood_group}
-                    onChange={(e) => setCreateForm({ ...createForm, blood_group: e.target.value })}
+                    placeholder="e.g. 92%"
+                    value={createForm.sslc_result}
+                    onChange={(e) => setCreateForm({ ...createForm, sslc_result: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Roll Number</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={createForm.date_of_birth}
+                    onChange={(e) => setCreateForm({ ...createForm, date_of_birth: e.target.value })}
+                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Gender</label>
+                  <select
+                    value={createForm.gender}
+                    onChange={(e) => setCreateForm({ ...createForm, gender: e.target.value })}
+                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Student Phone</label>
                   <input
                     type="text"
-                    placeholder="e.g. 24"
-                    value={createForm.roll_number}
-                    onChange={(e) => setCreateForm({ ...createForm, roll_number: e.target.value })}
+                    placeholder="+91 98450 12345"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Residential Address</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. MCC B Block, Davangere"
+                    value={createForm.address}
+                    onChange={(e) => setCreateForm({ ...createForm, address: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   />
                 </div>
@@ -782,31 +1105,18 @@ export const StudentsModule: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Father's Name</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Guardian Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Rajesh Kulkarni"
-                    value={createForm.father_name}
-                    onChange={(e) => setCreateForm({ ...createForm, father_name: e.target.value })}
+                    value={createForm.parent_name}
+                    onChange={(e) => setCreateForm({ ...createForm, parent_name: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Mother's Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Sunita Kulkarni"
-                    value={createForm.mother_name}
-                    onChange={(e) => setCreateForm({ ...createForm, mother_name: e.target.value })}
-                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Primary Phone (SMS/OTP)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Guardian Phone (SMS/OTP)</label>
                   <input
                     type="text"
                     required
@@ -816,16 +1126,17 @@ export const StudentsModule: React.FC = () => {
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Residential Address</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. MCC B Block, Davangere"
-                    value={createForm.parent_address}
-                    onChange={(e) => setCreateForm({ ...createForm, parent_address: e.target.value })}
-                    className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Guardian Email (Optional)</label>
+                <input
+                  type="email"
+                  placeholder="guardian@example.com"
+                  value={createForm.parent_email}
+                  onChange={(e) => setCreateForm({ ...createForm, parent_email: e.target.value })}
+                  className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
+                />
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">

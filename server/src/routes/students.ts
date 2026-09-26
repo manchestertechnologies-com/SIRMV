@@ -69,6 +69,29 @@ async function computeExamRanks(examId: string | string[], studentId: string | s
   };
 }
 
+/* ============================== ENROLLMENT FORM OPTIONS ============================== */
+
+// 0. Classes, Sections (with their parent class_id, for cascading dropdowns)
+// and Batches for the enrollment form and the roster filter bar. This was
+// previously missing entirely, which silently made the frontend fall back
+// to hardcoded placeholder options.
+studentsRouter.get('/options/classes-batches', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+    const classes = await query(`SELECT * FROM classes WHERE branch_id = $1 ORDER BY name ASC`, [branchId]);
+    const sections = await query(`
+      SELECT sec.* FROM sections sec
+      JOIN classes c ON sec.class_id = c.id
+      WHERE c.branch_id = $1
+      ORDER BY sec.name ASC
+    `, [branchId]);
+    const batches = await query(`SELECT * FROM batches WHERE branch_id = $1 ORDER BY name ASC`, [branchId]);
+    return res.json({ classes, sections, batches });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 /* ============================== STUDENT LIST & PROFILE ============================== */
 
 // 1. List students — filters: class_id, section_id, batch_id, admission_type (1ST_PU/2ND_PU/LONG_TERM),
@@ -79,7 +102,7 @@ studentsRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
 
   let sql = `
     SELECT sp.id, sp.register_number, sp.name, sp.phone, sp.photo_url, sp.residence_status,
-           sp.admission_type, sp.is_active,
+           sp.admission_type, sp.is_active, sp.class_id, sp.section_id, sp.batch_id,
            c.name as class_name, sec.name as section_name, b.name as batch_name
     FROM student_profiles sp
     JOIN classes c ON sp.class_id = c.id
@@ -103,6 +126,32 @@ studentsRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
 
   const students = await query(sql, params);
   return res.json({ students, total: students.length });
+});
+
+// 1b. "My own" profile, for a logged-in STUDENT/PARENT user (was previously
+// missing entirely, so the student/parent self-service banner silently fell
+// back to placeholder demo data for every real user).
+studentsRouter.get('/me/profile', authenticate, async (req: AuthRequest, res: Response) => {
+  const studentId = req.user!.student_id;
+  if (!studentId) {
+    return res.status(404).json({ error: 'No student profile is linked to this account.' });
+  }
+
+  const profile = await queryOne<any>(`
+    SELECT sp.*, c.name as class_name, sec.name as section_name, b.name as batch_name, br.name as branch_name
+    FROM student_profiles sp
+    JOIN classes c ON sp.class_id = c.id
+    JOIN sections sec ON sp.section_id = sec.id
+    JOIN batches b ON sp.batch_id = b.id
+    JOIN branches br ON sp.branch_id = br.id
+    WHERE sp.id = $1
+  `, [studentId]);
+
+  if (!profile) {
+    return res.status(404).json({ error: 'Student profile not found.' });
+  }
+
+  return res.json({ profile });
 });
 
 // 2. Individual student — photo/register number/address/sslc result/category
