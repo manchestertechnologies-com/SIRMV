@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/LoginPage';
@@ -29,6 +29,20 @@ export function App() {
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
+
+  // Switching accounts via the role-switcher (or logging in as someone else)
+  // changes `user` but previously left `activeTab` pointing at whatever the
+  // last role had open — e.g. still on "Timetable Generator" after switching
+  // to a Teacher, who can't see that module and whose screen then looked
+  // "stuck" on the old role's page. Reset to the dashboard home whenever the
+  // logged-in user actually changes (not on every render/data refresh).
+  const previousUserIdRef = useRef<string | undefined>(user?.id);
+  useEffect(() => {
+    if (user?.id !== previousUserIdRef.current) {
+      previousUserIdRef.current = user?.id;
+      setActiveTab('dashboard-home');
+    }
+  }, [user?.id]);
 
   // Push notification tap routing: the service worker either postMessages an
   // already-open tab (notificationclick focusing an existing window) or opens
