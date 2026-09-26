@@ -709,7 +709,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
   const [swapA, setSwapA] = useState<string | null>(null);
   const [pickedRoomId, setPickedRoomId] = useState<string | null>(null);
   const [invigilators, setInvigilators] = useState<any[]>([]);
-  const [invigilatorOptions, setInvigilatorOptions] = useState<{ teachers: any[]; roomsNeedingInvigilators: any[] } | null>(null);
+  const [invigilatorOptions, setInvigilatorOptions] = useState<{ teachers: any[]; roomsNeedingInvigilators: any[]; poolSize?: number } | null>(null);
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [requestDeptId, setRequestDeptId] = useState('');
   const [requestCount, setRequestCount] = useState(1);
@@ -911,8 +911,24 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
         <div className="bg-slate-50 rounded-xl p-3 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Invigilators</div>
-            <button onClick={autoAllocateInvigilators} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white">
-              <Wand2 className="w-3.5 h-3.5" /> Auto-Assign Invigilators
+            <span className="text-[11px] text-slate-500">
+              {(invigilatorOptions.poolSize ?? 0) > 0
+                ? `${invigilatorOptions.poolSize} HOD-approved lecturer(s) available to assign`
+                : 'No HOD-approved lecturers yet — send a request below first'}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 -mt-2">
+            Only an HOD can choose <em>which</em> lecturer invigilates (via the request below). The Exam Department only allocates
+            which <em>room</em> an already-approved lecturer covers — automatically for the whole session, or one room at a time.
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={autoAllocateInvigilators}
+              disabled={(invigilatorOptions.poolSize ?? 0) === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400 text-white transition"
+            >
+              <Wand2 className="w-3.5 h-3.5" /> Auto-Assign Rooms to Approved Lecturers
             </button>
           </div>
 
@@ -930,26 +946,29 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
           {invigilatorOptions.roomsNeedingInvigilators.length > 0 && (
             <div className="space-y-2">
               <div className="text-[11px] text-slate-500">Rooms still needing an invigilator:</div>
-              {invigilatorOptions.roomsNeedingInvigilators.map((r: any) => (
-                <div key={r.room_id} className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-700 w-24">Room {r.room_number}</span>
-                  <select
-                    defaultValue=""
-                    onChange={(e) => assignInvigilatorManual(r.room_id, e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none"
-                  >
-                    <option value="">Select lecturer...</option>
-                    {invigilatorOptions.teachers.filter((t: any) => t.isAvailable).map((t: any) => (
-                      <option key={t.teacherId} value={t.teacherId}>{t.name} ({t.departmentName}) — {t.currentInvigilationCount} duties today</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+              {invigilatorOptions.roomsNeedingInvigilators.map((r: any) => {
+                const poolTeachers = invigilatorOptions.teachers.filter((t: any) => t.isInPool && t.isAvailable);
+                return (
+                  <div key={r.room_id} className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-700 w-24">Room {r.room_number}</span>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => assignInvigilatorManual(r.room_id, e.target.value)}
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none"
+                    >
+                      <option value="">{poolTeachers.length ? 'Select HOD-approved lecturer...' : 'No approved lecturers available yet'}</option>
+                      {poolTeachers.map((t: any) => (
+                        <option key={t.teacherId} value={t.teacherId}>{t.name} ({t.departmentName}) — {t.currentInvigilationCount} duties today</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
             </div>
           )}
 
           <div className="border-t border-slate-200 pt-3">
-            <div className="text-[11px] font-bold text-slate-500 mb-1.5">Request invigilators from a department (HOD workflow)</div>
+            <div className="text-[11px] font-bold text-slate-500 mb-1.5">Request invigilators from a department (the HOD selects who)</div>
             <div className="flex flex-wrap items-center gap-2">
               <select value={requestDeptId} onChange={(e) => setRequestDeptId(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none">
                 {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}

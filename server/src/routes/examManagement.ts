@@ -1062,6 +1062,22 @@ async function loadTeacherAvailability(branchId: string, sessionId: string, depa
   return result;
 }
 
+// Which teachers an HOD has actually approved as invigilators for this
+// session, across every department request raised for it. Selecting WHO
+// invigilates is always the HOD's call (via the request/fulfill workflow
+// below) — the Exam Department can only ever allocate ROOMS to teachers
+// already in this pool, whether automatically or one room at a time.
+async function loadApprovedInvigilatorPool(sessionId: string): Promise<Set<string>> {
+  const rows = await query<any>(
+    `SELECT DISTINCT sel.teacher_id
+     FROM exam_invigilator_request_selections sel
+     JOIN exam_invigilator_requests r ON r.id = sel.request_id
+     WHERE r.exam_session_id = $1`,
+    [sessionId]
+  );
+  return new Set(rows.map((r) => r.teacher_id));
+}
+
 examManagementRouter.get('/sessions/:sessionId/invigilator-options', authenticate, requireRoles(...EXAM_ROLES, 'HOD'), async (req: AuthRequest, res: Response) => {
   try {
     const { sessionId } = req.params;
@@ -1069,7 +1085,9 @@ examManagementRouter.get('/sessions/:sessionId/invigilator-options', authenticat
     const session = await queryOne<any>(`SELECT s.*, e.branch_id FROM exam_sessions s JOIN pu_exams e ON e.id = s.exam_id WHERE s.id = $1`, [sessionId]);
     if (!session) return res.status(404).json({ error: 'Exam session not found.' });
 
-    const teachers = await loadTeacherAvailability(session.branch_id, sessionId, departmentId);
+    const pool = await loadApprovedInvigilatorPool(sessionId);
+    const teachers = (await loadTeacherAvailability(session.branch_id, sessionId, departmentId))
+      .map((t) => ({ ...t, isInPool: pool.has(t.teacherId) }));
     const roomsNeedingInvigilators = await query<any>(
       `SELECT ra.room_id, r.room_number, r.floor
        FROM exam_room_allocations ra JOIN rooms r ON r.id = ra.room_id
@@ -1078,7 +1096,7 @@ examManagementRouter.get('/sessions/:sessionId/invigilator-options', authenticat
       [sessionId]
     );
 
-    return res.json({ teachers, roomsNeedingInvigilators });
+    return res.json({ teachers, roomsNeedingInvigilators, poolSize: pool.size });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -1090,7 +1108,15 @@ examManagementRouter.post('/sessions/:sessionId/invigilators/auto', authenticate
     const session = await queryOne<any>(`SELECT s.*, e.branch_id, e.id as exam_id FROM exam_sessions s JOIN pu_exams e ON e.id = s.exam_id WHERE s.id = $1`, [sessionId]);
     if (!session) return res.status(404).json({ error: 'Exam session not found.' });
 
-    const teachers = await loadTeacherAvailability(session.branch_id, sessionId);
+    // "Auto-assign" allocates ROOMS to lecturers an HOD has already
+    // approved for this session — it never picks which lecturer
+    // invigilates. That choice is always made by the HOD, via the
+    // invigilator-request workflow (see below).
+    const pool = await loadApprovedInvigilatorPool(sessionId);
+    if (pool.size === 0) {
+      return res.status(400).json({ error: 'No HOD-approved invigilators yet for this session. Send an invigilator request to a department first, and wait for the HOD to select lecturers.' });
+    }
+    const teachers = (await loadTeacherAvailability(session.branch_id, sessionId)).filter((t) => pool.has(t.teacherId));
     const roomsNeedingInvigilators = await query<any>(
       `SELECT ra.room_id, r.room_number
        FROM exam_room_allocations ra JOIN rooms r ON r.id = ra.room_id
@@ -1135,6 +1161,14 @@ examManagementRouter.put('/sessions/:sessionId/invigilators/manual', authenticat
 
     const allocated = await queryOne(`SELECT id FROM exam_room_allocations WHERE exam_session_id = $1 AND room_id = $2`, [sessionId, room_id]);
     if (!allocated) return res.status(400).json({ error: 'That room is not allocated to this exam session.' });
+
+    // Even a "manual" room pick can only choose among lecturers an HOD has
+    // already approved for this session — the Exam Department allocates
+    // rooms, it never selects which lecturer invigilates.
+    const pool = await loadApprovedInvigilatorPool(sessionId);
+    if (!pool.has(teacher_id)) {
+      return res.status(400).json({ error: 'That lecturer has not been approved by their HOD for this session yet. Send (or wait on) an invigilator request first.' });
+    }
 
     const conflict = await queryOne(
       `SELECT 1 FROM exam_invigilator_assignments ia JOIN exam_sessions es ON es.id = ia.exam_session_id
