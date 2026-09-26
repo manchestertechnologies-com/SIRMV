@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
+import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, ArrowLeft, BookOpen, Upload, Eye, Save } from 'lucide-react';
 
@@ -71,10 +72,8 @@ const AddCycleModal: React.FC<{ branchId: string; onClose: () => void; onCreated
         </div>
         {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
         <form onSubmit={submit} className="space-y-3">
-          <select required value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input">
-            <option value="">Select Cycle</option>
-            <option value="Cycle 1">Cycle 1</option><option value="Cycle 2">Cycle 2</option><option value="Cycle 3">Cycle 3</option>
-          </select>
+          <Select required value={form.name || ''} onChange={(v) => setForm({ ...form, name: v })} placeholder="Select Cycle" sheetTitle="Select Cycle"
+            options={[{ value: 'Cycle 1', label: 'Cycle 1' }, { value: 'Cycle 2', label: 'Cycle 2' }, { value: 'Cycle 3', label: 'Cycle 3' }]} className="input" />
           <input value={form.academic_year} onChange={(e) => setForm({ ...form, academic_year: e.target.value })} placeholder="Academic Year" className="input" />
           <div className="grid grid-cols-2 gap-2">
             <input required type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="input" />
@@ -158,14 +157,10 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
               <button onClick={() => setShowAddSubject(false)}><X className="w-4 h-4 text-slate-400" /></button>
             </div>
             <form onSubmit={addSubject} className="space-y-3">
-              <select required value={subjectForm.subject_id || ''} onChange={(e) => setSubjectForm({ ...subjectForm, subject_id: e.target.value })} className="input">
-                <option value="">Select Subject</option>
-                {meta.subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <select required value={subjectForm.class_id || ''} onChange={(e) => setSubjectForm({ ...subjectForm, class_id: e.target.value })} className="input">
-                <option value="">Select Class</option>
-                {meta.classes?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <Select required value={subjectForm.subject_id || ''} onChange={(v) => setSubjectForm({ ...subjectForm, subject_id: v })} placeholder="Select Subject" sheetTitle="Select Subject"
+                options={(meta.subjects || []).map((s: any) => ({ value: s.id, label: s.name }))} className="input" />
+              <Select required value={subjectForm.class_id || ''} onChange={(v) => setSubjectForm({ ...subjectForm, class_id: v })} placeholder="Select Class" sheetTitle="Select Class"
+                options={(meta.classes || []).map((c: any) => ({ value: c.id, label: c.name }))} className="input" />
               <div className="grid grid-cols-2 gap-2">
                 <input type="number" value={subjectForm.max_marks} onChange={(e) => setSubjectForm({ ...subjectForm, max_marks: Number(e.target.value) })} placeholder="Max Marks" className="input" />
                 <input type="number" value={subjectForm.passing_marks} onChange={(e) => setSubjectForm({ ...subjectForm, passing_marks: Number(e.target.value) })} placeholder="Passing Marks" className="input" />

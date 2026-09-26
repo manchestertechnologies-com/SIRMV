@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
 import {
@@ -10,7 +11,8 @@ import {
   UserCheck,
   GraduationCap,
   Menu,
-  Bell
+  Bell,
+  X
 } from 'lucide-react';
 
 interface Notification {
@@ -53,6 +55,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  // Lock background scroll while a mobile sheet is open — standard iOS sheet behavior
+  useEffect(() => {
+    const anySheetOpen = showNotifications || showRoleSwitcher;
+    if (anySheetOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [showNotifications, showRoleSwitcher]);
+
   const handleNotificationClick = async (n: Notification) => {
     if (!n.is_read) {
       try {
@@ -65,8 +77,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
     }
     if (n.link_tab && onNavigate) {
       onNavigate(n.link_tab);
-      setShowNotifications(false);
     }
+    setShowNotifications(false);
   };
 
   const markAllRead = async () => {
@@ -103,15 +115,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-[#fdfcf9] border-b border-[#ded8cb] shadow-2xs">
+    <header className="sticky top-0 z-40 bg-[#fdfcf9] border-b border-[#ded8cb] shadow-2xs safe-top">
       <div className="px-3 sm:px-4 md:px-6 flex items-center justify-between h-16 gap-2">
-        
+
         {/* Left: Hamburger (mobile) + Brand & Campus Identification */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Mobile menu toggle — opens the Sidebar drawer */}
           <button
             onClick={onMenuClick}
-            className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:bg-[#ebe7df] transition shrink-0"
+            className="press md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:bg-[#ebe7df] transition shrink-0"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
@@ -149,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
+              className="press relative p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4 text-slate-600" />
@@ -161,38 +173,91 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-80 sm:w-80 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
-                <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-[10px] font-bold text-blue-600 hover:underline">
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-96 overflow-y-auto py-1">
-                  {notifications.length === 0 ? (
-                    <p className="px-3.5 py-6 text-xs text-slate-400 text-center">No notifications yet.</p>
-                  ) : (
-                    notifications.map((n) => (
-                      <button
-                        key={n.id}
-                        onClick={() => handleNotificationClick(n)}
-                        className={`w-full text-left px-3.5 py-2.5 hover:bg-slate-50 transition flex items-start gap-2 ${
-                          !n.is_read ? 'bg-blue-50/50' : ''
-                        }`}
-                      >
-                        {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />}
-                        <div className={`min-w-0 ${n.is_read ? 'pl-3.5' : ''}`}>
-                          <p className="text-xs font-bold text-slate-800 truncate">{n.title}</p>
-                          {n.message && <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>}
-                          <p className="text-[10px] text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
+              <>
+                {/* Mobile: backdrop + bottom sheet, portaled to <body> so they escape the
+                    header's own stacking context (position:sticky + z-index creates one,
+                    which otherwise traps position:fixed descendants' paint order) */}
+                {createPortal(
+                  <div className="sm:hidden">
+                    <div
+                      className="fixed inset-0 bg-black/40 z-[100] animate-backdrop-in"
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    <div className="fixed inset-x-0 bottom-0 z-[101] bg-white rounded-t-3xl shadow-2xl border-t border-[#ded8cb] animate-sheet-up safe-bottom max-h-[75dvh] flex flex-col">
+                      <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                        <div className="w-9 h-1 rounded-full bg-slate-300" />
+                      </div>
+                      <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <span className="text-sm font-bold text-slate-800">Notifications</span>
+                        <div className="flex items-center gap-3">
+                          {unreadCount > 0 && (
+                            <button onClick={markAllRead} className="press text-xs font-bold text-blue-600">
+                              Mark all read
+                            </button>
+                          )}
+                          <button onClick={() => setShowNotifications(false)} className="press p-1 text-slate-400">
+                            <X className="w-4.5 h-4.5" />
+                          </button>
                         </div>
+                      </div>
+                      <div className="overflow-y-auto py-1 flex-1">
+                        {notifications.length === 0 ? (
+                          <p className="px-4 py-8 text-xs text-slate-400 text-center">No notifications yet.</p>
+                        ) : (
+                          notifications.map((n) => (
+                            <button
+                              key={n.id}
+                              onClick={() => handleNotificationClick(n)}
+                              className={`press w-full text-left px-4 py-3 active:bg-slate-100 flex items-start gap-2 ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                            >
+                              {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />}
+                              <div className={`min-w-0 ${n.is_read ? 'pl-3.5' : ''}`}>
+                                <p className="text-sm font-bold text-slate-800">{n.title}</p>
+                                {n.message && <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>}
+                                <p className="text-[11px] text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+
+                {/* Desktop / tablet: anchored dropdown — stays in the normal tree since it
+                    needs the .relative bell wrapper as its positioning parent */}
+                <div className="hidden sm:block absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden animate-scale-in origin-top-right">
+                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllRead} className="press text-[10px] font-bold text-blue-600 hover:underline">
+                        Mark all read
                       </button>
-                    ))
-                  )}
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto py-1">
+                    {notifications.length === 0 ? (
+                      <p className="px-3.5 py-6 text-xs text-slate-400 text-center">No notifications yet.</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`press w-full text-left px-3.5 py-2.5 hover:bg-slate-50 transition flex items-start gap-2 ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+                        >
+                          {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />}
+                          <div className={`min-w-0 ${n.is_read ? 'pl-3.5' : ''}`}>
+                            <p className="text-xs font-bold text-slate-800 truncate">{n.title}</p>
+                            {n.message && <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>}
+                            <p className="text-[10px] text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
@@ -200,7 +265,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="relative">
             <button
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
+              className="press flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
             >
               <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-700 text-xs shrink-0">
                 {user?.role?.[0] || 'U'}
@@ -216,55 +281,107 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5 hidden sm:block" />
             </button>
 
-            {/* Dropdown Menu */}
             {showRoleSwitcher && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-72 sm:w-72 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
-                <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                    Switch Role Persona
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">Pass: 123456</span>
-                </div>
-
-                <div className="max-h-80 overflow-y-auto py-1">
-                  {institutionalRoles.map((roleItem) => {
-                    const isCurrent = user?.role === roleItem.role;
-                    return (
-                      <button
-                        key={roleItem.role}
-                        onClick={() => {
-                          quickSwitchUser(roleItem.email);
-                          setShowRoleSwitcher(false);
-                        }}
-                        className={`w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center justify-between transition ${
-                          isCurrent ? 'bg-blue-50/50' : ''
-                        }`}
-                      >
-                        <div>
-                          <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                            <span>{roleItem.label}</span>
-                            {isCurrent && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono">
-                            {roleItem.email}
-                          </div>
-                        </div>
-                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${roleItem.color}`}>
-                          {roleItem.role}
+              <>
+                {/* Mobile: backdrop + bottom sheet, portaled to <body> — same stacking-context
+                    escape as the notification sheet above */}
+                {createPortal(
+                  <div className="sm:hidden">
+                    <div
+                      className="fixed inset-0 bg-black/40 z-[100] animate-backdrop-in"
+                      onClick={() => setShowRoleSwitcher(false)}
+                    />
+                    <div className="fixed inset-x-0 bottom-0 z-[101] bg-white rounded-t-3xl shadow-2xl border-t border-[#ded8cb] animate-sheet-up safe-bottom max-h-[80dvh] flex flex-col">
+                      <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+                        <div className="w-9 h-1 rounded-full bg-slate-300" />
+                      </div>
+                      <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <span className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-blue-600" /> Switch Role Persona
                         </span>
-                      </button>
-                    );
-                  })}
+                        <button onClick={() => setShowRoleSwitcher(false)} className="press p-1 text-slate-400">
+                          <X className="w-4.5 h-4.5" />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto py-1 flex-1">
+                        {institutionalRoles.map((roleItem) => {
+                          const isCurrent = user?.role === roleItem.role;
+                          return (
+                            <button
+                              key={roleItem.role}
+                              onClick={() => {
+                                quickSwitchUser(roleItem.email);
+                                setShowRoleSwitcher(false);
+                              }}
+                              className={`press w-full text-left px-4 py-3 active:bg-slate-100 flex items-center justify-between ${isCurrent ? 'bg-blue-50/50' : ''}`}
+                            >
+                              <div>
+                                <div className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span>{roleItem.label}</span>
+                                  {isCurrent && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-mono">{roleItem.email}</div>
+                              </div>
+                              <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0 ${roleItem.color}`}>
+                                {roleItem.role}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+
+                {/* Desktop / tablet: anchored dropdown — stays in the normal tree since it
+                    needs the .relative wrapper as its positioning parent */}
+                <div className="hidden sm:block absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden animate-scale-in origin-top-right">
+                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                      Switch Role Persona
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">Pass: 123456</span>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto py-1">
+                    {institutionalRoles.map((roleItem) => {
+                      const isCurrent = user?.role === roleItem.role;
+                      return (
+                        <button
+                          key={roleItem.role}
+                          onClick={() => {
+                            quickSwitchUser(roleItem.email);
+                            setShowRoleSwitcher(false);
+                          }}
+                          className={`press w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center justify-between transition ${isCurrent ? 'bg-blue-50/50' : ''}`}
+                        >
+                          <div>
+                            <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                              <span>{roleItem.label}</span>
+                              {isCurrent && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {roleItem.email}
+                            </div>
+                          </div>
+                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${roleItem.color}`}>
+                            {roleItem.role}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
           {/* Logout Button */}
           <button
             onClick={logout}
-            className="p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-600 hover:text-rose-700 transition shadow-2xs"
+            className="press p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-600 hover:text-rose-700 transition shadow-2xs"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
+import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import {
   UserX,
@@ -266,19 +267,18 @@ export const SubstitutionCenter: React.FC = () => {
             <form onSubmit={handleMarkTeacherAbsent} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Select Faculty Member</label>
-                <select
+                <Select
                   required
                   value={absentTeacherId}
-                  onChange={(e) => setAbsentTeacherId(e.target.value)}
+                  onChange={setAbsentTeacherId}
+                  placeholder="-- Choose Teacher --"
+                  sheetTitle="Select Faculty Member"
+                  options={allTeachers.map((t) => ({
+                    value: t.id,
+                    label: `${t.name} (${t.employee_id}) - ${t.department_name}`
+                  }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">-- Choose Teacher --</option>
-                  {allTeachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.employee_id}) - {t.department_name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>

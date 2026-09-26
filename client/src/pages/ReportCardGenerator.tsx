@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
+import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import {
   FileCheck2,
@@ -33,6 +34,10 @@ export const ReportCardGenerator: React.FC = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedMultiSubjects, setSelectedMultiSubjects] = useState<string[]>([]);
   const [reportType, setReportType] = useState<'DETAILED' | 'SUMMARY'>('DETAILED');
+
+  // Bulk-generation modal selections (previously uncontrolled placeholders)
+  const [bulkClass, setBulkClass] = useState<string>('2 PUC');
+  const [bulkSectionBatch, setBulkSectionBatch] = useState<string>('A-NEET');
 
   // Generated Report Data
   const [reportData, setReportData] = useState<any | null>(null);
@@ -176,60 +181,56 @@ export const ReportCardGenerator: React.FC = () => {
           {/* Select Student */}
           <div>
             <label className="block font-bold text-slate-700 mb-1">Select Student</label>
-            <select
+            <Select
               value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
+              onChange={setSelectedStudentId}
+              sheetTitle="Select Student"
+              options={students.map((st) => ({ value: st.id, label: `${st.name} (${st.register_number})` }))}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-semibold text-slate-900 outline-none"
-            >
-              {students.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.name} ({st.register_number})
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Dynamic Exam Selector */}
           <div>
             <label className="block font-bold text-slate-700 mb-1">Select Examination</label>
-            <select
+            <Select
               value={selectedExamId}
-              onChange={(e) => setSelectedExamId(e.target.value)}
+              onChange={setSelectedExamId}
+              sheetTitle="Select Examination"
+              options={exams.map((ex) => ({ value: ex.id, label: `${ex.name} (${ex.exam_type})` }))}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-semibold text-indigo-900 outline-none"
-            >
-              {exams.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name} ({ex.exam_type})
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Subject Mode Selector */}
           <div>
             <label className="block font-bold text-slate-700 mb-1">Subject Scope Mode</label>
-            <select
+            <Select
               value={subjectMode}
-              onChange={(e: any) => setSubjectMode(e.target.value)}
+              onChange={(v) => setSubjectMode(v as 'ALL' | 'SINGLE' | 'MULTI')}
+              sheetTitle="Subject Scope Mode"
+              options={[
+                { value: 'ALL', label: 'Option 1: ALL Enrolled Subjects' },
+                { value: 'SINGLE', label: 'Option 2: ONE Subject Specific' },
+                { value: 'MULTI', label: 'Option 3: MULTIPLE Selected Subjects' }
+              ]}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-semibold text-slate-900 outline-none"
-            >
-              <option value="ALL">Option 1: ALL Enrolled Subjects</option>
-              <option value="SINGLE">Option 2: ONE Subject Specific</option>
-              <option value="MULTI">Option 3: MULTIPLE Selected Subjects</option>
-            </select>
+            />
           </div>
 
           {/* Report Layout Type */}
           <div>
             <label className="block font-bold text-slate-700 mb-1">Report Detail Level</label>
-            <select
+            <Select
               value={reportType}
-              onChange={(e: any) => setReportType(e.target.value)}
+              onChange={(v) => setReportType(v as 'DETAILED' | 'SUMMARY')}
+              sheetTitle="Report Detail Level"
+              options={[
+                { value: 'DETAILED', label: 'Detailed Institutional Report' },
+                { value: 'SUMMARY', label: 'Compact Summary Report' }
+              ]}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-semibold text-slate-900 outline-none"
-            >
-              <option value="DETAILED">Detailed Institutional Report</option>
-              <option value="SUMMARY">Compact Summary Report</option>
-            </select>
+            />
           </div>
         </div>
 
@@ -514,32 +515,39 @@ export const ReportCardGenerator: React.FC = () => {
             <div className="p-6 space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Target Class</label>
-                <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none">
-                  <option value="2 PUC">2 PUC</option>
-                  <option value="1 PUC">1 PUC</option>
-                </select>
+                <Select
+                  value={bulkClass}
+                  onChange={setBulkClass}
+                  sheetTitle="Target Class"
+                  options={[{ value: '2 PUC', label: '2 PUC' }, { value: '1 PUC', label: '1 PUC' }]}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none"
+                />
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Target Section & Batch</label>
-                <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none">
-                  <option value="A-NEET">Section A - NEET Batch</option>
-                  <option value="B-JEE">Section B - JEE Batch</option>
-                  <option value="C-KCET">Section C - KCET Batch</option>
-                </select>
+                <Select
+                  value={bulkSectionBatch}
+                  onChange={setBulkSectionBatch}
+                  sheetTitle="Target Section & Batch"
+                  options={[
+                    { value: 'A-NEET', label: 'Section A - NEET Batch' },
+                    { value: 'B-JEE', label: 'Section B - JEE Batch' },
+                    { value: 'C-KCET', label: 'Section C - KCET Batch' }
+                  ]}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none"
+                />
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Examination</label>
-                <select
+                <Select
                   value={selectedExamId}
-                  onChange={(e) => setSelectedExamId(e.target.value)}
+                  onChange={setSelectedExamId}
+                  sheetTitle="Examination"
+                  options={exams.map((ex) => ({ value: ex.id, label: ex.name }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-bold"
-                >
-                  {exams.map((ex) => (
-                    <option key={ex.id} value={ex.id}>{ex.name}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="pt-3 flex gap-3">

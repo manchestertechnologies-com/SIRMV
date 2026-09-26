@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, LogIn, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
 
@@ -151,24 +152,26 @@ export const LoginPage: React.FC = () => {
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 Institutional Role Presets
               </label>
-              <select
+              <Select
                 value={identifier}
-                onChange={(e) => {
-                  setIdentifier(e.target.value);
+                onChange={(v) => {
+                  setIdentifier(v);
                   setPassword('123456');
                 }}
+                sheetTitle="Institutional Role Presets"
+                options={[
+                  { value: 'admin@sirmv.edu.in', label: 'Administrator (admin@sirmv.edu.in)' },
+                  { value: 'principal@sirmv.edu.in', label: 'Principal Office (principal@sirmv.edu.in)' },
+                  { value: 'hod.physics@sirmv.edu.in', label: 'HOD Physics (hod.physics@sirmv.edu.in)' },
+                  { value: 'lecturer@sirmv.edu.in', label: 'Teaching Faculty (lecturer@sirmv.edu.in)' },
+                  { value: 'attender@sirmv.edu.in', label: 'Floor Attender (attender@sirmv.edu.in)' },
+                  { value: 'staff@sirmv.edu.in', label: 'Office Staff (staff@sirmv.edu.in)' },
+                  { value: 'warden@sirmv.edu.in', label: 'Hostel Warden (warden@sirmv.edu.in)' },
+                  { value: 'student@sirmv.edu.in', label: 'Student Account (student@sirmv.edu.in)' },
+                  { value: 'parent@sirmv.edu.in', label: 'Parent Portal (parent@sirmv.edu.in)' }
+                ]}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition cursor-pointer"
-              >
-                <option value="admin@sirmv.edu.in">Administrator (admin@sirmv.edu.in)</option>
-                <option value="principal@sirmv.edu.in">Principal Office (principal@sirmv.edu.in)</option>
-                <option value="hod.physics@sirmv.edu.in">HOD Physics (hod.physics@sirmv.edu.in)</option>
-                <option value="lecturer@sirmv.edu.in">Teaching Faculty (lecturer@sirmv.edu.in)</option>
-                <option value="attender@sirmv.edu.in">Floor Attender (attender@sirmv.edu.in)</option>
-                <option value="staff@sirmv.edu.in">Office Staff (staff@sirmv.edu.in)</option>
-                <option value="warden@sirmv.edu.in">Hostel Warden (warden@sirmv.edu.in)</option>
-                <option value="student@sirmv.edu.in">Student Account (student@sirmv.edu.in)</option>
-                <option value="parent@sirmv.edu.in">Parent Portal (parent@sirmv.edu.in)</option>
-              </select>
+              />
             </div>
 
           </div>

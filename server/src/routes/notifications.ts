@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
+import { getVapidPublicKey } from '../services/pushService';
 import crypto from 'crypto';
 
 export const notificationsRouter = Router();
@@ -78,3 +79,81 @@ export async function createNotification(userId: string, title: string, message?
   `, [id, userId, title, message || null, linkTab || null]);
   return id;
 }
+
+// ---------------------------------------------------------------------------
+// Web Push (VAPID) — the browser/OS notification layer. This is separate from
+// the in-app "notifications" table above: a push is what wakes the device
+// when the site isn't open, an in-app notification is the bell dropdown.
+// A publish/approval flow (e.g. timetableGenerator.ts) typically calls both
+// createNotification() and sendPushToUser() for the same event.
+// ---------------------------------------------------------------------------
+
+// 5. Public VAPID key — safe to expose, this is what the frontend needs to subscribe.
+notificationsRouter.get('/vapid-public-key', authenticate, async (_req: AuthRequest, res: Response) => {
+  const key = getVapidPublicKey();
+  if (!key) {
+    return res.status(503).json({ error: 'Push notifications are not configured on this server yet.' });
+  }
+  return res.json({ publicKey: key });
+});
+
+// 6. Whether the current user has at least one active push subscription (any device).
+notificationsRouter.get('/status', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const rows = await query<{ count: string }>(`SELECT COUNT(*) as count FROM push_subscriptions WHERE user_id = $1`, [req.user!.id]);
+    const count = Number(rows[0]?.count || 0);
+    return res.json({ subscribed: count > 0, deviceCount: count });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. Register (or refresh) this device's push subscription for the authenticated user.
+//    userId always comes from the JWT (req.user.id) — never from the request body.
+notificationsRouter.post('/subscribe', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { endpoint, keys, platform } = req.body || {};
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({ error: 'A valid PushSubscription (endpoint, keys.p256dh, keys.auth) is required.' });
+    }
+
+    const userAgent = req.headers['user-agent'] || null;
+    const existing = await queryOne<{ id: string; user_id: string }>(`SELECT id, user_id FROM push_subscriptions WHERE endpoint = $1`, [endpoint]);
+
+    if (existing) {
+      // Same endpoint re-subscribing (e.g. key refresh) — keep it tied to whoever owns it now.
+      await execute(
+        `UPDATE push_subscriptions SET user_id = $1, p256dh = $2, auth = $3, user_agent = $4, platform = $5, updated_at = CURRENT_TIMESTAMP WHERE endpoint = $6`,
+        [req.user!.id, keys.p256dh, keys.auth, userAgent, platform || null, endpoint]
+      );
+      return res.json({ success: true, id: existing.id });
+    }
+
+    const id = 'push-' + crypto.randomUUID();
+    await execute(
+      `INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, user_agent, platform)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [id, req.user!.id, endpoint, keys.p256dh, keys.auth, userAgent, platform || null]
+    );
+    await logAudit(req, 'PUSH_SUBSCRIBED', 'push_subscriptions', id, { platform });
+    return res.status(201).json({ success: true, id });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 8. Remove one specific device's subscription (never all of a user's devices at once).
+notificationsRouter.post('/unsubscribe', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { endpoint } = req.body || {};
+    if (!endpoint) {
+      return res.status(400).json({ error: 'endpoint is required.' });
+    }
+    // Scoped to the authenticated user's own id — cannot remove someone else's subscription.
+    const deleted = await execute(`DELETE FROM push_subscriptions WHERE endpoint = $1 AND user_id = $2`, [endpoint, req.user!.id]);
+    await logAudit(req, 'PUSH_UNSUBSCRIBED', 'push_subscriptions', endpoint, {});
+    return res.json({ success: true, removed: deleted });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});

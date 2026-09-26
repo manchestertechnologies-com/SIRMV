@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Play, Video, BookOpen, Clock, Calendar, CheckCircle2, User, Sparkles, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Select } from '../components/Select';
 
 export const LiveClassModule: React.FC = () => {
   const { user } = useAuth();
@@ -97,18 +98,20 @@ export const LiveClassModule: React.FC = () => {
         {/* Filter */}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-400" />
-          <select
+          <Select
             value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
+            onChange={setSelectedSubject}
+            sheetTitle="Filter by Subject"
+            options={[
+              { value: 'ALL', label: 'All Subjects' },
+              { value: 'Physics', label: 'Physics' },
+              { value: 'Chemistry', label: 'Chemistry' },
+              { value: 'Mathematics', label: 'Mathematics' },
+              { value: 'Biology', label: 'Biology' },
+              { value: 'Computer Science', label: 'Computer Science' }
+            ]}
             className="px-3 py-1.5 bg-white border border-[#ded8cb] rounded-xl text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-600"
-          >
-            <option value="ALL">All Subjects</option>
-            <option value="Physics">Physics</option>
-            <option value="Chemistry">Chemistry</option>
-            <option value="Mathematics">Mathematics</option>
-            <option value="Biology">Biology</option>
-            <option value="Computer Science">Computer Science</option>
-          </select>
+          />
         </div>
       </div>
 

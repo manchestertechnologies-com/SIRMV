@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
+import { Select } from '../components/Select';
 import {
   History,
   Search,
@@ -68,20 +69,23 @@ export const AuditLogsPage: React.FC = () => {
           />
         </form>
 
-        <select
+        <Select
           value={actionFilter}
-          onChange={(e) => setActionFilter(e.target.value)}
+          onChange={setActionFilter}
+          placeholder="All Audit Actions"
+          sheetTitle="Filter by Action"
+          options={[
+            { value: '', label: 'All Audit Actions' },
+            { value: 'ATTENDANCE_FINALIZED', label: 'Attendance Finalized' },
+            { value: 'TEACHER_MARKED_ABSENT', label: 'Teacher Marked Absent' },
+            { value: 'SUBSTITUTION_ASSIGNED', label: 'Substitution Assigned' },
+            { value: 'OUTPASS_APPROVED', label: 'Outpass Approved' },
+            { value: 'GATE_EXIT_RECORDED', label: 'Gate Exit Recorded' },
+            { value: 'GATE_RETURN_RECORDED', label: 'Gate Return Recorded' },
+            { value: 'REPORT_CARD_GENERATED', label: 'Report Card Generated' }
+          ]}
           className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none"
-        >
-          <option value="">All Audit Actions</option>
-          <option value="ATTENDANCE_FINALIZED">Attendance Finalized</option>
-          <option value="TEACHER_MARKED_ABSENT">Teacher Marked Absent</option>
-          <option value="SUBSTITUTION_ASSIGNED">Substitution Assigned</option>
-          <option value="OUTPASS_APPROVED">Outpass Approved</option>
-          <option value="GATE_EXIT_RECORDED">Gate Exit Recorded</option>
-          <option value="GATE_RETURN_RECORDED">Gate Return Recorded</option>
-          <option value="REPORT_CARD_GENERATED">Report Card Generated</option>
-        </select>
+        />
       </div>
 
       {/* Audit Log Table */}

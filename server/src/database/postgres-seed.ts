@@ -523,6 +523,44 @@ export async function seedPostgresDatabase() {
     await upsert(epSql, ['ep-rahul-phy', 'sp-rahul', 'es-mid-phy', '/uploads/evaluated_papers/rahul_phy_midterm.pdf', 'usr-teacher-abc'], 'evaluated_papers');
     await upsert(epSql, ['ep-rahul-bio', 'sp-rahul', 'es-mid-bio', '/uploads/evaluated_papers/rahul_bio_midterm.pdf', 'usr-teacher-bio1'], 'evaluated_papers');
 
+    // 18b. Shivamogga Standard Role-Switcher Accounts
+    // These 10 accounts exist so that every entry in the Navbar's "Switch Role
+    // Persona" dropdown (Navbar.tsx institutionalRoles) and the AuthContext demo
+    // fallback role map actually resolves to a real, working Postgres user —
+    // all on branch-smg (Shivamogga), all logging in with password 123456.
+    // usr-prin-smg already existed (created above) with different credentials;
+    // it's re-upserted here so its username/email now match the dropdown too.
+    await upsert(userSql, ['usr-admin-smg', 'branch-smg', 'admin', passwordHash, 'ADMIN', 'Campus Administrator', 'admin@sirmv.edu.in', '9900011111', '/avatars/admin.png', 1], 'users');
+    await upsert(userSql, ['usr-prin-smg', 'branch-smg', 'principal', passwordHash, 'PRINCIPAL', 'Prof. K. R. Suresh (Principal)', 'principal@sirmv.edu.in', '9845022333', '/avatars/principal.png', 1], 'users');
+    await upsert(userSql, ['usr-hodphysics-smg', 'branch-smg', 'hod.physics', passwordHash, 'HOD', 'Dr. Nagesh Rao (HOD Physics)', 'hod.physics@sirmv.edu.in', '9900022222', '/avatars/hod_phy.png', 1], 'users');
+    await upsert(userSql, ['usr-lecturer-smg', 'branch-smg', 'lecturer', passwordHash, 'TEACHER', 'Mrs. Deepa Shetty (Senior Faculty)', 'lecturer@sirmv.edu.in', '9900033333', '/avatars/teacher_abc.png', 1], 'users');
+    await upsert(userSql, ['usr-attender-smg', 'branch-smg', 'attender', passwordHash, 'FLOOR_ATTENDER', 'Ravindra Naik (Floor Operations)', 'attender@sirmv.edu.in', '9900044444', '/avatars/attender.png', 1], 'users');
+    await upsert(userSql, ['usr-staff-smg', 'branch-smg', 'staff', passwordHash, 'NON_TEACHING_STAFF', 'Ganesh Bhat (Administrative Staff)', 'staff@sirmv.edu.in', '9900055555', '/avatars/security.png', 1], 'users');
+    await upsert(userSql, ['usr-warden-smg', 'branch-smg', 'warden', passwordHash, 'WARDEN', 'Suresh Poojary (Hostel Warden)', 'warden@sirmv.edu.in', '9900066666', '/avatars/warden.png', 1], 'users');
+    await upsert(userSql, ['usr-headwarden-smg', 'branch-smg', 'headwarden', passwordHash, 'HEAD_WARDEN', 'Dr. Chandrakala H (Chief Warden)', 'headwarden@sirmv.edu.in', '9900077777', '/avatars/warden.png', 1], 'users');
+    await upsert(userSql, ['usr-student-smg', 'branch-smg', 'student', passwordHash, 'STUDENT', 'Bhoomika Naik (Student)', 'student@sirmv.edu.in', '9900088888', '/avatars/student_rahul.png', 1], 'users');
+    await upsert(userSql, ['usr-parent-smg', 'branch-smg', 'parent', passwordHash, 'PARENT', 'Mr. Naveen Naik (Parent)', 'parent@sirmv.edu.in', '9900099999', '/avatars/parent.png', 1], 'users');
+
+    // Teacher profiles for the two teaching-role accounts above, so they can be
+    // used in teacher_assignments and appear in the Timetable Generator.
+    await upsert(tpSql, ['tp-hodphysics-smg', 'usr-hodphysics-smg', 'EMP-SMG-PHY-001', '/avatars/hod_phy.png', '1975-02-10', '9900022222', 'hod.physics@sirmv.edu.in', 'Tilak Nagar, Shivamogga', 'dept-phy-branch-smg', 'Professor & HOD', '2012-06-01', 'M.Sc., Ph.D. in Physics', 1], 'teacher_profiles');
+    await upsert(tpSql, ['tp-lecturer-smg', 'usr-lecturer-smg', 'EMP-SMG-PHY-002', '/avatars/teacher_abc.png', '1988-09-22', '9900033333', 'lecturer@sirmv.edu.in', 'Jail Road, Shivamogga', 'dept-phy-branch-smg', 'Senior Physics Lecturer', '2019-06-15', 'M.Sc. Physics, B.Ed', 0], 'teacher_profiles');
+    await client.query(`UPDATE departments SET hod_user_id = 'usr-hodphysics-smg' WHERE id = 'dept-phy-branch-smg'`);
+
+    // Real teacher_assignments for branch-smg so "Suggest From Assignments" /
+    // "Suggest All Teachers" in the Timetable Generator return actual data.
+    await upsert(taSql, ['ta-hodphysics-smg-1', 'tp-hodphysics-smg', 'dept-phy-branch-smg', 'sub-phy-branch-smg', 'cls-1puc-branch-smg', 'sec-1PUC-A-branch-smg', 'batch-neet-branch-smg', 1], 'teacher_assignments');
+    await upsert(taSql, ['ta-lecturer-smg-1', 'tp-lecturer-smg', 'dept-phy-branch-smg', 'sub-phy-branch-smg', 'cls-2puc-branch-smg', 'sec-2PUC-A-branch-smg', 'batch-neet-branch-smg', 0], 'teacher_assignments');
+    await upsert(taSql, ['ta-lecturer-smg-2', 'tp-lecturer-smg', 'dept-phy-branch-smg', 'sub-phy-branch-smg', 'cls-2puc-branch-smg', 'sec-2PUC-B-branch-smg', 'batch-jee-branch-smg', 0], 'teacher_assignments');
+
+    // Minimal student_profile for the Shivamogga student/parent demo accounts.
+    await upsert(studentSql, [
+      'sp-bhoomika-smg', 'usr-student-smg', 'branch-smg', '2026PUCSMG001', 'Bhoomika Naik', '/avatars/student_rahul.png',
+      '2008-11-02', 'FEMALE', '9900088888', 'student@sirmv.edu.in', 'Tilak Nagar, Shivamogga',
+      'usr-parent-smg', 'Mr. Naveen Naik', '9900099999', 'parent@sirmv.edu.in',
+      'cls-2puc-branch-smg', 'sec-2PUC-A-branch-smg', 'batch-neet-branch-smg', 0
+    ], 'student_profiles');
+
     // 18. Audit Logs
     const auditSql = `
       INSERT INTO audit_logs (id, user_id, user_name, role, action, entity_type, entity_id, details_json, ip_address)

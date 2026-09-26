@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
 import { X } from 'lucide-react';
@@ -22,12 +22,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
     onClose?.();
   };
 
+  // Lock background scroll while the drawer is open — standard iOS drawer behavior
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [isOpen]);
+
   return (
     <>
       {/* Backdrop — mobile only, shown while the drawer is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden animate-backdrop-in"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -37,8 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         className={`
           fixed md:relative top-0 left-0 h-screen md:h-auto md:min-h-screen z-50 md:z-auto
           w-72 sm:w-64 md:w-56 shrink-0 bg-[#ebe7de] border-r border-[#ded9cf]
-          flex flex-col select-none
-          transform transition-transform duration-200 ease-out
+          flex flex-col select-none safe-top safe-bottom
+          transform transition-transform duration-[380ms] [transition-timing-function:var(--ease-ios)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         `}
       >
@@ -60,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           {/* Close button — mobile only */}
           <button
             onClick={onClose}
-            className="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-[#dfdbd2] hover:text-slate-800 transition shrink-0"
+            className="press md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-[#dfdbd2] hover:text-slate-800 transition shrink-0"
             aria-label="Close menu"
           >
             <X className="w-4.5 h-4.5" />
@@ -80,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 <button
                   key={item.id}
                   onClick={() => handleSelect(item.targetTab)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-100 ${
+                  className={`press w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-colors duration-150 ${
                     isActive
                       ? 'bg-[#dfdbd2] text-slate-900 font-semibold'
                       : 'text-slate-700 hover:bg-[#e4dfd6] hover:text-slate-900'
@@ -109,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                   <button
                     key={item.id}
                     onClick={() => handleSelect(item.targetTab)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-100 ${
+                    className={`press w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-colors duration-150 ${
                       isActive
                         ? 'bg-[#dfdbd2] text-slate-900 font-semibold'
                         : 'text-slate-700 hover:bg-[#e4dfd6] hover:text-slate-900'

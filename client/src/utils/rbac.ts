@@ -1,4 +1,4 @@
-﻿import {
+import {
   IconDashboard,
   IconStaffs,
   IconStudents,
@@ -191,6 +191,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'attendance', label: 'Attendance', icon: IconAttendance, targetTab: 'attendance' },
           { id: 'fee', label: 'Fee', icon: IconFee, targetTab: 'fee' },
           { id: 'timetable', label: 'Timetable', icon: IconTimetable, targetTab: 'timetable' },
+          { id: 'timetable-generator', label: 'Timetable Generator', icon: IconTimetable, targetTab: 'timetable-generator' },
           { id: 'live-class', label: 'Live Class', icon: IconLiveClass, targetTab: 'live-class' },
           { id: 'sms', label: 'Sms', icon: IconSms, targetTab: 'sms' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard' },

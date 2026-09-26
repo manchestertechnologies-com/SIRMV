@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
+import { Select } from '../components/Select';
 import { CameraModal } from '../components/CameraModal';
 import {
   Users,
@@ -315,17 +316,19 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
           />
         </div>
 
-        <select
+        <Select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={setStatusFilter}
+          sheetTitle="Filter by Status"
+          options={[
+            { value: 'ALL', label: `All Statuses (${students.length})` },
+            { value: 'PRESENT', label: `Present (${presentCount})` },
+            { value: 'ABSENT', label: `Absent (${absentCount})` },
+            { value: 'LATE', label: `Late (${lateCount})` },
+            { value: 'MEDICAL', label: 'Medical Leave' }
+          ]}
           className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none"
-        >
-          <option value="ALL">All Statuses ({students.length})</option>
-          <option value="PRESENT">Present ({presentCount})</option>
-          <option value="ABSENT">Absent ({absentCount})</option>
-          <option value="LATE">Late ({lateCount})</option>
-          <option value="MEDICAL">Medical Leave</option>
-        </select>
+        />
       </div>
 
       {/* Students Attendance Table */}

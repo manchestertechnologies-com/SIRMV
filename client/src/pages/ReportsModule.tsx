@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { Select } from '../components/Select';
 import {
   BarChart3,
   TrendingUp,
@@ -134,17 +135,13 @@ export const ReportsModule: React.FC = () => {
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-700">Select Examination:</span>
-              <select
+              <Select
                 value={selectedExamId}
-                onChange={(e) => setSelectedExamId(e.target.value)}
+                onChange={setSelectedExamId}
+                sheetTitle="Select Examination"
+                options={exams.map((e) => ({ value: e.id, label: `${e.name} (${e.exam_type})` }))}
                 className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-              >
-                {exams.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name} ({e.exam_type})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <span className="text-xs text-slate-500 font-medium">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { LoginPage } from './pages/LoginPage';
@@ -19,6 +19,8 @@ import { TestsPage } from './pages/TestsPage';
 import { BoardMarksPage } from './pages/BoardMarksPage';
 import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
+import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
+import { SettingsPage } from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -27,6 +29,26 @@ export function App() {
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
+
+  // Push notification tap routing: the service worker either postMessages an
+  // already-open tab (notificationclick focusing an existing window) or opens
+  // a new window with ?openTab=... (no window was open) — both land here.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openTab = params.get('openTab');
+    if (openTab) {
+      setActiveTab(openTab);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_NOTIFICATION_CLICK' && event.data.targetTab) {
+        setActiveTab(event.data.targetTab);
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', onMessage);
+  }, []);
 
   const moduleTitles: Record<string, string> = {
     staffs: 'Staffs',
@@ -40,6 +62,7 @@ export function App() {
     attendance: 'Attendance',
     fee: 'Fee',
     timetable: 'Timetable',
+    'timetable-generator': 'Timetable Generator',
     'live-class': 'Live Class',
     sms: 'Sms',
     noticeboard: 'Noticeboard',
@@ -267,6 +290,10 @@ export function App() {
               </div>
               <TeachersModule />
             </div>
+          ) : activeTab === 'timetable-generator' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <TimetableGeneratorModule />
+            </div>
           ) : activeTab === 'classes' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
@@ -398,6 +425,8 @@ export function App() {
               </div>
               <FeeModule />
             </div>
+          ) : activeTab === 'settings' ? (
+            <SettingsPage />
           ) : (
             <div className="space-y-6 max-w-5xl mx-auto">
               {/* Top Bar for Placeholder Modules */}
