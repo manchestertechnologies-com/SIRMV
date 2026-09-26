@@ -267,10 +267,17 @@ const ExamListView: React.FC<{
 // Room configuration view
 // ---------------------------------------------------------------------------
 
+const NEW_ROOM_DEFAULTS = { room_number: '', floor: 0, building: 'Main Academic Block', benches: 15, seats_per_bench: 2, is_available_for_exams: true };
+
 const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'error', m: string) => void }> = ({ onBack, flash }) => {
   const { currentBranch } = useAuth();
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newRoom, setNewRoom] = useState(NEW_ROOM_DEFAULTS);
+  const [isCreating, setIsCreating] = useState(false);
+  const [justAddedRoomId, setJustAddedRoomId] = useState<string | null>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -302,12 +309,115 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
     }
   };
 
+  const createRoom = async () => {
+    if (!newRoom.room_number.trim()) {
+      flash('error', 'Room number is required.');
+      return;
+    }
+    setIsCreating(true);
+    try {
+      const res = await apiFetch<{ room_id: string; message: string }>('/exam-management/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ branch_id: currentBranch?.id, ...newRoom })
+      });
+      flash('success', res.message || `Room ${newRoom.room_number} added.`);
+      setShowAddForm(false);
+      setJustAddedRoomId(res.room_id);
+      setSelectedRoomId(res.room_id);
+      setNewRoom(NEW_ROOM_DEFAULTS);
+      await load();
+    } catch (err: any) {
+      flash('error', err.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const roomsByFloor: Record<number, FloorRoom[]> = {};
+  rooms.forEach((r) => {
+    (roomsByFloor[r.floor] = roomsByFloor[r.floor] || []).push({
+      roomId: r.room_id,
+      roomNumber: r.room_number,
+      floor: r.floor,
+      benches: r.benches,
+      seatsPerBench: r.seats_per_bench,
+      capacity: r.total_capacity,
+      studentsAssigned: 0,
+      status: (r.room_id === justAddedRoomId ? 'SELECTED' : r.is_available_for_exams ? 'AVAILABLE' : 'UNAVAILABLE') as RoomStatus,
+      building: r.building
+    });
+  });
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <button onClick={onBack} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200"><ArrowLeft className="w-4 h-4 text-slate-600" /></button>
-        <h2 className="text-lg font-bold text-slate-900 font-heading">Exam Room Configuration</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button onClick={onBack} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200"><ArrowLeft className="w-4 h-4 text-slate-600" /></button>
+          <h2 className="text-lg font-bold text-slate-900 font-heading">Exam Room Configuration</h2>
+        </div>
+        <button
+          onClick={() => setShowAddForm((v) => !v)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+        >
+          <Plus className="w-4 h-4" /> Add Room
+        </button>
       </div>
+
+      {showAddForm && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-3">
+          <h3 className="text-sm font-bold text-slate-900">New Room</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
+              Room Number
+              <input value={newRoom.room_number} onChange={(e) => setNewRoom((p) => ({ ...p, room_number: e.target.value }))}
+                placeholder="e.g. 103" className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
+              Floor <span className="font-normal normal-case text-slate-400">(0 = ground)</span>
+              <input type="number" min={0} value={newRoom.floor} onChange={(e) => setNewRoom((p) => ({ ...p, floor: Number(e.target.value) || 0 }))}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500 col-span-2">
+              Building
+              <input value={newRoom.building} onChange={(e) => setNewRoom((p) => ({ ...p, building: e.target.value }))}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
+              Benches
+              <input type="number" min={1} value={newRoom.benches} onChange={(e) => setNewRoom((p) => ({ ...p, benches: Number(e.target.value) || 1 }))}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+            </label>
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
+              Seats / Bench
+              <input type="number" min={1} value={newRoom.seats_per_bench} onChange={(e) => setNewRoom((p) => ({ ...p, seats_per_bench: Number(e.target.value) || 1 }))}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+            </label>
+          </div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <input type="checkbox" checked={newRoom.is_available_for_exams} onChange={(e) => setNewRoom((p) => ({ ...p, is_available_for_exams: e.target.checked }))} />
+            Available for exams
+          </label>
+          <div className="flex justify-end gap-2 pt-1">
+            <button onClick={() => setShowAddForm(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100">Cancel</button>
+            <button onClick={createRoom} disabled={isCreating} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-60">
+              <CheckCircle2 className="w-3.5 h-3.5" /> {isCreating ? 'Adding...' : 'Add Room'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {Object.keys(roomsByFloor).length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 mb-2 px-1">Examination Building — 3D View</h3>
+          <p className="text-[11px] text-slate-500 mb-2 px-1">Click a block to see full room details. A newly added room is highlighted until you refresh.</p>
+          <ExamFloor3D
+            roomsByFloor={roomsByFloor}
+            selectedRoomId={selectedRoomId}
+            onSelectRoom={(id) => setSelectedRoomId(id || null)}
+          />
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">

@@ -55,6 +55,52 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
   }
 });
 
+// Add a brand-new physical room (there was previously no way to create one
+// at all — only to configure benches/seats on rooms already seeded). Room
+// number + floor + building place it; it then appears positioned on the
+// 3D building view for that floor immediately, same as any other room.
+examManagementRouter.post('/rooms', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { branch_id, room_number, floor, building, benches, seats_per_bench, is_available_for_exams } = req.body;
+    if (!room_number || `${room_number}`.trim() === '') {
+      return res.status(400).json({ error: 'room_number is required.' });
+    }
+    if (floor === undefined || floor === null || Number.isNaN(Number(floor))) {
+      return res.status(400).json({ error: 'floor is required and must be a number (use 0 for the ground floor).' });
+    }
+    const branchId = branch_id || req.user!.branch_id;
+
+    const existing = await queryOne(
+      `SELECT id FROM rooms WHERE branch_id = $1 AND floor = $2 AND LOWER(room_number) = LOWER($3)`,
+      [branchId, Number(floor), `${room_number}`.trim()]
+    );
+    if (existing) {
+      return res.status(409).json({ error: `Room ${room_number} already exists on that floor.` });
+    }
+
+    const benchesN = Number.isInteger(benches) && benches > 0 ? benches : 15;
+    const seatsPerBenchN = Number.isInteger(seats_per_bench) && seats_per_bench > 0 ? seats_per_bench : 2;
+    const roomId = 'room-' + crypto.randomUUID();
+
+    await transaction(async (client) => {
+      await client.query(
+        `INSERT INTO rooms (id, branch_id, room_number, floor, building, capacity) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [roomId, branchId, `${room_number}`.trim(), Number(floor), building && `${building}`.trim() ? `${building}`.trim() : 'Main Academic Block', benchesN * seatsPerBenchN]
+      );
+      await client.query(
+        `INSERT INTO exam_room_configs (room_id, benches, seats_per_bench, is_available_for_exams)
+         VALUES ($1,$2,$3,$4)`,
+        [roomId, benchesN, seatsPerBenchN, is_available_for_exams === false ? 0 : 1]
+      );
+    });
+
+    await logAudit(req, 'EXAM_ROOM_CREATED', 'rooms', roomId, { room_number, floor, building, benches: benchesN, seats_per_bench: seatsPerBenchN });
+    return res.status(201).json({ success: true, room_id: roomId, message: `Room ${room_number} added to floor ${floor}.` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Configure a room's benches / seats-per-bench / exam availability.
 examManagementRouter.put('/rooms/:roomId/config', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
   try {

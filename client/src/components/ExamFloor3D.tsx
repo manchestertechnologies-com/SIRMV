@@ -1,10 +1,17 @@
-import React, { Suspense, useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 // Deliberately not using drei's <Text> (troika-three-text): it fetches a
 // default font from a remote CDN at runtime, which fails hard (blank
-// canvas) on any restricted or flaky network. <Html> labels below cover
-// every bit of text this scene needs without that dependency.
+// canvas) on any restricted or flaky network.
+// Also deliberately not using drei's <Html>: with several instances
+// mounting at once (one per room), its per-instance `ReactDOM.createRoot`
+// races under React 19's concurrent scheduler and some labels silently
+// never render their content (confirmed by inspecting the mounted DOM —
+// the wrapper element exists but is empty). `LabelOverlay` below reimplements
+// the same "project a 3D point onto the 2D canvas" idea as one normal
+// overlay in the outer React tree, so there's only ever one root involved.
 import { Building2, Grid3x3, RotateCcw, X } from 'lucide-react';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
@@ -39,282 +46,247 @@ const STATUS_LABEL: Record<RoomStatus, string> = {
   PRIORITY: 'Priority Room'
 };
 
-const WALL_BLUE = '#2563eb';
-const WALL_WHITE = '#f8fafc';
-const DESK_TAN = '#d6b98c';
-const BOARD_GREEN = '#166534';
+function benchAvailability(room: FloorRoom) {
+  const benches = Math.max(1, room.benches);
+  const seatsPerBench = Math.max(1, room.seatsPerBench);
+  const occupiedBenches = Math.min(benches, Math.ceil(room.studentsAssigned / seatsPerBench));
+  return { occupiedBenches, availableBenches: benches - occupiedBenches };
+}
 
 // ---------------------------------------------------------------------------
-// A single classroom: floor slab, three walls (open toward the corridor so
-// the desk grid is visible from above, matching an architectural cutaway),
-// a blackboard + teacher table against the back wall, a desk/bench grid
-// sized to the room's actual benches x seats-per-bench, a status accent
-// stripe over the doorway, and a floating name label.
+// Shared layout math: where each room's cube sits (two rows flanking a
+// corridor once there are more than 4 rooms), and where the ground plaza
+// and corridor strip go. Used both to place the actual 3D meshes and,
+// outside the canvas, to know where each label should be projected.
 // ---------------------------------------------------------------------------
-function ClassroomBlock({
-  room, x, z, width, depth, faceSign, onClick
+const CUBE_SIZE = 1.5;
+const CUBE_GAP = 0.7; // wide enough that neighboring room labels never overlap on screen
+const CUBE_HEIGHT = 0.85;
+const CORRIDOR_DEPTH = 1.3;
+
+interface RoomLayout { room: FloorRoom; x: number; z: number; }
+interface SceneLayout {
+  rooms: RoomLayout[];
+  rows: number;
+  totalWidth: number;
+  plazaDepth: number;
+  hasCorridor: boolean;
+}
+
+function computeLayout(rooms: FloorRoom[]): SceneLayout {
+  const rows = rooms.length > 4 ? 2 : 1;
+  const perRow = Math.ceil(rooms.length / rows);
+  const rowA = rooms.slice(0, perRow);
+  const rowB = rooms.slice(perRow);
+
+  const cellW = CUBE_SIZE + CUBE_GAP;
+  const rowAWidth = rowA.length * cellW - CUBE_GAP;
+  const rowBWidth = rowB.length * cellW - CUBE_GAP;
+  const totalWidth = Math.max(rowAWidth, rowBWidth, CUBE_SIZE);
+
+  const zA = rows === 2 ? -(CORRIDOR_DEPTH / 2 + CUBE_SIZE / 2) : 0;
+  const zB = rows === 2 ? CORRIDOR_DEPTH / 2 + CUBE_SIZE / 2 : 0;
+  const plazaDepth = rows === 2 ? CUBE_SIZE * 2 + CORRIDOR_DEPTH + 2 : CUBE_SIZE + 2;
+
+  const placed: RoomLayout[] = [
+    ...rowA.map((r, i) => ({ room: r, x: -((rowA.length * cellW - CUBE_GAP) / 2) + cellW * i + CUBE_SIZE / 2, z: zA })),
+    ...rowB.map((r, i) => ({ room: r, x: -((rowB.length * cellW - CUBE_GAP) / 2) + cellW * i + CUBE_SIZE / 2, z: zB }))
+  ];
+
+  return { rooms: placed, rows, totalWidth, plazaDepth, hasCorridor: rows === 2 };
+}
+
+// ---------------------------------------------------------------------------
+// A single classroom: a clean, solid cube colored by status. The room
+// number / bench-count label lives outside the canvas (see LabelOverlay) —
+// keeping it there avoids drei's <Html>, which is unreliable when several
+// instances mount in the same tick (see the import comment above). Full
+// detail (benches, seats/bench, occupancy, room ID) is shown in the detail
+// panel on click rather than crammed into the 3D scene.
+// ---------------------------------------------------------------------------
+function ClassroomCube({
+  room, x, z, onClick
 }: {
-  room: FloorRoom; x: number; z: number; width: number; depth: number;
-  // faceSign: +1 if the room's open side faces +z (corridor is in front),
-  // -1 if it faces -z (room is mirrored on the far side of the corridor).
-  faceSign: 1 | -1;
+  room: FloorRoom; x: number; z: number;
   onClick: () => void;
 }) {
-  const wallH = 1.1;
-  const wallT = 0.08;
   const color = STATUS_COLOR[room.status];
-  const backZ = -faceSign * (depth / 2 - wallT / 2);
-  const doorZ = faceSign * (depth / 2 - wallT / 2);
-
-  const benches = Math.max(1, Math.min(room.benches, 10));
-  const seatsPerBench = Math.max(1, Math.min(room.seatsPerBench, 6));
-  const deskAreaW = width * 0.78;
-  const deskAreaD = depth * 0.55;
-  const deskW = deskAreaW / seatsPerBench;
-  const deskD = deskAreaD / benches;
-
-  const desks: React.ReactNode[] = [];
-  for (let b = 0; b < benches; b++) {
-    for (let s = 0; s < seatsPerBench; s++) {
-      const dx = -deskAreaW / 2 + deskW * (s + 0.5);
-      const dz = faceSign * (-depth / 2 + deskAreaD * 0.18 + deskD * (b + 0.5));
-      desks.push(
-        <mesh key={`d-${b}-${s}`} position={[dx, 0.16, dz]}>
-          <boxGeometry args={[deskW * 0.8, 0.08, deskD * 0.55]} />
-          <meshStandardMaterial color={DESK_TAN} />
-        </mesh>
-      );
-    }
-  }
 
   return (
     <group position={[x, 0, z]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
-      {/* Floor slab */}
-      <mesh position={[0, 0.02, 0]}>
-        <boxGeometry args={[width, 0.04, depth]} />
-        <meshStandardMaterial color={WALL_WHITE} />
-      </mesh>
-      {/* Status accent stripe across the doorway threshold */}
-      <mesh position={[0, 0.045, doorZ - faceSign * 0.02]}>
-        <boxGeometry args={[width * 0.9, 0.02, 0.08]} />
+      <mesh position={[0, CUBE_HEIGHT / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[CUBE_SIZE, CUBE_HEIGHT, CUBE_SIZE]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* Back wall + blackboard */}
-      <mesh position={[0, wallH / 2, backZ]}>
-        <boxGeometry args={[width, wallH, wallT]} />
-        <meshStandardMaterial color={WALL_BLUE} />
+      {/* A slightly darker cap so the cube reads as a solid block, not a flat color swatch */}
+      <mesh position={[0, CUBE_HEIGHT + 0.015, 0]}>
+        <boxGeometry args={[CUBE_SIZE * 0.98, 0.03, CUBE_SIZE * 0.98]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15} />
       </mesh>
-      <mesh position={[0, wallH * 0.62, backZ - faceSign * (wallT / 2 + 0.01)]}>
-        <boxGeometry args={[width * 0.45, wallH * 0.32, 0.02]} />
-        <meshStandardMaterial color={BOARD_GREEN} />
-      </mesh>
-      {/* Teacher table */}
-      <mesh position={[0, 0.14, backZ - faceSign * depth * 0.14]}>
-        <boxGeometry args={[width * 0.22, 0.12, depth * 0.12]} />
-        <meshStandardMaterial color={DESK_TAN} />
-      </mesh>
-      {/* Side walls (door side left open toward the corridor) */}
-      <mesh position={[-width / 2 + wallT / 2, wallH / 2, 0]}>
-        <boxGeometry args={[wallT, wallH, depth]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      <mesh position={[width / 2 - wallT / 2, wallH / 2, 0]}>
-        <boxGeometry args={[wallT, wallH, depth]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      {desks}
-      {/* Room label pinned near the doorway, like a door plaque */}
-      <Html position={[0, 0, doorZ]} center distanceFactor={9} occlude style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, color: '#0f172a', background: 'rgba(255,255,255,0.92)',
-          padding: '2px 7px', borderRadius: 6, border: `1px solid ${color}`, whiteSpace: 'nowrap'
-        }}>
-          {room.roomNumber}
-        </div>
-      </Html>
-      <Html position={[0, wallH + 0.22, 0]} center distanceFactor={9} occlude style={{ pointerEvents: 'none' }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap' }}>{room.roomNumber}</div>
-      </Html>
-      <Html position={[0, wallH + 0.02, 0]} center distanceFactor={10} occlude style={{ pointerEvents: 'none' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}>
-          {room.studentsAssigned}/{room.capacity}
-        </div>
-      </Html>
     </group>
   );
 }
 
-// A decorative (non-clickable) end block — stairs on one side, toilets on
-// the other — purely to frame the corridor the way a real floor plan does.
-function EndBlock({ x, depth, label, kind }: { x: number; depth: number; label: string; kind: 'stairs' | 'toilets' }) {
-  return (
-    <group position={[x, 0, 0]}>
-      <mesh position={[0, 0.02, 0]}>
-        <boxGeometry args={[1.4, 0.04, depth]} />
-        <meshStandardMaterial color="#e2e8f0" />
-      </mesh>
-      <mesh position={[0, 0.5, -depth / 2 + 0.05]}>
-        <boxGeometry args={[1.4, 1, 0.08]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      <mesh position={[-0.62, 0.5, 0]}>
-        <boxGeometry args={[0.08, 1, depth]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      <mesh position={[0.62, 0.5, 0]}>
-        <boxGeometry args={[0.08, 1, depth]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      {kind === 'stairs' ? (
-        [0, 1, 2, 3, 4].map((i) => (
-          <mesh key={i} position={[0, 0.05 + i * 0.08, -depth / 2 + 0.3 + i * 0.28]}>
-            <boxGeometry args={[1.1, 0.08, 0.26]} />
-            <meshStandardMaterial color="#94a3b8" />
-          </mesh>
-        ))
-      ) : (
-        <>
-          <mesh position={[-0.3, 0.35, 0]}><boxGeometry args={[0.06, 0.7, depth * 0.7]} /><meshStandardMaterial color="#cbd5e1" /></mesh>
-          <mesh position={[0.15, 0.3, -depth * 0.15]}><boxGeometry args={[0.35, 0.05, 0.3]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
-          <mesh position={[0.15, 0.3, depth * 0.15]}><boxGeometry args={[0.35, 0.05, 0.3]} /><meshStandardMaterial color="#f1f5f9" /></mesh>
-        </>
-      )}
-      <Html position={[0, 1.2, 0]} center distanceFactor={10} occlude style={{ pointerEvents: 'none' }}>
-        <div style={{ fontSize: 9, fontWeight: 800, color: '#475569', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>{label}</div>
-      </Html>
-    </group>
-  );
-}
-
-// A little cone-and-trunk tree / rounded bush, purely decorative landscaping
-// in front of the facade, echoing the reference render.
-function Greenery({ x, z, kind }: { x: number; z: number; kind: 'tree' | 'bush' }) {
-  if (kind === 'tree') {
-    return (
-      <group position={[x, 0, z]}>
-        <mesh position={[0, 0.18, 0]}><cylinderGeometry args={[0.04, 0.05, 0.36, 6]} /><meshStandardMaterial color="#78350f" /></mesh>
-        <mesh position={[0, 0.5, 0]}><coneGeometry args={[0.28, 0.55, 8]} /><meshStandardMaterial color="#16a34a" /></mesh>
-      </group>
-    );
-  }
-  return (
-    <mesh position={[x, 0.14, z]}>
-      <sphereGeometry args={[0.16, 8, 8]} />
-      <meshStandardMaterial color="#22c55e" />
-    </mesh>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Full building scene: two rows of classrooms flanking a labeled corridor,
-// stairs + toilets bookending the rows, and a front facade with an entrance
-// and signage — an isometric-style layout modeled on the reference render.
+// Full building scene: two rows of classroom cubes flanking a labeled
+// corridor strip — a clean, simple block layout rather than a detailed
+// architectural cutaway.
 // ---------------------------------------------------------------------------
-function BuildingScene({ rooms, onSelectRoom }: { rooms: FloorRoom[]; onSelectRoom: (id: string) => void }) {
-  const width = 1.9;
-  const depth = 1.7;
-  const gap = 0.12;
-  const corridorDepth = 1.5;
-
-  const rows = rooms.length > 4 ? 2 : 1;
-  const perRow = Math.ceil(rooms.length / rows);
-  const rowA = rooms.slice(0, perRow); // far row (faces -z, toward the back)
-  const rowB = rooms.slice(perRow); // near row (faces +z, toward the corridor/entrance)
-
-  const cellW = width + gap;
-  const rowAWidth = rowA.length * cellW - gap;
-  const rowBWidth = rowB.length * cellW - gap;
-  const totalWidth = Math.max(rowAWidth, rowBWidth, width);
-
-  const zA = rows === 2 ? -(corridorDepth / 2 + depth / 2) : 0;
-  const zB = rows === 2 ? corridorDepth / 2 + depth / 2 : 0;
-
-  const half = totalWidth / 2;
-  const facadeZ = zB + depth / 2 + 0.9;
-
+function BuildingScene({ layout, onSelectRoom }: { layout: SceneLayout; onSelectRoom: (id: string) => void }) {
   return (
     <group>
-      {/* Ground plaza */}
-      <mesh position={[0, -0.02, facadeZ * 0.3]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[totalWidth + 4, Math.abs(facadeZ) + Math.abs(zA) + depth + 4]} />
-        <meshStandardMaterial color="#e5e7eb" />
+      {/* Ground plaza — deliberately excluded from the camera auto-fit
+          (userData.excludeFromFit) so the frame hugs the classroom cubes
+          instead of stretching out to include the whole floor plate. */}
+      <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow userData={{ excludeFromFit: true }}>
+        <planeGeometry args={[layout.totalWidth + 2.5, layout.plazaDepth]} />
+        <meshStandardMaterial color="#e7e9ee" />
       </mesh>
 
-      {/* Corridor strip + label */}
-      {rows === 2 && (
-        <>
-          <mesh position={[0, 0.01, 0]}>
-            <boxGeometry args={[totalWidth, 0.02, corridorDepth]} />
-            <meshStandardMaterial color="#f1f5f9" />
-          </mesh>
-          <Html position={[0, 0.05, 0]} center distanceFactor={12} occlude style={{ pointerEvents: 'none' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: 2, whiteSpace: 'nowrap' }}>CORRIDOR</div>
-          </Html>
-        </>
-      )}
-
-      {rowA.map((r, i) => (
-        <ClassroomBlock
-          key={r.roomId} room={r} faceSign={-1}
-          x={-((rowA.length * cellW - gap) / 2) + cellW * i + width / 2}
-          z={zA} width={width} depth={depth}
-          onClick={() => onSelectRoom(r.roomId)}
-        />
-      ))}
-      {rowB.map((r, i) => (
-        <ClassroomBlock
-          key={r.roomId} room={r} faceSign={1}
-          x={-((rowB.length * cellW - gap) / 2) + cellW * i + width / 2}
-          z={zB} width={width} depth={depth}
-          onClick={() => onSelectRoom(r.roomId)}
-        />
-      ))}
-
-      {rows === 2 && (
-        <>
-          <EndBlock x={-half - 1.0} depth={depth * 2 + corridorDepth} label="Stairs" kind="stairs" />
-          <EndBlock x={half + 1.0} depth={depth * 2 + corridorDepth} label="Toilets" kind="toilets" />
-        </>
-      )}
-
-      {/* Facade: front wall of the building with an entrance + signage */}
-      <mesh position={[0, 0.55, facadeZ]}>
-        <boxGeometry args={[totalWidth + 3, 1.1, 0.15]} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-      <mesh position={[0, 1.15, facadeZ]}>
-        <boxGeometry args={[totalWidth + 3, 0.1, 0.16]} />
-        <meshStandardMaterial color={WALL_BLUE} />
-      </mesh>
-      <mesh position={[0, 0.42, facadeZ - 0.35]}>
-        <boxGeometry args={[1.3, 0.75, 0.5]} />
-        <meshStandardMaterial color="#dbeafe" />
-      </mesh>
-      {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[0, 0.05 + i * 0.06, facadeZ - 0.4 - i * 0.22]}>
-          <boxGeometry args={[1.5, 0.06, 0.2]} />
-          <meshStandardMaterial color="#cbd5e1" />
+      {/* Corridor strip */}
+      {layout.hasCorridor && (
+        <mesh position={[0, 0.005, 0]} receiveShadow>
+          <boxGeometry args={[layout.totalWidth, 0.01, CORRIDOR_DEPTH]} />
+          <meshStandardMaterial color="#f1f5f9" />
         </mesh>
-      ))}
-      <Html position={[0, 1.15, facadeZ]} center distanceFactor={9} occlude style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontSize: 11, fontWeight: 800, color: '#ffffff', background: WALL_BLUE,
-          padding: '3px 10px', borderRadius: 4, whiteSpace: 'nowrap', letterSpacing: 0.5
-        }}>
-          COLLEGE BUILDING
-        </div>
-      </Html>
+      )}
 
-      {/* Landscaping along the front edge */}
-      {Array.from({ length: Math.max(3, Math.floor(totalWidth / 1.4)) }).map((_, i) => {
-        const n = Math.max(3, Math.floor(totalWidth / 1.4));
-        const gx = -half + (i + 0.5) * (totalWidth / n);
-        return Math.abs(gx) < 0.9
-          ? <Greenery key={i} x={gx} z={facadeZ + 0.55} kind="bush" />
-          : <Greenery key={i} x={gx} z={facadeZ + 0.6} kind="tree" />;
-      })}
+      {layout.rooms.map(({ room, x, z }) => (
+        <ClassroomCube key={room.roomId} room={room} x={x} z={z} onClick={() => onSelectRoom(room.roomId)} />
+      ))}
     </group>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Projects a set of 3D world points onto 2D canvas-pixel coordinates every
+// frame and reports back only when something actually moved (same idea as
+// drei's Html, minus the per-label React root). Lives inside the Canvas so
+// it can read the live camera; the overlay that consumes its output lives
+// outside, in the single outer React tree.
+// ---------------------------------------------------------------------------
+interface LabelPoint { id: string; position: [number, number, number]; }
+interface ScreenPos { x: number; y: number; behind: boolean; }
+
+function LabelProjector({ points, onUpdate }: { points: LabelPoint[]; onUpdate: (pos: Record<string, ScreenPos>) => void }) {
+  const { camera, size } = useThree();
+  const lastRef = useRef<Record<string, ScreenPos>>({});
+  const worldPos = useRef(new THREE.Vector3());
+  const camPos = useRef(new THREE.Vector3());
+  const camDir = useRef(new THREE.Vector3());
+
+  useFrame(() => {
+    camera.updateMatrixWorld();
+    camera.getWorldPosition(camPos.current);
+    camera.getWorldDirection(camDir.current);
+    const next: Record<string, ScreenPos> = {};
+    let changed = false;
+    for (const p of points) {
+      worldPos.current.set(p.position[0], p.position[1], p.position[2]);
+      const toPoint = worldPos.current.clone().sub(camPos.current);
+      const behind = toPoint.angleTo(camDir.current) > Math.PI / 2;
+      const projected = worldPos.current.clone().project(camera);
+      const x = projected.x * (size.width / 2) + size.width / 2;
+      const y = -(projected.y * (size.height / 2)) + size.height / 2;
+      next[p.id] = { x, y, behind };
+      const prev = lastRef.current[p.id];
+      if (!prev || Math.abs(prev.x - x) > 0.4 || Math.abs(prev.y - y) > 0.4 || prev.behind !== behind) {
+        changed = true;
+      }
+    }
+    if (Object.keys(lastRef.current).length !== Object.keys(next).length) changed = true;
+    if (changed) {
+      lastRef.current = next;
+      onUpdate(next);
+    }
+  });
+  return null;
+}
+
+// Frames the whole building in view automatically: measures the real
+// rendered geometry each time the floor/room set changes and repositions
+// the camera + orbit target to fit it, instead of a single hand-tuned
+// camera position that only looks right for one particular room count.
+function FitCameraToScene({
+  groupRef, controlsRef, signature
+}: {
+  groupRef: React.RefObject<THREE.Object3D | null>;
+  controlsRef: React.RefObject<any>;
+  signature: string;
+}) {
+  const { camera } = useThree();
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    // Build the fit box from the classroom cubes (and everything else)
+    // except meshes explicitly flagged out, e.g. the wide ground plaza —
+    // otherwise the camera zooms out to fit the whole floor plate and the
+    // actual rooms shrink to a tiny cluster in the middle of the frame.
+    const box = new THREE.Box3();
+    group.traverse((obj) => {
+      if ((obj as any).isMesh && !obj.userData?.excludeFromFit) {
+        box.expandByObject(obj);
+      }
+    });
+    if (box.isEmpty()) return;
+    // The room-number/bench-count label is an <Html> overlay anchored above
+    // each cube, not a mesh, so it never counts toward the box above. Pad
+    // upward so the fit leaves room for it instead of clipping it at the
+    // top edge of the canvas.
+    box.max.y += 0.55;
+    const center = box.getCenter(new THREE.Vector3());
+
+    // A sphere-based fit wastes a lot of a wide canvas: it braces for the
+    // object's full diagonal in every direction, so a flat, wide layout
+    // like this one (short vertically, wide horizontally) ends up tiny
+    // with big empty margins left and right. Instead, fit the camera to
+    // the box's actual corners along the camera's own view axes, which
+    // hugs the real silhouette from this specific viewing angle.
+    const persp = camera as THREE.PerspectiveCamera;
+    const vFov = (persp.fov * Math.PI) / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (persp.aspect || 1));
+
+    const dir = new THREE.Vector3(0.15, 0.9, 1).normalize(); // camera-from-center direction
+    const forward = dir.clone().negate(); // camera-to-center direction
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
+    if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+    const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+
+    const corners = [
+      new THREE.Vector3(box.min.x, box.min.y, box.min.z), new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.min.z), new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+      new THREE.Vector3(box.min.x, box.min.y, box.max.z), new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+      new THREE.Vector3(box.min.x, box.max.y, box.max.z), new THREE.Vector3(box.max.x, box.max.y, box.max.z)
+    ];
+
+    const tanH = Math.tan(hFov / 2);
+    const tanV = Math.tan(vFov / 2);
+    let dist = 1.4; // sane floor for a single small room
+    for (const corner of corners) {
+      const rel = corner.clone().sub(center);
+      const k = rel.dot(dir); // how far this corner sits toward the camera along `dir`
+      const x = rel.dot(right);
+      const y = rel.dot(up);
+      // depth(D) = D - k must satisfy depth*tan >= |x| (and |y|), so
+      // D >= k + |x|/tan. Take the strictest requirement over all corners.
+      dist = Math.max(dist, k + Math.abs(x) / tanH, k + Math.abs(y) / tanV);
+    }
+    dist *= 1.12; // small breathing margin
+
+    persp.position.copy(center.clone().add(dir.clone().multiplyScalar(dist)));
+    persp.near = Math.max(0.05, dist / 100);
+    persp.far = dist * 12;
+    persp.lookAt(center);
+    persp.updateProjectionMatrix();
+
+    if (controlsRef.current) {
+      controlsRef.current.target.copy(center);
+      controlsRef.current.update();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+  return null;
 }
 
 export const ExamFloor3D: React.FC<{
@@ -339,9 +311,26 @@ export const ExamFloor3D: React.FC<{
   }, [floors]);
 
   const [mode, setMode] = useState<'3D' | '2D'>('3D');
+  const groupRef = useRef<THREE.Group>(null);
+  const controlsRef = useRef<any>(null);
 
   const activeRooms = roomsByFloor[activeFloor] || [];
   const selectedRoom = activeRooms.find((r) => r.roomId === selectedRoomId) || null;
+  const totalAvailableBenches = activeRooms.reduce((sum, r) => sum + benchAvailability(r).availableBenches, 0);
+  const totalBenches = activeRooms.reduce((sum, r) => sum + r.benches, 0);
+  // Re-fit the camera whenever the floor changes or the room set on it
+  // changes (e.g. a room is added, or rooms load in asynchronously).
+  const sceneSignature = `${activeFloor}-${activeRooms.map((r) => r.roomId).join(',')}`;
+
+  const layout = useMemo(() => computeLayout(activeRooms), [sceneSignature]); // eslint-disable-line react-hooks/exhaustive-deps
+  const labelPoints = useMemo<LabelPoint[]>(() => {
+    const points: LabelPoint[] = layout.rooms.map(({ room, x, z }) => ({
+      id: room.roomId, position: [x, CUBE_HEIGHT + 0.32, z]
+    }));
+    if (layout.hasCorridor) points.push({ id: '__corridor', position: [0, 0.02, 0] });
+    return points;
+  }, [layout]);
+  const [screenPositions, setScreenPositions] = useState<Record<string, ScreenPos>>({});
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -374,22 +363,73 @@ export const ExamFloor3D: React.FC<{
         </div>
       </div>
 
+      <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-2 text-xs">
+        <span className="text-slate-500">Benches open on this floor:</span>
+        <span className={`font-bold ${totalAvailableBenches > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{totalAvailableBenches} / {totalBenches}</span>
+      </div>
+
       {mode === '3D' ? (
-        <div style={{ height: 420 }} className="bg-slate-100 relative">
-          <Canvas camera={{ position: [0, 8, 8.5], fov: 42 }}>
-            <ambientLight intensity={0.9} />
-            <directionalLight position={[6, 10, 4]} intensity={0.7} />
-            <directionalLight position={[-6, 6, -4]} intensity={0.25} />
-            <Suspense fallback={null}>
-              <BuildingScene rooms={activeRooms} onSelectRoom={onSelectRoom} />
-            </Suspense>
-            <OrbitControls
-              enablePan enableZoom enableRotate makeDefault
-              minPolarAngle={0.3}
-              maxPolarAngle={Math.PI / 2.3}
-              target={[0, 0, 1]}
-            />
-          </Canvas>
+        <div style={{ height: 380 }} className="bg-gradient-to-b from-slate-100 to-slate-200 relative">
+          {activeRooms.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">No rooms on this floor yet.</div>
+          ) : (
+            <Canvas shadows camera={{ position: [0, 8, 8.5], fov: 42 }}>
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[6, 10, 4]} intensity={0.85} castShadow shadow-mapSize={[1024, 1024]} />
+              <directionalLight position={[-6, 6, -4]} intensity={0.3} />
+              <Suspense fallback={null}>
+                <group ref={groupRef}>
+                  <BuildingScene layout={layout} onSelectRoom={onSelectRoom} />
+                </group>
+              </Suspense>
+              <FitCameraToScene groupRef={groupRef} controlsRef={controlsRef} signature={sceneSignature} />
+              <LabelProjector points={labelPoints} onUpdate={setScreenPositions} />
+              <OrbitControls
+                ref={controlsRef}
+                enablePan enableZoom enableRotate makeDefault
+                minPolarAngle={0.3}
+                maxPolarAngle={Math.PI / 2.3}
+              />
+            </Canvas>
+          )}
+          {activeRooms.length > 0 && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {layout.rooms.map(({ room }) => {
+                const pos = screenPositions[room.roomId];
+                if (!pos || pos.behind) return null;
+                const { availableBenches } = benchAvailability(room);
+                const color = STATUS_COLOR[room.status];
+                return (
+                  <div
+                    key={room.roomId}
+                    style={{
+                      position: 'absolute', left: 0, top: 0,
+                      transform: `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -100%)`,
+                      fontSize: 11, fontWeight: 800, color: '#0f172a', background: 'rgba(255,255,255,0.96)',
+                      padding: '3px 9px', borderRadius: 7, border: `1.5px solid ${color}`, whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 6px rgba(15,23,42,0.15)', textAlign: 'center', lineHeight: 1.3
+                    }}
+                  >
+                    <div>{room.roomNumber}</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: availableBenches > 0 ? '#059669' : '#dc2626' }}>
+                      {availableBenches > 0 ? `${availableBenches} bench${availableBenches === 1 ? '' : 'es'} open` : 'Full'}
+                    </div>
+                  </div>
+                );
+              })}
+              {layout.hasCorridor && screenPositions.__corridor && !screenPositions.__corridor.behind && (
+                <div
+                  style={{
+                    position: 'absolute', left: 0, top: 0,
+                    transform: `translate3d(${screenPositions.__corridor.x}px, ${screenPositions.__corridor.y}px, 0) translate(-50%, -50%)`,
+                    fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: 2, whiteSpace: 'nowrap'
+                  }}
+                >
+                  CORRIDOR
+                </div>
+              )}
+            </div>
+          )}
           <button
             onClick={() => onSelectRoom('')}
             title="Reset view"
@@ -400,18 +440,24 @@ export const ExamFloor3D: React.FC<{
         </div>
       ) : (
         <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {activeRooms.map((r) => (
-            <button
-              key={r.roomId}
-              onClick={() => onSelectRoom(r.roomId)}
-              className="text-left p-3 rounded-xl border-2 transition"
-              style={{ borderColor: STATUS_COLOR[r.status], background: `${STATUS_COLOR[r.status]}14` }}
-            >
-              <div className="font-bold text-sm text-slate-900">Room {r.roomNumber}</div>
-              <div className="text-[11px] text-slate-500">{STATUS_LABEL[r.status]}</div>
-              <div className="text-[11px] text-slate-600 mt-1">{r.studentsAssigned}/{r.capacity} seats</div>
-            </button>
-          ))}
+          {activeRooms.map((r) => {
+            const { availableBenches } = benchAvailability(r);
+            return (
+              <button
+                key={r.roomId}
+                onClick={() => onSelectRoom(r.roomId)}
+                className="text-left p-3 rounded-xl border-2 transition"
+                style={{ borderColor: STATUS_COLOR[r.status], background: `${STATUS_COLOR[r.status]}14` }}
+              >
+                <div className="font-bold text-sm text-slate-900">Room {r.roomNumber}</div>
+                <div className="text-[11px] text-slate-500">{STATUS_LABEL[r.status]}</div>
+                <div className="text-[11px] text-slate-600 mt-1">{r.studentsAssigned}/{r.capacity} seats</div>
+                <div className={`text-[11px] font-semibold mt-0.5 ${availableBenches > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {availableBenches > 0 ? `${availableBenches} bench(es) available` : 'No benches available'}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -444,11 +490,12 @@ export const ExamFloor3D: React.FC<{
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-xs text-slate-600">
             <div><span className="text-slate-400 block">Benches</span>{selectedRoom.benches}</div>
             <div><span className="text-slate-400 block">Seats / Bench</span>{selectedRoom.seatsPerBench}</div>
+            <div><span className="text-slate-400 block">Benches Available</span><span className="font-bold text-emerald-600">{benchAvailability(selectedRoom).availableBenches}</span></div>
             <div><span className="text-slate-400 block">Total Capacity</span>{selectedRoom.capacity}</div>
             <div><span className="text-slate-400 block">Students Assigned</span>{selectedRoom.studentsAssigned}</div>
             <div><span className="text-slate-400 block">Seats Available</span>{Math.max(0, selectedRoom.capacity - selectedRoom.studentsAssigned)}</div>
             <div><span className="text-slate-400 block">Occupancy</span>{selectedRoom.capacity > 0 ? Math.round((selectedRoom.studentsAssigned / selectedRoom.capacity) * 100) : 0}%</div>
-            <div className="col-span-2 sm:col-span-2"><span className="text-slate-400 block">Room ID</span><span className="font-mono text-[10px]">{selectedRoom.roomId}</span></div>
+            <div><span className="text-slate-400 block">Room ID</span><span className="font-mono text-[10px]">{selectedRoom.roomId}</span></div>
           </div>
 
           <div className="mt-3 h-1.5 rounded-full bg-slate-200 overflow-hidden">
