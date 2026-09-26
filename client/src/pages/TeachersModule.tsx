@@ -66,7 +66,15 @@ export const TeachersModule: React.FC = () => {
   const [myTimetableData, setMyTimetableData] = useState<any | null>(null);
 
   // Substitution Center State
-  const [subDate, setSubDate] = useState(new Date().toISOString().split('T')[0]);
+  // Local calendar date, not new Date().toISOString() — toISOString() is
+  // always UTC, which can be a whole day behind/ahead of what the database
+  // (and a human looking at a calendar) considers "today" depending on
+  // timezone. That mismatch was exactly why the Faculty Directory's
+  // "absent today" count and this Substitution Hub's count could disagree.
+  const [subDate, setSubDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [substitutionData, setSubstitutionData] = useState<any | null>(null);
   const [showMarkAbsentModal, setShowMarkAbsentModal] = useState(false);
   const [absentTeacherId, setAbsentTeacherId] = useState('');
@@ -76,6 +84,11 @@ export const TeachersModule: React.FC = () => {
   const [selectedSubstituteId, setSelectedSubstituteId] = useState('');
   const [assignRemarks, setAssignRemarks] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
+  // Periods still needing a substitute after marking someone absent — index
+  // 0 is always the one currently shown in the Assign Proxy modal. Lets a
+  // lecturer (or whoever marked the absence) step straight through every
+  // affected period right away instead of leaving them all for later.
+  const [assignQueue, setAssignQueue] = useState<any[]>([]);
 
   // Create Faculty Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -215,6 +228,14 @@ export const TeachersModule: React.FC = () => {
       setNotification({ type: 'success', message: res.message });
       setTimeout(() => setNotification(null), 5000);
       loadSubstitutionCenter();
+
+      // Straight from marking someone absent, line up a substitute for
+      // every period it affects — one at a time — instead of leaving that
+      // for a separate trip to the Hub later.
+      const periods = res.affectedPeriods || [];
+      if (periods.length > 0) {
+        openAssignQueue(periods);
+      }
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -237,6 +258,20 @@ export const TeachersModule: React.FC = () => {
     }
   };
 
+  // Start (or continue) stepping through a queue of affected periods, each
+  // needing its own substitute pick. `periods` is raw timetable_entries rows
+  // (as returned by POST /substitutions/absence) — reshaped into the same
+  // { timetableEntry, dayOfWeek } shape handleOpenAssignModal expects from
+  // the Hub's own requirement list.
+  const openAssignQueue = (periods: any[]) => {
+    setAssignQueue(periods);
+    if (periods.length > 0) {
+      handleOpenAssignModal({ timetableEntry: periods[0], dayOfWeek: periods[0].day_of_week, date: subDate });
+    } else {
+      setSelectedReq(null);
+    }
+  };
+
   // Submit Substitute Assignment
   const handleAssignSubstitute = async () => {
     if (!selectedReq || !selectedSubstituteId) return;
@@ -252,10 +287,10 @@ export const TeachersModule: React.FC = () => {
           remarks: assignRemarks
         })
       });
-      setSelectedReq(null);
       setNotification({ type: 'success', message: res.message });
       setTimeout(() => setNotification(null), 5000);
       loadSubstitutionCenter();
+      openAssignQueue(assignQueue.slice(1));
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -1144,12 +1179,17 @@ export const TeachersModule: React.FC = () => {
                   {selectedReq.timetableEntry.subject_name} • Room {selectedReq.timetableEntry.room_number}
                 </p>
               </div>
-              <button onClick={() => setSelectedReq(null)} className="text-slate-400 hover:text-slate-700 font-bold">
+              <button onClick={() => { setSelectedReq(null); setAssignQueue([]); }} className="text-slate-400 hover:text-slate-700 font-bold">
                 ✕
               </button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {assignQueue.length > 1 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold rounded-xl px-3 py-2">
+                  {assignQueue.length - 1} more affected period{assignQueue.length - 1 === 1 ? '' : 's'} still need a substitute after this one.
+                </div>
+              )}
               <label className="block text-xs font-bold text-slate-700">
                 Available Faculty for Period {selectedReq.timetableEntry.period_number}
               </label>
@@ -1208,11 +1248,20 @@ export const TeachersModule: React.FC = () => {
               <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedReq(null)}
+                  onClick={() => { setSelectedReq(null); setAssignQueue([]); }}
                   className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold"
                 >
                   Cancel
                 </button>
+                {assignQueue.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => openAssignQueue(assignQueue.slice(1))}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold"
+                  >
+                    Skip This Period
+                  </button>
+                )}
                 <button
                   onClick={handleAssignSubstitute}
                   disabled={!selectedSubstituteId || isAssigning}

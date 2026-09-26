@@ -3,9 +3,25 @@ import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import { resolveHodDepartmentId } from '../utils/hodScope';
+import { createNotification } from './notifications';
+import { sendPushToUser } from '../services/pushService';
 import crypto from 'crypto';
 
 export const substitutionsRouter = Router();
+
+// The single source of truth for "today" whenever a caller doesn't pass an
+// explicit ?date= — evaluated by Postgres itself, the exact same expression
+// the Faculty Directory's "absent today" badge uses (TO_CHAR(CURRENT_DATE,
+// 'YYYY-MM-DD')). Previously this fell back to the Node process's own
+// `new Date().toISOString().split('T')[0]`, which is always UTC — that can
+// disagree with the database's calendar day (and with what a human viewing
+// the page considers "today") depending on server/DB timezone, which is
+// exactly how the Directory and the Substitution Hub ended up showing a
+// different absent count for what was meant to be the same day.
+async function getDbToday(): Promise<string> {
+  const row = await queryOne<{ today: string }>(`SELECT TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') as today`);
+  return row!.today;
+}
 
 // 1. Mark Teacher Absent (System auto-identifies affected timetable periods and creates substitution required entries)
 // A real upsert keyed on (teacher_id, date) — teacher_absences has a
@@ -85,7 +101,7 @@ substitutionsRouter.post('/absence', authenticate, requireRoles('HOD', 'PRINCIPA
 substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
   try {
     const branchId = (req.query.branch_id as string) || req.user!.branch_id;
-    const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
+    const date = (req.query.date as string) || await getDbToday();
     const targetDate = new Date(date);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = dayNames[targetDate.getDay()] === 'Sunday' ? 'Monday' : dayNames[targetDate.getDay()];
@@ -216,10 +232,10 @@ substitutionsRouter.get('/center', authenticate, requireRoles('HOD', 'PRINCIPAL'
 });
 
 // 3. Find Available Teachers for a specific Timetable Period (Prioritizes Free Teachers)
-substitutionsRouter.get('/available-teachers', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
+substitutionsRouter.get('/available-teachers', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN', 'TEACHER'), async (req: AuthRequest, res: Response) => {
   try {
     const branchId = (req.query.branch_id as string) || req.user!.branch_id;
-    const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
+    const date = (req.query.date as string) || await getDbToday();
     const dayOfWeek = (req.query.day_of_week as string) || 'Monday';
     const periodNumber = parseInt(req.query.period_number as string, 10) || 1;
     const hodDepartmentId = await resolveHodDepartmentId(req);
@@ -303,11 +319,21 @@ substitutionsRouter.get('/available-teachers', authenticate, requireRoles('HOD',
 });
 
 // 4. Assign Substitute Teacher
-substitutionsRouter.post('/assign', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN'), async (req: AuthRequest, res: Response) => {
+// TEACHER is allowed here too, so a lecturer marking themselves absent can
+// immediately pick their own substitute rather than waiting for an HOD —
+// but only ever for their own periods (checked below), never someone else's.
+substitutionsRouter.post('/assign', authenticate, requireRoles('HOD', 'PRINCIPAL', 'ADMIN', 'TEACHER'), async (req: AuthRequest, res: Response) => {
   const { timetable_entry_id, date, original_teacher_id, substitute_teacher_id, remarks } = req.body;
 
   if (!timetable_entry_id || !date || !original_teacher_id || !substitute_teacher_id) {
     return res.status(400).json({ error: 'Missing required parameters for substitution assignment.' });
+  }
+
+  if (req.user!.role === 'TEACHER') {
+    const own = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!own || own.id !== original_teacher_id) {
+      return res.status(403).json({ error: 'You can only assign a substitute for your own periods.' });
+    }
   }
 
   try {
@@ -359,9 +385,34 @@ substitutionsRouter.post('/assign', authenticate, requireRoles('HOD', 'PRINCIPAL
       assigned_by: assignedBy
     });
 
+    // Notify the substitute teacher — this used to only be claimed in the
+    // response message below, with no notification actually sent.
+    try {
+      const substituteUser = await queryOne<{ user_id: string }>(
+        `SELECT tp.user_id FROM teacher_profiles tp WHERE tp.id = $1`,
+        [substitute_teacher_id]
+      );
+      if (substituteUser?.user_id && timetable) {
+        const subj = await queryOne<{ name: string }>('SELECT name FROM subjects WHERE id = $1', [timetable.subject_id]);
+        const cls = await queryOne<{ name: string }>('SELECT name FROM classes WHERE id = $1', [timetable.class_id]);
+        const sec = await queryOne<{ name: string }>('SELECT name FROM sections WHERE id = $1', [timetable.section_id]);
+        const message = `You've been assigned as a substitute on ${date}, period ${timetable.period_number} (${timetable.start_time}-${timetable.end_time}): ${subj?.name || 'a class'} — ${cls?.name || ''}${sec?.name || ''}.`;
+        await createNotification(substituteUser.user_id, 'Substitution Duty Assigned', message, 'my-schedule');
+        await sendPushToUser(substituteUser.user_id, {
+          title: 'Substitution Duty Assigned',
+          body: message,
+          data: { type: 'substitution', id }
+        });
+      }
+    } catch (notifyErr) {
+      // Never let a notification failure roll back or fail the assignment
+      // itself — the substitution is already recorded above.
+      console.error('Failed to notify substitute teacher', notifyErr);
+    }
+
     return res.json({
       success: true,
-      message: 'Substitute teacher assigned successfully and notification duty created.',
+      message: 'Substitute teacher assigned successfully and the substitute has been notified.',
       substitutionId: id
     });
   } catch (err: any) {
