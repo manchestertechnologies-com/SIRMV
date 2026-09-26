@@ -436,19 +436,24 @@ function LabelProjector({ points, onUpdate }: { points: LabelPoint[]; onUpdate: 
   return null;
 }
 
-// OrbitControls sets the canvas's CSS touch-action to 'none' the moment it
-// connects (three.js does this itself, to guarantee it gets every touch
-// event uncontested) — which as a side effect stops a one-finger swipe over
-// the model from ever reaching the page as a scroll. Since the touches prop
-// above already makes a one-finger touch a no-op for the controls, there's
-// nothing left that needs 'none' here; re-assert 'pan-y' every frame so a
-// single finger scrolls the page while two fingers still reach the canvas
-// for pinch-to-zoom.
+// OrbitControls sets its target element's CSS touch-action to 'none' the
+// moment it connects (three.js does this itself, to guarantee it gets every
+// touch event uncontested) — which as a side effect stops a one-finger
+// swipe from ever reaching the page as a scroll. Critically, that target
+// element is NOT the <canvas> (gl.domElement) — react-three-fiber's <Canvas>
+// attaches pointer/touch events to the plain wrapper <div> it renders around
+// the canvas (exposed as state.events.connected), and that's the node whose
+// style OrbitControls actually mutates. Since the touches prop above already
+// makes a one-finger touch a no-op for the controls, nothing here still
+// needs 'none' — re-assert 'pan-y' on the real connected element every
+// frame so a single finger scrolls the page while two fingers still reach
+// the model for pinch-to-zoom.
 function TouchActionFix() {
-  const { gl } = useThree();
+  const get = useThree((state) => state.get);
   useFrame(() => {
-    if (gl.domElement.style.touchAction !== 'pan-y') {
-      gl.domElement.style.touchAction = 'pan-y';
+    const el = get().events.connected as HTMLElement | undefined;
+    if (el && el.style && el.style.touchAction !== 'pan-y') {
+      el.style.touchAction = 'pan-y';
     }
   });
   return null;
@@ -617,12 +622,16 @@ export const ExamFloor3D: React.FC<{
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+      <div className="p-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
           <Building2 className="w-4 h-4 text-violet-600" />
           <span className="text-sm font-bold text-slate-900">Examination Building</span>
         </div>
-        <div className="flex items-center gap-2">
+        {/* flex-wrap here (rather than relying on the outer row) means the
+            zoom buttons drop to their own line on a narrow phone instead of
+            overflowing past the card's edge and being clipped by its
+            overflow-hidden — that's why they were invisible on mobile. */}
+        <div className="flex items-center flex-wrap gap-2">
           <div className="flex bg-slate-100 p-1 rounded-xl">
             {floors.map((f) => (
               <button
