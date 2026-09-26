@@ -133,6 +133,7 @@ const ExamListView: React.FC<{
 }> = ({ exams, isLoading, onNew, onOpen, onRooms }) => {
   const { currentBranch } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [buildingRooms, setBuildingRooms] = useState<RoomRow[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -141,7 +142,31 @@ const ExamListView: React.FC<{
         setStats(res);
       } catch { /* dashboard is a nice-to-have, don't block the list on it */ }
     })();
+    (async () => {
+      try {
+        // Same rooms the "Configure Rooms" screen edits — reused here just to
+        // draw the building. Not a duplicate data source: no exam/session
+        // fields are stored on it, so there is nothing to keep in sync.
+        const res = await apiFetch<{ rooms: RoomRow[] }>(`/exam-management/rooms?branch_id=${currentBranch?.id || ''}`);
+        setBuildingRooms(res.rooms || []);
+      } catch { /* the 3D overview is a nice-to-have, don't block the list on it */ }
+    })();
   }, [currentBranch]);
+
+  const buildingRoomsByFloor: Record<number, FloorRoom[]> = {};
+  buildingRooms.forEach((r) => {
+    const floorRoom: FloorRoom = {
+      roomId: r.room_id,
+      roomNumber: r.room_number,
+      floor: r.floor,
+      benches: r.benches,
+      seatsPerBench: r.seats_per_bench,
+      capacity: r.total_capacity,
+      studentsAssigned: 0,
+      status: (r.is_available_for_exams ? 'AVAILABLE' : 'UNAVAILABLE') as RoomStatus
+    };
+    (buildingRoomsByFloor[r.floor] = buildingRoomsByFloor[r.floor] || []).push(floorRoom);
+  });
 
   return (
   <div className="space-y-4">
@@ -184,6 +209,17 @@ const ExamListView: React.FC<{
             <span className={`text-lg font-bold mt-1 block ${k.danger ? 'text-rose-600' : 'text-slate-900'}`}>{k.value}</span>
           </div>
         ))}
+      </div>
+    )}
+
+    {Object.keys(buildingRoomsByFloor).length > 0 && (
+      <div>
+        <h2 className="text-sm font-bold text-slate-900 mb-2 px-1">Examination Building — Room Availability</h2>
+        <ExamFloor3D
+          roomsByFloor={buildingRoomsByFloor}
+          selectedRoomId={null}
+          onSelectRoom={onRooms}
+        />
       </div>
     )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
-import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, ArrowLeft, Monitor, FileText, Upload, ListChecks, Trophy } from 'lucide-react';
 
@@ -105,13 +105,19 @@ const CreateTestModal: React.FC<{ branchId: string; meta: any; onClose: () => vo
           </div>
           <input required value={form.title || ''} onChange={(e) => update('title', e.target.value)} placeholder="Test title" className="input" />
           <div className="grid grid-cols-2 gap-3">
-            <Select required value={form.class_id || ''} onChange={(v) => update('class_id', v)} placeholder="Select Class" sheetTitle="Select Class"
-              options={(meta.classes || []).map((c: any) => ({ value: c.id, label: c.name }))} className="input" />
-            <Select required value={form.batch_id || ''} onChange={(v) => update('batch_id', v)} placeholder="Select Batch" sheetTitle="Select Batch"
-              options={(meta.batches || []).map((b: any) => ({ value: b.id, label: b.name }))} className="input" />
+            <select required value={form.class_id || ''} onChange={(e) => update('class_id', e.target.value)} className="input">
+              <option value="">Select Class</option>
+              {meta.classes?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select required value={form.batch_id || ''} onChange={(e) => update('batch_id', e.target.value)} className="input">
+              <option value="">Select Batch</option>
+              {meta.batches?.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
           </div>
-          <Select value={form.subject_id || ''} onChange={(v) => update('subject_id', v)} placeholder="Select Subject (optional)" sheetTitle="Select Subject"
-            options={(meta.subjects || []).map((s: any) => ({ value: s.id, label: s.name }))} className="input" />
+          <select value={form.subject_id || ''} onChange={(e) => update('subject_id', e.target.value)} className="input">
+            <option value="">Select Subject (optional)</option>
+            {meta.subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
           <div className="grid grid-cols-3 gap-3">
             <input required type="date" value={form.scheduled_date || ''} onChange={(e) => update('scheduled_date', e.target.value)} className="input" />
             <input type="time" value={form.start_time || ''} onChange={(e) => update('start_time', e.target.value)} className="input" />
@@ -148,7 +154,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
     try {
       await apiFetch(`/tests/${testId}/questions`, { method: 'POST', body: JSON.stringify(qForm) });
       setQForm({ marks: 1 }); load();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   const uploadPaper = async (file: File) => {
@@ -157,7 +163,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
       const fd = new FormData(); fd.append('paper', file);
       await apiFetch(`/tests/${testId}/upload-paper`, { method: 'POST', body: fd });
       load();
-    } catch (err: any) { alert(err.message); } finally { setUploading(false); }
+    } catch (err: any) { showToast(err.message, 'error'); } finally { setUploading(false); }
   };
 
   if (!test) return <div className="text-sm text-slate-400 text-center py-16">Loading...</div>;
@@ -211,8 +217,9 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
               <input required value={qForm.option_d || ''} onChange={(e) => setQForm({ ...qForm, option_d: e.target.value })} placeholder="Option D" className="input" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Select required value={qForm.correct_option || ''} onChange={(v) => setQForm({ ...qForm, correct_option: v })} placeholder="Correct Option" sheetTitle="Correct Option"
-                options={[{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }, { value: 'C', label: 'C' }, { value: 'D', label: 'D' }]} className="input" />
+              <select required value={qForm.correct_option || ''} onChange={(e) => setQForm({ ...qForm, correct_option: e.target.value })} className="input">
+                <option value="">Correct Option</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+              </select>
               <input type="number" value={qForm.marks} onChange={(e) => setQForm({ ...qForm, marks: Number(e.target.value) })} placeholder="Marks" className="input" />
             </div>
             <button className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">Add Question</button>

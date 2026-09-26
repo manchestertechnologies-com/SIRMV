@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { Bell, Calendar, Pin, FileText, Plus, X, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
-import { Select } from '../components/Select';
 
 const POSTER_ROLES = ['ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'WARDEN', 'HEAD_WARDEN', 'FLOOR_ATTENDER', 'NON_TEACHING_STAFF', 'GATE_STAFF'];
 const CATEGORIES = ['GENERAL', 'ACADEMIC', 'COACHING', 'HOSTEL', 'EXAM', 'ADMIN'];
@@ -51,7 +51,7 @@ export const NoticeboardModule: React.FC = () => {
       await apiFetch(`/announcements/${id}`, { method: 'DELETE' });
       load();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -199,13 +199,9 @@ const ComposerModal: React.FC<{ branchId?: string; onClose: () => void; onPosted
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 mb-1">Category</label>
-              <Select
-                value={category}
-                onChange={setCategory}
-                sheetTitle="Category"
-                options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none"
-              />
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             <div className="flex items-end pb-2.5">
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">

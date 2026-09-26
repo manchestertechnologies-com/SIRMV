@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -49,7 +50,7 @@ export const TeacherPortal: React.FC = () => {
       setTimeout(() => setActionSuccess(null), 4000);
       loadTeacherData();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 

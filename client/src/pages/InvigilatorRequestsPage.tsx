@@ -71,6 +71,7 @@ export const InvigilatorRequestsPage: React.FC = () => {
       {notice && <div className="p-3 rounded-xl text-sm bg-violet-50 text-violet-800 border border-violet-200">{notice}</div>}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead><tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
             <th className="py-2 px-4">Exam</th><th className="py-2 px-4">Date / Time</th><th className="py-2 px-4">Required</th><th className="py-2 px-4">Selected</th><th className="py-2 px-4">Status</th><th className="py-2 px-4"></th>
@@ -94,6 +95,7 @@ export const InvigilatorRequestsPage: React.FC = () => {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {activeRequest && (

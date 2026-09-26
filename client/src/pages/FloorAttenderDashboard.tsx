@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { CameraModal } from '../components/CameraModal';
@@ -128,7 +129,7 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
       setSelectedLecture(null);
       loadFloorDashboard();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsSaving(false);
     }

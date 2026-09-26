@@ -106,6 +106,7 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
         </div>
 
         {reportType === 'INVIGILATOR' && (
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead><tr className="border-b-2 border-slate-800 font-bold">
               <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Time</th><th className="py-2 pr-3">Subject</th>
@@ -127,9 +128,11 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {reportType === 'SEATING' && (
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead><tr className="border-b-2 border-slate-800 font-bold">
               <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Subject</th><th className="py-2 pr-3">Room</th>
@@ -151,6 +154,7 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         {reportType === 'ROOM_CHART' && (

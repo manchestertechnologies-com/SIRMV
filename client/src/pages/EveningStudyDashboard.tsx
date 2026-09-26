@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
-import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import {
   Moon,
@@ -95,7 +95,7 @@ export const EveningStudyDashboard: React.FC = () => {
       setTimeout(() => setSuccessMessage(null), 4000);
       loadSession();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -159,17 +159,15 @@ export const EveningStudyDashboard: React.FC = () => {
                 />
               </div>
 
-              <Select
+              <select
                 value={studyHall}
-                onChange={setStudyHall}
-                sheetTitle="Select Study Hall"
-                options={[
-                  { value: 'Study Hall 1 (Dr. Sir MV Block)', label: 'Study Hall 1 (Dr. Sir MV Block)' },
-                  { value: 'Study Hall 2 (Kuvempu Block)', label: 'Study Hall 2 (Kuvempu Block)' },
-                  { value: 'Library Reading Hall', label: 'Library Reading Hall' }
-                ]}
+                onChange={(e) => setStudyHall(e.target.value)}
                 className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-800 outline-none"
-              />
+              >
+                <option value="Study Hall 1 (Dr. Sir MV Block)">Study Hall 1 (Dr. Sir MV Block)</option>
+                <option value="Study Hall 2 (Kuvempu Block)">Study Hall 2 (Kuvempu Block)</option>
+                <option value="Library Reading Hall">Library Reading Hall</option>
+              </select>
 
               <span className="text-slate-400 font-mono">Slot: 18:30 - 21:00 (150 mins)</span>
             </div>
@@ -227,24 +225,22 @@ export const EveningStudyDashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Select
+                        <select
                           value={st.status || 'PRESENT'}
-                          onChange={(v) => handleStudentFieldChange(st.id, 'status', v)}
-                          sheetTitle="Attendance Status"
-                          options={[
-                            { value: 'PRESENT', label: 'PRESENT' },
-                            { value: 'ABSENT', label: 'ABSENT' },
-                            { value: 'LATE', label: 'LATE' },
-                            { value: 'LEFT_EARLY', label: 'LEFT EARLY' },
-                            { value: 'ON_LEAVE', label: 'ON LEAVE' }
-                          ]}
+                          onChange={(e) => handleStudentFieldChange(st.id, 'status', e.target.value)}
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold outline-none border ${
                             st.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
                             st.status === 'ABSENT' ? 'bg-rose-50 text-rose-800 border-rose-200' :
                             st.status === 'LEFT_EARLY' ? 'bg-purple-50 text-purple-800 border-purple-200' :
                             'bg-amber-50 text-amber-800 border-amber-200'
                           }`}
-                        />
+                        >
+                          <option value="PRESENT">PRESENT</option>
+                          <option value="ABSENT">ABSENT</option>
+                          <option value="LATE">LATE</option>
+                          <option value="LEFT_EARLY">LEFT EARLY</option>
+                          <option value="ON_LEAVE">ON LEAVE</option>
+                        </select>
                       </td>
                       <td className="py-3 px-4">
                         <input

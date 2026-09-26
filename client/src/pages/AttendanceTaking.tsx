@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
-import { Select } from '../components/Select';
 import { CameraModal } from '../components/CameraModal';
 import {
   Users,
@@ -92,7 +92,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
       setSuccessMessage('Attendance draft saved successfully.');
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -134,7 +134,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
       setSuccessMessage('Photo processed. Please review and verify suggestions below before finalizing.');
       setTimeout(() => setSuccessMessage(null), 6000);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsProcessingPhoto(false);
     }
@@ -165,7 +165,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
       setTimeout(() => setSuccessMessage(null), 5000);
       loadAttendanceData();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -316,19 +316,17 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
           />
         </div>
 
-        <Select
+        <select
           value={statusFilter}
-          onChange={setStatusFilter}
-          sheetTitle="Filter by Status"
-          options={[
-            { value: 'ALL', label: `All Statuses (${students.length})` },
-            { value: 'PRESENT', label: `Present (${presentCount})` },
-            { value: 'ABSENT', label: `Absent (${absentCount})` },
-            { value: 'LATE', label: `Late (${lateCount})` },
-            { value: 'MEDICAL', label: 'Medical Leave' }
-          ]}
+          onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none"
-        />
+        >
+          <option value="ALL">All Statuses ({students.length})</option>
+          <option value="PRESENT">Present ({presentCount})</option>
+          <option value="ABSENT">Absent ({absentCount})</option>
+          <option value="LATE">Late ({lateCount})</option>
+          <option value="MEDICAL">Medical Leave</option>
+        </select>
       </div>
 
       {/* Students Attendance Table */}

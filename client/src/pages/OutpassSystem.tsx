@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
-import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import { CameraModal } from '../components/CameraModal';
 import {
@@ -129,7 +129,7 @@ export const OutpassSystem: React.FC = () => {
       setPrintableOutpassId(opId);
       setActiveTab('printable');
     } catch (err: any) {
-      alert('Failed to load printable pass: ' + err.message);
+      showToast('Failed to load printable pass: ' + err.message, 'error');
     }
   };
 
@@ -176,7 +176,7 @@ export const OutpassSystem: React.FC = () => {
       const otpRes = await apiFetch<any>(`/outpass/${res.outpassId}/send-otp`, { method: 'POST' });
       setSimulatedOtp(otpRes.simulatedOtp);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -199,7 +199,7 @@ export const OutpassSystem: React.FC = () => {
         loadPendingPrincipal();
       }, 2000);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -214,7 +214,7 @@ export const OutpassSystem: React.FC = () => {
       loadPendingPrincipal();
       loadPrintable(outpassId);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -232,7 +232,7 @@ export const OutpassSystem: React.FC = () => {
       setTimeout(() => setSuccessMessage(null), 4000);
       loadPendingPrincipal();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -262,7 +262,7 @@ export const OutpassSystem: React.FC = () => {
       const fresh = await apiFetch<any>(`/outpass/gate-verify/${outpassId}?branch_id=${currentBranch?.id || ''}`);
       setVerifiedOutpass(fresh.outpass);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -275,7 +275,7 @@ export const OutpassSystem: React.FC = () => {
       const fresh = await apiFetch<any>(`/outpass/gate-verify/${outpassId}?branch_id=${currentBranch?.id || ''}`);
       setVerifiedOutpass(fresh.outpass);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -350,16 +350,17 @@ export const OutpassSystem: React.FC = () => {
             <form onSubmit={handleCreateRequest} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Select Student</label>
-                <Select
+                <select
                   value={selectedStudentId}
-                  onChange={handleStudentSelect}
-                  sheetTitle="Select Student"
-                  options={students.map((s) => ({
-                    value: s.id,
-                    label: `${s.name} (${s.register_number}) - ${s.class_name} ${s.section_name} (${s.batch_name})`
-                  }))}
+                  onChange={(e) => handleStudentSelect(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none"
-                />
+                >
+                  {students.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.register_number}) - {s.class_name} {s.section_name} ({s.batch_name})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -396,20 +397,18 @@ export const OutpassSystem: React.FC = () => {
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship to Student</label>
-                    <Select
+                    <select
                       value={relationship}
-                      onChange={setRelationship}
-                      sheetTitle="Relationship to Student"
-                      options={[
-                        { value: 'Father', label: 'Father' },
-                        { value: 'Mother', label: 'Mother' },
-                        { value: 'Brother', label: 'Brother' },
-                        { value: 'Sister', label: 'Sister' },
-                        { value: 'Guardian', label: 'Local Guardian' },
-                        { value: 'Relative', label: 'Uncle / Relative' }
-                      ]}
+                      onChange={(e) => setRelationship(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-xl p-2 outline-none"
-                    />
+                    >
+                      <option value="Father">Father</option>
+                      <option value="Mother">Mother</option>
+                      <option value="Brother">Brother</option>
+                      <option value="Sister">Sister</option>
+                      <option value="Guardian">Local Guardian</option>
+                      <option value="Relative">Uncle / Relative</option>
+                    </select>
                   </div>
 
                   <div>
@@ -427,18 +426,16 @@ export const OutpassSystem: React.FC = () => {
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">Govt ID Type & Number</label>
                     <div className="flex gap-2">
-                      <Select
+                      <select
                         value={idType}
-                        onChange={setIdType}
-                        sheetTitle="ID Type"
-                        options={[
-                          { value: 'Aadhaar Card', label: 'Aadhaar' },
-                          { value: 'Driving License', label: 'DL' },
-                          { value: 'Voter ID', label: 'Voter ID' },
-                          { value: 'PAN Card', label: 'PAN' }
-                        ]}
+                        onChange={(e) => setIdType(e.target.value)}
                         className="bg-white border border-slate-200 rounded-xl p-2 text-[11px] outline-none w-1/2"
-                      />
+                      >
+                        <option value="Aadhaar Card">Aadhaar</option>
+                        <option value="Driving License">DL</option>
+                        <option value="Voter ID">Voter ID</option>
+                        <option value="PAN Card">PAN</option>
+                      </select>
                       <input
                         type="text"
                         placeholder="ID Number"
@@ -798,20 +795,18 @@ export const OutpassSystem: React.FC = () => {
               />
             </div>
 
-            <Select
+            <select
               value={statusFilter}
-              onChange={setStatusFilter}
-              sheetTitle="Filter by Status"
-              options={[
-                { value: 'ALL', label: 'All Statuses' },
-                { value: 'PENDING', label: 'PENDING' },
-                { value: 'APPROVED', label: 'APPROVED' },
-                { value: 'OUT', label: 'OUT (Outside Campus)' },
-                { value: 'RETURNED', label: 'RETURNED' },
-                { value: 'REJECTED', label: 'REJECTED' }
-              ]}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none"
-            />
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="PENDING">PENDING</option>
+              <option value="APPROVED">APPROVED</option>
+              <option value="OUT">OUT (Outside Campus)</option>
+              <option value="RETURNED">RETURNED</option>
+              <option value="REJECTED">REJECTED</option>
+            </select>
           </div>
 
           {/* Register Table */}

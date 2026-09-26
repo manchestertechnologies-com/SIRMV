@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
+import { ToastContainer } from './components/ToastContainer';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardHome } from './pages/DashboardHome';
 import { TeachersModule } from './pages/TeachersModule';
@@ -111,6 +112,7 @@ export function App() {
 
   return (
     <div className="min-h-screen flex bg-[#ebe7de] text-slate-800 font-sans">
+      <ToastContainer />
       {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
       <Sidebar
         activeTab={activeTab}

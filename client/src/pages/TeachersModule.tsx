@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Select } from '../components/Select';
 import {
   User,
   Users,
@@ -207,7 +207,7 @@ export const TeachersModule: React.FC = () => {
       setTimeout(() => setNotification(null), 5000);
       loadSubstitutionCenter();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -246,7 +246,7 @@ export const TeachersModule: React.FC = () => {
       setTimeout(() => setNotification(null), 5000);
       loadSubstitutionCenter();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsAssigning(false);
     }
@@ -276,7 +276,7 @@ export const TeachersModule: React.FC = () => {
       setTimeout(() => setNotification(null), 4000);
       loadDirectory();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -406,17 +406,19 @@ export const TeachersModule: React.FC = () => {
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-bold text-slate-700 shrink-0">Department:</span>
-              <Select
+              <span className="text-xs font-bold text-slate-700">Department:</span>
+              <select
                 value={selectedDept}
-                onChange={setSelectedDept}
-                sheetTitle="Filter by Department"
-                options={[
-                  { value: 'ALL', label: 'All Departments' },
-                  ...departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))
-                ]}
+                onChange={(e) => setSelectedDept(e.target.value)}
                 className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-              />
+              >
+                <option value="ALL">All Departments</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="relative w-full sm:w-72">
@@ -940,18 +942,19 @@ export const TeachersModule: React.FC = () => {
             <form onSubmit={handleMarkAbsent} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Select Faculty Member</label>
-                <Select
+                <select
                   required
                   value={absentTeacherId}
-                  onChange={setAbsentTeacherId}
-                  placeholder="-- Choose Faculty --"
-                  sheetTitle="Select Faculty Member"
-                  options={teachers.map((t) => ({
-                    value: t.id,
-                    label: `${t.name} (${t.employee_id}) - ${t.department_name}`
-                  }))}
+                  onChange={(e) => setAbsentTeacherId(e.target.value)}
                   className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                />
+                >
+                  <option value="">-- Choose Faculty --</option>
+                  {teachers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.employee_id}) - {t.department_name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -1137,15 +1140,19 @@ export const TeachersModule: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Department</label>
-                  <Select
+                  <select
                     required
                     value={formData.department_id}
-                    onChange={(v) => setFormData({ ...formData, department_id: v })}
-                    placeholder="-- Choose Department --"
-                    sheetTitle="Choose Department"
-                    options={departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))}
+                    onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    <option value="">-- Choose Department --</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.code})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Designation</label>

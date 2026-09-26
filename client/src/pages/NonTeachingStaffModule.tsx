@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Select } from '../components/Select';
 import {
   Users,
   Search,
@@ -82,7 +82,7 @@ export const NonTeachingStaffModule: React.FC = () => {
       setTimeout(() => setNotification(null), 4000);
       loadStaff();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -169,20 +169,18 @@ export const NonTeachingStaffModule: React.FC = () => {
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-slate-400" />
           <span className="text-xs font-bold text-slate-700">Role Designation:</span>
-          <Select
+          <select
             value={selectedRole}
-            onChange={setSelectedRole}
-            sheetTitle="Filter by Role"
-            options={[
-              { value: 'ALL', label: 'All Roles' },
-              { value: 'FLOOR_ATTENDER', label: 'Floor Attenders' },
-              { value: 'WARDEN', label: 'Hostel Wardens' },
-              { value: 'HEAD_WARDEN', label: 'Head Wardens' },
-              { value: 'GATE_STAFF', label: 'Gate Staff / Security' },
-              { value: 'NON_TEACHING_STAFF', label: 'Non-Teaching Administrative' }
-            ]}
+            onChange={(e) => setSelectedRole(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          />
+          >
+            <option value="ALL">All Roles</option>
+            <option value="FLOOR_ATTENDER">Floor Attenders</option>
+            <option value="WARDEN">Hostel Wardens</option>
+            <option value="HEAD_WARDEN">Head Wardens</option>
+            <option value="GATE_STAFF">Gate Staff / Security</option>
+            <option value="NON_TEACHING_STAFF">Non-Teaching Administrative</option>
+          </select>
         </div>
 
         <div className="relative w-full sm:w-64">
@@ -294,19 +292,17 @@ export const NonTeachingStaffModule: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Role / Department</label>
-                <Select
+                <select
                   value={formData.role}
-                  onChange={(v) => setFormData({ ...formData, role: v })}
-                  sheetTitle="Role / Department"
-                  options={[
-                    { value: 'FLOOR_ATTENDER', label: 'Floor Attender' },
-                    { value: 'WARDEN', label: 'Hostel Warden' },
-                    { value: 'HEAD_WARDEN', label: 'Head Warden' },
-                    { value: 'GATE_STAFF', label: 'Gate Security Personnel' },
-                    { value: 'NON_TEACHING_STAFF', label: 'Non-Teaching Office Staff' }
-                  ]}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                />
+                >
+                  <option value="FLOOR_ATTENDER">Floor Attender</option>
+                  <option value="WARDEN">Hostel Warden</option>
+                  <option value="HEAD_WARDEN">Head Warden</option>
+                  <option value="GATE_STAFF">Gate Security Personnel</option>
+                  <option value="NON_TEACHING_STAFF">Non-Teaching Office Staff</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Select } from '../components/Select';
 import {
   Users,
   Search,
@@ -164,7 +164,7 @@ export const StudentsModule: React.FC = () => {
       setTimeout(() => setNotification(null), 4000);
       loadData();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -311,53 +311,57 @@ export const StudentsModule: React.FC = () => {
       <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-wrap gap-3 items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {/* Class Filter */}
-          <Select
+          <select
             value={selectedClass}
-            onChange={setSelectedClass}
-            sheetTitle="Filter by Class"
-            options={[
-              { value: 'ALL', label: 'All Classes' },
-              ...options.classes.map((c) => ({ value: c.id, label: c.name }))
-            ]}
+            onChange={(e) => setSelectedClass(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          />
+          >
+            <option value="ALL">All Classes</option>
+            {options.classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
           {/* Section Filter */}
-          <Select
+          <select
             value={selectedSection}
-            onChange={setSelectedSection}
-            sheetTitle="Filter by Section"
-            options={[
-              { value: 'ALL', label: 'All Sections' },
-              ...options.sections.map((s) => ({ value: s.id, label: `Section ${s.name}` }))
-            ]}
+            onChange={(e) => setSelectedSection(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          />
+          >
+            <option value="ALL">All Sections</option>
+            {options.sections.map((s) => (
+              <option key={s.id} value={s.id}>
+                Section {s.name}
+              </option>
+            ))}
+          </select>
 
           {/* Batch Filter */}
-          <Select
+          <select
             value={selectedBatch}
-            onChange={setSelectedBatch}
-            sheetTitle="Filter by Batch"
-            options={[
-              { value: 'ALL', label: 'All Batches' },
-              ...options.batches.map((b) => ({ value: b.id, label: `Batch ${b.name}` }))
-            ]}
+            onChange={(e) => setSelectedBatch(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          />
+          >
+            <option value="ALL">All Batches</option>
+            {options.batches.map((b) => (
+              <option key={b.id} value={b.id}>
+                Batch {b.name}
+              </option>
+            ))}
+          </select>
 
           {/* Residence Filter */}
-          <Select
+          <select
             value={selectedResStatus}
-            onChange={setSelectedResStatus}
-            sheetTitle="Filter by Residence"
-            options={[
-              { value: 'ALL', label: 'All Residencies' },
-              { value: 'DAY_SCHOLAR', label: 'Day Scholar' },
-              { value: 'HOSTELLER', label: 'Hosteller' }
-            ]}
+            onChange={(e) => setSelectedResStatus(e.target.value)}
             className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          />
+          >
+            <option value="ALL">All Residencies</option>
+            <option value="DAY_SCHOLAR">Day Scholar</option>
+            <option value="HOSTELLER">Hosteller</option>
+          </select>
         </div>
 
         {/* Search */}
@@ -689,57 +693,67 @@ export const StudentsModule: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Class</label>
-                  <Select
+                  <select
                     required
                     value={createForm.class_id}
-                    onChange={(v) => setCreateForm({ ...createForm, class_id: v })}
-                    placeholder="-- Select Class --"
-                    sheetTitle="Select Class"
-                    options={options.classes.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(e) => setCreateForm({ ...createForm, class_id: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    <option value="">-- Select Class --</option>
+                    {options.classes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Section</label>
-                  <Select
+                  <select
                     required
                     value={createForm.section_id}
-                    onChange={(v) => setCreateForm({ ...createForm, section_id: v })}
-                    placeholder="-- Select Section --"
-                    sheetTitle="Select Section"
-                    options={options.sections.map((s) => ({ value: s.id, label: `Section ${s.name}` }))}
+                    onChange={(e) => setCreateForm({ ...createForm, section_id: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    <option value="">-- Select Section --</option>
+                    {options.sections.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        Section {s.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Competitive Batch</label>
-                  <Select
+                  <select
                     required
                     value={createForm.batch_id}
-                    onChange={(v) => setCreateForm({ ...createForm, batch_id: v })}
-                    placeholder="-- Select Batch --"
-                    sheetTitle="Select Batch"
-                    options={options.batches.map((b) => ({ value: b.id, label: `Batch ${b.name}` }))}
+                    onChange={(e) => setCreateForm({ ...createForm, batch_id: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    <option value="">-- Select Batch --</option>
+                    {options.batches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        Batch {b.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Residential Status</label>
-                  <Select
+                  <select
                     value={createForm.residential_status}
-                    onChange={(v) => setCreateForm({ ...createForm, residential_status: v })}
-                    sheetTitle="Residential Status"
-                    options={[
-                      { value: 'DAY_SCHOLAR', label: 'Day Scholar' },
-                      { value: 'HOSTELLER', label: 'Hosteller' }
-                    ]}
+                    onChange={(e) => setCreateForm({ ...createForm, residential_status: e.target.value })}
                     className="w-full bg-slate-50 border border-[#ded9cf] rounded-xl px-3 py-2 text-xs text-slate-900 outline-none"
-                  />
+                  >
+                    <option value="DAY_SCHOLAR">Day Scholar</option>
+                    <option value="HOSTELLER">Hosteller</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Blood Group</label>

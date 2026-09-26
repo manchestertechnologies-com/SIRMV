@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -75,7 +76,7 @@ export const HostelDashboard: React.FC = () => {
       setTimeout(() => setSuccessMessage(null), 4000);
       loadHostelAttendance();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsSaving(false);
     }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -107,7 +108,7 @@ export const TimetableGeneratorModule: React.FC = () => {
     const name = window.prompt('Name this timetable configuration (e.g. "2026-27 Odd Semester"):');
     if (!name) return;
     if (academicYears.length === 0) {
-      alert('No academic years found. Add one first.');
+      showToast('No academic years found. Add one first.', 'error');
       return;
     }
     try {
@@ -128,7 +129,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       await loadList();
       await openConfig(res.id);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -138,7 +139,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       await apiFetch(`/timetable-generator/configs/${id}`, { method: 'DELETE' });
       await loadList();
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -155,9 +156,9 @@ export const TimetableGeneratorModule: React.FC = () => {
           use_room_allocation: !!config.use_room_allocation
         })
       });
-      alert('Settings saved.');
+      showToast('Settings saved.', 'success');
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -168,7 +169,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       const additions = (res.suggestions || []).filter((s: any) => !existingKeys.has(`${s.subject_id}|${s.class_id}|${s.section_id}`));
       setRequirements([...requirements, ...additions]);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -178,10 +179,10 @@ export const TimetableGeneratorModule: React.FC = () => {
         method: 'PUT',
         body: JSON.stringify({ requirements })
       });
-      alert('Subject requirements saved.');
+      showToast('Subject requirements saved.', 'success');
       await refreshConfig(activeConfigId!);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -192,7 +193,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       const additions = (res.suggestions || []).map((s: any) => ({ ...s, available_days: config?.working_days || DAYS.slice(0, 6) })).filter((s: any) => !existingIds.has(s.teacher_id));
       setAvailability([...availability, ...additions]);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -202,10 +203,10 @@ export const TimetableGeneratorModule: React.FC = () => {
         method: 'PUT',
         body: JSON.stringify({ availability, unavailable_periods: unavailablePeriods })
       });
-      alert('Teacher availability saved.');
+      showToast('Teacher availability saved.', 'success');
       await refreshConfig(activeConfigId!);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -218,7 +219,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       await refreshConfig(activeConfigId!);
       await openDraft(res.draftId);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -245,10 +246,10 @@ export const TimetableGeneratorModule: React.FC = () => {
     if (!activeDraftId) return;
     try {
       const res = await apiFetch<any>(`/timetable-generator/drafts/${activeDraftId}/regenerate-conflicts`, { method: 'POST' });
-      alert(`Regenerated ${res.regenerated} conflicting period(s).`);
+      showToast(`Regenerated ${res.regenerated} conflicting period(s).`, 'success');
       await openDraft(activeDraftId);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -258,10 +259,10 @@ export const TimetableGeneratorModule: React.FC = () => {
     setIsPublishing(true);
     try {
       const res = await apiFetch<any>(`/timetable-generator/drafts/${activeDraftId}/publish`, { method: 'POST' });
-      alert(`Published ${res.entriesPublished} periods. ${res.teachersNotified} teacher(s) notified.`);
+      showToast(`Published ${res.entriesPublished} periods. ${res.teachersNotified} teacher(s) notified.`, 'success');
       await refreshConfig(activeConfigId!);
     } catch (err: any) {
-      alert(err.message + (err.message.includes('conflict') ? ' Resolve conflicts first.' : ''));
+      showToast(err.message + (err.message.includes('conflict') ? ' Resolve conflicts first.' : ''), 'error');
     } finally {
       setIsPublishing(false);
     }
@@ -272,7 +273,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       await apiFetch(`/timetable-generator/drafts/${activeDraftId}/entries/${entryId}`, { method: 'PUT', body: JSON.stringify(patch) });
       await openDraft(activeDraftId!);
     } catch (err: any) {
-      alert(err.error || err.message);
+      showToast(err.error || err.message, 'error');
     }
   };
 
@@ -282,7 +283,7 @@ export const TimetableGeneratorModule: React.FC = () => {
       await apiFetch(`/timetable-generator/drafts/${activeDraftId}/entries/${entryId}`, { method: 'DELETE' });
       await openDraft(activeDraftId!);
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 

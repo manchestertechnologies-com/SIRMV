@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, Users, Target, Trash2, ArrowLeft } from 'lucide-react';
@@ -32,7 +33,7 @@ export const BatchesPage: React.FC = () => {
 
   const deleteBatch = async (id: string) => {
     if (!confirm('Delete this batch?')) return;
-    try { await apiFetch(`/batches/${id}`, { method: 'DELETE' }); load(); } catch (err: any) { alert(err.message); }
+    try { await apiFetch(`/batches/${id}`, { method: 'DELETE' }); load(); } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   if (selectedBatchId) {

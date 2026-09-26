@@ -21,73 +21,6 @@
   .font-mono {
     font-family: var(--font-mono);
   }
-
-  /* iOS-style interaction foundation — applies everywhere automatically */
-  :root {
-    --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
-    --ease-ios-out: cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Momentum scrolling on every scroll container, phone-native feel */
-  .overflow-y-auto,
-  .overflow-x-auto,
-  .overflow-auto {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-
-  button, a, [role="button"] {
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-/* Press feedback — apply .press to any tappable element for an iOS-like
-   compress-on-tap response instead of an instant, flat state change */
-.press {
-  transition: transform 0.15s var(--ease-ios), opacity 0.15s var(--ease-ios);
-}
-.press:active {
-  transform: scale(0.96);
-  opacity: 0.85;
-}
-
-/* Sheet / drawer slide-in, matching Apple's own UIKit presentation curve */
-@keyframes sheet-slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@keyframes sheet-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes sheet-scale-in {
-  from { opacity: 0; transform: scale(0.96) translateY(4px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-.animate-sheet-up {
-  animation: sheet-slide-up 0.38s var(--ease-ios);
-}
-.animate-backdrop-in {
-  animation: sheet-fade-in 0.28s var(--ease-ios);
-}
-.animate-scale-in {
-  animation: sheet-scale-in 0.22s var(--ease-ios-out);
-}
-
-/* Safe-area padding for notch / home-indicator devices */
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Custom Scrollbars */
@@ -165,5 +98,11 @@
   }
   .border, .border-2 {
     border-color: #cbd5e1 !important;
+  }
+  /* Report tables scroll horizontally on-screen (mobile), but printed
+     output has no viewport to scroll — let them size to content instead
+     so nothing gets clipped on paper. */
+  .overflow-x-auto {
+    overflow-x: visible !important;
   }
 }

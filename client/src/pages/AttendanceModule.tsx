@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -183,7 +184,7 @@ export const AttendanceModule: React.FC = () => {
         prev.map((s) => (s.id === studentId ? { ...s, status } : s))
       );
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 
@@ -203,7 +204,7 @@ export const AttendanceModule: React.FC = () => {
         prev.map((r) => (r.student_id === studentId ? { ...r, status } : r))
       );
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   };
 

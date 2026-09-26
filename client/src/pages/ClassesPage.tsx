@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, Users, Layers, Trash2 } from 'lucide-react';
@@ -36,17 +37,17 @@ export const ClassesPage: React.FC = () => {
     try {
       await apiFetch(`/classes/${classId}/sections`, { method: 'POST', body: JSON.stringify({ name: newSectionName }) });
       setNewSectionName(''); setAddingSectionFor(null); load();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   const deleteClass = async (id: string) => {
     if (!confirm('Delete this class?')) return;
-    try { await apiFetch(`/classes/${id}`, { method: 'DELETE' }); load(); } catch (err: any) { alert(err.message); }
+    try { await apiFetch(`/classes/${id}`, { method: 'DELETE' }); load(); } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   const deleteSection = async (sectionId: string) => {
     if (!confirm('Delete this section?')) return;
-    try { await apiFetch(`/classes/sections/${sectionId}`, { method: 'DELETE' }); load(); } catch (err: any) { alert(err.message); }
+    try { await apiFetch(`/classes/sections/${sectionId}`, { method: 'DELETE' }); load(); } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   return (
