@@ -631,3 +631,17 @@ CREATE TABLE IF NOT EXISTS floor_issues (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_floor_issues_branch ON floor_issues(branch_id, status);
+
+-- 25. Exam room class/section assignment. The exam-management module's own
+-- tables (exam_room_configs, pu_exams, exam_sessions, etc.) live in the
+-- standalone add-exam-management-schema.sql migration rather than here, so
+-- these are guarded with IF EXISTS: they apply once that migration has been
+-- run, and are a no-op (not an error) on a fresh install that hasn't run it
+-- yet. Lets exam staff explicitly specify which class/section a classroom
+-- belongs to, so the 3D exam building view always shows a label per room and
+-- automatic room allocation can prioritize a batch's own room even when the
+-- regular teaching timetable has no entries for it yet.
+ALTER TABLE IF EXISTS exam_room_configs
+  ADD COLUMN IF NOT EXISTS assigned_class_id VARCHAR(64) REFERENCES classes(id) ON DELETE SET NULL;
+ALTER TABLE IF EXISTS exam_room_configs
+  ADD COLUMN IF NOT EXISTS assigned_section_id VARCHAR(64) REFERENCES sections(id) ON DELETE SET NULL;

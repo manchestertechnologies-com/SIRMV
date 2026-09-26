@@ -224,7 +224,7 @@ outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN
 });
 
 // 6. Gate Staff Instant Search & Verification (by Outpass Number OR 4-digit code)
-outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), async (req: AuthRequest, res: Response) => {
+outpassRouter.get('/gate-verify/:query', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN', 'HEAD_WARDEN'), async (req: AuthRequest, res: Response) => {
   const { query: searchQuery } = req.params;
   const branchId = (req.query.branch_id as string) || req.user!.branch_id;
 
@@ -285,7 +285,7 @@ outpassRouter.post('/:id/record-exit', authenticate, requireRoles('GATE_STAFF', 
 });
 
 // 8. Gate Staff Record Return
-outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN'), async (req: AuthRequest, res: Response) => {
+outpassRouter.post('/:id/record-return', authenticate, requireRoles('GATE_STAFF', 'ADMIN', 'PRINCIPAL', 'WARDEN', 'HEAD_WARDEN'), async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const gateStaffId = req.user!.id;
 

@@ -50,7 +50,6 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'dashboard', label: 'My Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Faculty daily overview & tasks' },
           { id: 'timetable', label: 'My Timetable & Schedule', icon: IconTimetable, targetTab: 'timetable', description: 'Weekly lecture timetable & proxy duties' },
           { id: 'students', label: 'My Class Students', icon: IconStudents, targetTab: 'students', description: 'Roster of enrolled students in your batches' },
-          { id: 'attendance', label: 'Lecture Attendance', icon: IconAttendance, targetTab: 'attendance', description: 'Mark & finalize classroom attendance' },
           { id: 'tests', label: 'Tests & Assessments', icon: IconTests, targetTab: 'tests', description: 'Unit tests & internal assessments' },
           { id: 'board-marks', label: 'Board Marks', icon: IconBoardMarks, targetTab: 'board-marks', description: 'PU board examination scores' },
           { id: 'live-class', label: 'Class Recordings', icon: IconLiveClass, targetTab: 'live-class', description: 'Upload lecture streams for absent students' },
@@ -162,8 +161,6 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'attendance', label: 'Night Roll-Call & Study', icon: IconAttendance, targetTab: 'attendance', description: 'Night attendance & study tracking' },
           { id: 'gate-pass', label: 'Hostel Outpasses', icon: IconGatePass, targetTab: 'gate-pass', description: 'Review hosteller check-in/out' },
           { id: 'students', label: 'Hosteller Registry & Admission', icon: IconStudents, targetTab: 'students', description: 'Resident student profile & emergency contacts' },
-          { id: 'discipline', label: 'Student Discipline', icon: ShieldAlert, targetTab: 'discipline', description: 'Log & track hosteller discipline incidents' },
-          { id: 'noticeboard', label: 'Announcements & Hostel Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Mess schedule & hostel rules' },
           { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: []

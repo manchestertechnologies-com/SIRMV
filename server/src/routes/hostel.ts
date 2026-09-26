@@ -93,7 +93,7 @@ hostelRouter.get('/attendance', authenticate, async (req: AuthRequest, res: Resp
 });
 
 // 3. Mark Hostel Attendance
-hostelRouter.post('/mark', authenticate, requireRoles('WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+hostelRouter.post('/mark', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
   const { date, time = '21:30', records } = req.body; // records: Array<{ student_id, room_id, status, remarks }>
 
   if (!date || !Array.isArray(records)) {

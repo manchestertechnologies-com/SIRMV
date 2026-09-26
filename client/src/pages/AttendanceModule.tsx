@@ -22,9 +22,24 @@ import {
 } from 'lucide-react';
 import { IconAttendance } from '../components/ModuleIcons';
 
+// Which of the 3 attendance types a role actually needs to see. Floor
+// In-Charge only ever runs the classroom lecture round — evening study and
+// hostel night roll-call are a hostel-warden concern, not theirs. Wardens
+// only ever run the hostel-side rounds — the classroom lecture roster
+// belongs to teachers/floor staff, not them (showing it to a warden is what
+// caused the "Class Attendance Roster" screen and its per-student toggles
+// to show up out of context for that role). Everyone else (Admin/Principal/
+// Teacher/HOD) keeps the full institutional view.
+function tabsForRole(role: string | undefined): Array<'lecture' | 'evening-study' | 'hostel-rollcall'> {
+  if (role === 'FLOOR_ATTENDER') return ['lecture'];
+  if (role === 'WARDEN' || role === 'HEAD_WARDEN') return ['evening-study', 'hostel-rollcall'];
+  return ['lecture', 'evening-study', 'hostel-rollcall'];
+}
+
 export const AttendanceModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
-  const [activeTab, setActiveTab] = useState<'lecture' | 'evening-study' | 'hostel-rollcall'>('lecture');
+  const visibleTabs = tabsForRole(user?.role);
+  const [activeTab, setActiveTab] = useState<'lecture' | 'evening-study' | 'hostel-rollcall'>(visibleTabs[0]);
 
   // Lecture Attendance State
   const [lectureSessions, setLectureSessions] = useState<any[]>([]);
@@ -294,43 +309,51 @@ export const AttendanceModule: React.FC = () => {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-[#ded9cf] gap-2 sm:gap-6 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('lecture')}
-          className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
-            activeTab === 'lecture'
-              ? 'border-b-2 border-emerald-600 text-emerald-800'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          Classroom Lecture Attendance
-        </button>
+      {visibleTabs.length > 1 && (
+        <div className="flex border-b border-[#ded9cf] gap-2 sm:gap-6 overflow-x-auto">
+          {visibleTabs.includes('lecture') && (
+            <button
+              onClick={() => setActiveTab('lecture')}
+              className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
+                activeTab === 'lecture'
+                  ? 'border-b-2 border-emerald-600 text-emerald-800'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              Classroom Lecture Attendance
+            </button>
+          )}
 
-        <button
-          onClick={() => setActiveTab('evening-study')}
-          className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
-            activeTab === 'evening-study'
-              ? 'border-b-2 border-emerald-600 text-emerald-800'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          Evening Study Roster
-        </button>
+          {visibleTabs.includes('evening-study') && (
+            <button
+              onClick={() => setActiveTab('evening-study')}
+              className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
+                activeTab === 'evening-study'
+                  ? 'border-b-2 border-emerald-600 text-emerald-800'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              Evening Study Roster
+            </button>
+          )}
 
-        <button
-          onClick={() => setActiveTab('hostel-rollcall')}
-          className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
-            activeTab === 'hostel-rollcall'
-              ? 'border-b-2 border-emerald-600 text-emerald-800'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Moon className="w-4 h-4" />
-          Hostel Night Roll-Call
-        </button>
-      </div>
+          {visibleTabs.includes('hostel-rollcall') && (
+            <button
+              onClick={() => setActiveTab('hostel-rollcall')}
+              className={`pb-3 text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 ${
+                activeTab === 'hostel-rollcall'
+                  ? 'border-b-2 border-emerald-600 text-emerald-800'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Moon className="w-4 h-4" />
+              Hostel Night Roll-Call
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: CLASSROOM LECTURE ATTENDANCE */}

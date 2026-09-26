@@ -57,7 +57,7 @@ eveningStudyRouter.get('/session', authenticate, async (req: AuthRequest, res: R
 });
 
 // 2. Mark / Update Evening Study Attendance
-eveningStudyRouter.post('/mark', authenticate, requireRoles('WARDEN', 'TEACHER', 'FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+eveningStudyRouter.post('/mark', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'TEACHER', 'FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
   const { session_id, records } = req.body; // records: Array<{ student_id, entry_time, exit_time, duration_minutes, status, remarks }>
 
   if (!session_id || !Array.isArray(records)) {

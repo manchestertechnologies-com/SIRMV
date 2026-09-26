@@ -18,6 +18,7 @@ interface RoomRow {
   room_id: string; room_number: string; floor: number; building?: string;
   benches: number; seats_per_bench: number; is_available_for_exams: boolean; total_capacity: number;
   home_class_id?: string | null; home_section_id?: string | null; home_class_label?: string | null;
+  assigned_class_id?: string | null; assigned_section_id?: string | null; is_assigned?: boolean;
 }
 interface ExamRow {
   id: string; name: string; pu_level: string; status: string; academic_year_name: string;
@@ -274,6 +275,7 @@ const NEW_ROOM_DEFAULTS = { room_number: '', floor: 0, building: 'Main Academic 
 const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'error', m: string) => void }> = ({ onBack, flash }) => {
   const { currentBranch } = useAuth();
   const [rooms, setRooms] = useState<RoomRow[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newRoom, setNewRoom] = useState(NEW_ROOM_DEFAULTS);
@@ -284,8 +286,12 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
   const load = async () => {
     setIsLoading(true);
     try {
-      const res = await apiFetch<{ rooms: RoomRow[] }>(`/exam-management/rooms?branch_id=${currentBranch?.id || ''}`);
-      setRooms(res.rooms || []);
+      const [roomsRes, classesRes] = await Promise.all([
+        apiFetch<{ rooms: RoomRow[] }>(`/exam-management/rooms?branch_id=${currentBranch?.id || ''}`),
+        apiFetch<{ classes: ClassOption[] }>(`/classes?branch_id=${currentBranch?.id || ''}`).catch(() => ({ classes: [] }))
+      ]);
+      setRooms(roomsRes.rooms || []);
+      setClasses(classesRes.classes || []);
     } catch (err: any) {
       flash('error', err.message);
     } finally {
@@ -303,9 +309,16 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
     try {
       await apiFetch(`/exam-management/rooms/${room.room_id}/config`, {
         method: 'PUT',
-        body: JSON.stringify({ benches: room.benches, seats_per_bench: room.seats_per_bench, is_available_for_exams: room.is_available_for_exams })
+        body: JSON.stringify({
+          benches: room.benches,
+          seats_per_bench: room.seats_per_bench,
+          is_available_for_exams: room.is_available_for_exams,
+          assigned_class_id: room.assigned_class_id || '',
+          assigned_section_id: room.assigned_section_id || ''
+        })
       });
       flash('success', `Room ${room.room_number} configuration saved.`);
+      await load();
     } catch (err: any) {
       flash('error', err.message);
     }
@@ -346,7 +359,8 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
       capacity: r.total_capacity,
       studentsAssigned: 0,
       status: (r.room_id === justAddedRoomId ? 'SELECTED' : r.is_available_for_exams ? 'AVAILABLE' : 'UNAVAILABLE') as RoomStatus,
-      building: r.building
+      building: r.building,
+      homeClassLabel: r.home_class_label || undefined
     });
   });
 
@@ -427,6 +441,7 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                 <th className="py-3 px-4">Room</th>
                 <th className="py-3 px-4">Floor</th>
+                <th className="py-3 px-4">Class / Section</th>
                 <th className="py-3 px-4">Benches</th>
                 <th className="py-3 px-4">Seats / Bench</th>
                 <th className="py-3 px-4">Total Capacity</th>
@@ -436,11 +451,38 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <tr><td colSpan={7} className="py-8 text-center text-slate-400">Loading rooms...</td></tr>
-              ) : rooms.map((r) => (
+                <tr><td colSpan={8} className="py-8 text-center text-slate-400">Loading rooms...</td></tr>
+              ) : rooms.map((r) => {
+                const selectedClass = classes.find((c) => c.id === r.assigned_class_id);
+                return (
                 <tr key={r.room_id}>
                   <td className="py-2 px-4 font-bold text-slate-900">Room {r.room_number}</td>
                   <td className="py-2 px-4">{r.floor}</td>
+                  <td className="py-2 px-4">
+                    <div className="flex items-center gap-1">
+                      <select
+                        value={r.assigned_class_id || ''}
+                        onChange={(e) => updateRoom(r.room_id, { assigned_class_id: e.target.value || null, assigned_section_id: null })}
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-800 max-w-[110px]"
+                      >
+                        <option value="">— Class —</option>
+                        {classes.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={r.assigned_section_id || ''}
+                        onChange={(e) => updateRoom(r.room_id, { assigned_section_id: e.target.value || null })}
+                        disabled={!r.assigned_class_id}
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] text-slate-800 max-w-[90px] disabled:opacity-50"
+                      >
+                        <option value="">— Section —</option>
+                        {selectedClass?.sections.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
                   <td className="py-2 px-4">
                     <input type="number" min={1} value={r.benches} onChange={(e) => updateRoom(r.room_id, { benches: Number(e.target.value) || 1 })} className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1" />
                   </td>
@@ -455,7 +497,8 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
                     <button onClick={() => saveRoom(r)} className="px-3 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[11px] font-semibold">Save</button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

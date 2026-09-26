@@ -35,18 +35,21 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
       `SELECT r.id as room_id, r.room_number, r.floor, r.building,
               COALESCE(c.benches, 15) as benches,
               COALESCE(c.seats_per_bench, 2) as seats_per_bench,
-              COALESCE(c.is_available_for_exams, 1) as is_available_for_exams
+              COALESCE(c.is_available_for_exams, 1) as is_available_for_exams,
+              c.assigned_class_id, c.assigned_section_id,
+              ac.name as assigned_class_name, asec.name as assigned_section_name
        FROM rooms r
        LEFT JOIN exam_room_configs c ON c.room_id = r.id
+       LEFT JOIN classes ac ON ac.id = c.assigned_class_id
+       LEFT JOIN sections asec ON asec.id = c.assigned_section_id
        WHERE r.branch_id = $1
        ORDER BY r.floor ASC, r.room_number ASC`,
       [branchId]
     );
 
-    // The class/section that regularly occupies each room, per the normal
-    // teaching timetable (its "home" class) — shown as a label on the exam
-    // building's 3D view so exam staff can see at a glance which class each
-    // room belongs to, not just its floor/number.
+    // Fallback: the class/section that regularly occupies each room, per the
+    // normal teaching timetable (its "home" class) — used only for rooms
+    // that haven't been explicitly assigned a class/section above.
     const homeRooms = await query<any>(
       `SELECT room_id, class_id, section_id, class_name, section_name FROM (
          SELECT te.room_id, te.class_id, te.section_id, c.name as class_name, sec.name as section_name,
@@ -62,16 +65,24 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
     const homeRoomByRoomId = new Map(homeRooms.map((h: any) => [h.room_id, h]));
 
     const withCapacity = rooms.map((r: any) => {
+      // An explicit assignment (set on the Room Configuration screen) always
+      // wins over the timetable-derived guess, since staff may set it up
+      // before any timetable exists, or to override a stale/ambiguous one.
       const home = homeRoomByRoomId.get(r.room_id);
+      const classId = r.assigned_class_id || home?.class_id || null;
+      const sectionId = r.assigned_section_id || home?.section_id || null;
+      const className = r.assigned_class_id ? r.assigned_class_name : home?.class_name;
+      const sectionName = r.assigned_section_id ? r.assigned_section_name : home?.section_name;
       return {
         ...r,
         benches: Number(r.benches),
         seats_per_bench: Number(r.seats_per_bench),
         is_available_for_exams: !!Number(r.is_available_for_exams),
         total_capacity: Number(r.benches) * Number(r.seats_per_bench),
-        home_class_id: home?.class_id || null,
-        home_section_id: home?.section_id || null,
-        home_class_label: home ? `${home.class_name} - ${home.section_name}` : null
+        home_class_id: classId,
+        home_section_id: sectionId,
+        home_class_label: className && sectionName ? `${className} - ${sectionName}` : null,
+        is_assigned: !!r.assigned_class_id
       };
     });
     return res.json({ rooms: withCapacity });
@@ -142,18 +153,55 @@ examManagementRouter.put('/rooms/:roomId/config', authenticate, requireRoles(...
       return res.status(400).json({ error: 'seats_per_bench must be a positive integer.' });
     }
 
+    // The class/section a room is explicitly assigned to (so the exam 3D
+    // view can show it and auto-allocation can prioritize it, even before
+    // any teaching timetable exists for that section). Both fields are
+    // optional and only touched when the caller actually sends them —
+    // sending an empty string clears the assignment, omitting the field
+    // leaves whatever was set before untouched.
+    const hasClassField = Object.prototype.hasOwnProperty.call(req.body, 'assigned_class_id');
+    const hasSectionField = Object.prototype.hasOwnProperty.call(req.body, 'assigned_section_id');
+    const assignedClassId: string | null = hasClassField ? (req.body.assigned_class_id || null) : null;
+    const assignedSectionId: string | null = hasSectionField ? (req.body.assigned_section_id || null) : null;
+
+    if (hasSectionField && assignedSectionId && !assignedClassId && !hasClassField) {
+      return res.status(400).json({ error: 'A class must be selected before assigning a section.' });
+    }
+    if (assignedClassId) {
+      const cls = await queryOne(`SELECT id FROM classes WHERE id = $1`, [assignedClassId]);
+      if (!cls) return res.status(400).json({ error: 'Selected class was not found.' });
+    }
+    if (assignedSectionId) {
+      const sec = await queryOne<{ id: string; class_id: string }>(`SELECT id, class_id FROM sections WHERE id = $1`, [assignedSectionId]);
+      if (!sec) return res.status(400).json({ error: 'Selected section was not found.' });
+      if (assignedClassId && sec.class_id !== assignedClassId) {
+        return res.status(400).json({ error: 'Selected section does not belong to the selected class.' });
+      }
+    }
+
     await execute(
-      `INSERT INTO exam_room_configs (room_id, benches, seats_per_bench, is_available_for_exams, updated_at)
-       VALUES ($1, COALESCE($2, 15), COALESCE($3, 2), COALESCE($4, 1), CURRENT_TIMESTAMP)
+      `INSERT INTO exam_room_configs (room_id, benches, seats_per_bench, is_available_for_exams, assigned_class_id, assigned_section_id, updated_at)
+       VALUES ($1, COALESCE($2, 15), COALESCE($3, 2), COALESCE($4, 1), $5, $6, CURRENT_TIMESTAMP)
        ON CONFLICT (room_id) DO UPDATE SET
          benches = COALESCE($2, exam_room_configs.benches),
          seats_per_bench = COALESCE($3, exam_room_configs.seats_per_bench),
          is_available_for_exams = COALESCE($4, exam_room_configs.is_available_for_exams),
+         assigned_class_id = CASE WHEN $7 THEN $5 ELSE exam_room_configs.assigned_class_id END,
+         assigned_section_id = CASE WHEN $8 THEN $6 ELSE exam_room_configs.assigned_section_id END,
          updated_at = CURRENT_TIMESTAMP`,
-      [roomId, benches ?? null, seats_per_bench ?? null, is_available_for_exams === undefined ? null : (is_available_for_exams ? 1 : 0)]
+      [
+        roomId,
+        benches ?? null,
+        seats_per_bench ?? null,
+        is_available_for_exams === undefined ? null : (is_available_for_exams ? 1 : 0),
+        assignedClassId,
+        assignedSectionId,
+        hasClassField,
+        hasSectionField
+      ]
     );
 
-    await logAudit(req, 'EXAM_ROOM_CONFIGURED', 'exam_room_configs', roomId, { benches, seats_per_bench, is_available_for_exams });
+    await logAudit(req, 'EXAM_ROOM_CONFIGURED', 'exam_room_configs', roomId, { benches, seats_per_bench, is_available_for_exams, assigned_class_id: assignedClassId, assigned_section_id: assignedSectionId });
     return res.json({ success: true, message: 'Room exam configuration saved.' });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -515,6 +563,20 @@ async function loadConflictingRoomIds(branchId: string, examDate: string, startT
 async function priorityRoomMap(branchId: string, batches: BatchInfo[]): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   for (const b of batches) {
+    // An explicit "assigned class/section" set on the Room Configuration
+    // screen always wins — it's the reliable source, since it doesn't
+    // depend on the regular teaching timetable having been generated yet.
+    const assigned = await queryOne<any>(
+      `SELECT c.room_id FROM exam_room_configs c
+       JOIN rooms r ON r.id = c.room_id
+       WHERE r.branch_id = $1 AND c.assigned_class_id = $2 AND c.assigned_section_id = $3
+       LIMIT 1`,
+      [branchId, b.classId, b.sectionId]
+    );
+    if (assigned) {
+      map.set(`${b.classId}:${b.sectionId}`, assigned.room_id);
+      continue;
+    }
     const row = await queryOne<any>(
       `SELECT room_id FROM timetable_entries
        WHERE branch_id = $1 AND class_id = $2 AND section_id = $3
