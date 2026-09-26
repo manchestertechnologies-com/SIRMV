@@ -69,6 +69,11 @@ const CUBE_SIZE = 1.5;
 const CUBE_GAP = 0.7; // wide enough that neighboring room labels never overlap on screen
 const CUBE_HEIGHT = 0.85;
 const CORRIDOR_DEPTH = 1.3;
+// The stairs/toilet wings bookending each row, and the gap that separates
+// them from the nearest classroom — sized narrower than a classroom so they
+// read as end-of-corridor fixtures, not another room.
+const WING_WIDTH = CUBE_SIZE * 0.62;
+const WING_GAP = 0.3;
 
 interface RoomLayout { room: FloorRoom; x: number; z: number; }
 interface SceneLayout {
@@ -77,6 +82,22 @@ interface SceneLayout {
   totalWidth: number;
   plazaDepth: number;
   hasCorridor: boolean;
+}
+
+// Shared by BuildingScene (to place the actual meshes) and by the label
+// overlay (to know where to project the "TOILET"/"COLLEGE BUILDING" tags) —
+// kept in one place so the two never drift apart.
+function computeWings(layout: SceneLayout) {
+  const zValues = layout.rooms.map((r) => r.z);
+  const minZ = Math.min(...zValues);
+  const maxZ = Math.max(...zValues);
+  const wingCenterZ = (minZ + maxZ) / 2;
+  const wingDepth = (maxZ - minZ) + CUBE_SIZE;
+  const leftX = -(layout.totalWidth / 2) - WING_GAP - WING_WIDTH / 2;
+  const rightX = layout.totalWidth / 2 + WING_GAP + WING_WIDTH / 2;
+  const extendedWidth = layout.totalWidth + (WING_WIDTH + WING_GAP) * 2;
+  const facadeZ = maxZ + CUBE_SIZE / 2 + 0.32;
+  return { minZ, maxZ, wingCenterZ, wingDepth, leftX, rightX, extendedWidth, facadeZ };
 }
 
 function computeLayout(rooms: FloorRoom[]): SceneLayout {
@@ -103,63 +124,250 @@ function computeLayout(rooms: FloorRoom[]): SceneLayout {
 }
 
 // ---------------------------------------------------------------------------
-// A single classroom: a clean, solid cube colored by status. The room
-// number / bench-count label lives outside the canvas (see LabelOverlay) —
-// keeping it there avoids drei's <Html>, which is unreliable when several
-// instances mount in the same tick (see the import comment above). Full
-// detail (benches, seats/bench, occupancy, room ID) is shown in the detail
-// panel on click rather than crammed into the 3D scene.
+// A single classroom, modeled as an open-roof floor-plan block — floor,
+// walls, a door standing ajar, a blackboard + teacher's table, and a grid
+// of benches — rather than a single solid-color cube. The status color
+// still reads at a glance as the floor tint, so the allocation-status
+// legend below the scene stays meaningful. The room number / bench-count
+// label lives outside the canvas (see LabelOverlay) — keeping it there
+// avoids drei's <Html>, which is unreliable when several instances mount in
+// the same tick (see the import comment above). Full detail (benches,
+// seats/bench, occupancy, room ID) is shown in the detail panel on click
+// rather than crammed into the 3D scene.
 // ---------------------------------------------------------------------------
-function ClassroomCube({
-  room, x, z, onClick
+function ClassroomBlock({
+  room, x, z, facing, onClick
 }: {
-  room: FloorRoom; x: number; z: number;
+  room: FloorRoom; x: number; z: number; facing: 1 | -1;
   onClick: () => void;
 }) {
   const color = STATUS_COLOR[room.status];
+  const half = CUBE_SIZE / 2;
+  const wallColor = '#f8fafc';
+  const doorGap = CUBE_SIZE * 0.34;
+  const segWidth = (CUBE_SIZE - doorGap) / 2;
+
+  const rows = Math.min(3, Math.max(1, Math.ceil(Math.min(room.benches, 9) / 3)));
+  const rowOffsets = [0.4, 0.75, 1.1].slice(0, rows);
+  const colXs = [-0.42, 0, 0.42];
 
   return (
     <group position={[x, 0, z]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
-      <mesh position={[0, CUBE_HEIGHT / 2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[CUBE_SIZE, CUBE_HEIGHT, CUBE_SIZE]} />
+      {/* Floor — the at-a-glance status color */}
+      <mesh position={[0, 0.012, 0]} receiveShadow>
+        <boxGeometry args={[CUBE_SIZE - 0.02, 0.024, CUBE_SIZE - 0.02]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {/* A slightly darker cap so the cube reads as a solid block, not a flat color swatch */}
-      <mesh position={[0, CUBE_HEIGHT + 0.015, 0]}>
-        <boxGeometry args={[CUBE_SIZE * 0.98, 0.03, CUBE_SIZE * 0.98]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15} />
+
+      {/* Back wall, opposite the doorway, carries the blackboard */}
+      <mesh position={[0, CUBE_HEIGHT / 2, -facing * (half - 0.025)]} castShadow>
+        <boxGeometry args={[CUBE_SIZE, CUBE_HEIGHT, 0.05]} />
+        <meshStandardMaterial color={wallColor} />
+      </mesh>
+      {/* Side walls */}
+      <mesh position={[-half + 0.025, CUBE_HEIGHT / 2, 0]} castShadow>
+        <boxGeometry args={[0.05, CUBE_HEIGHT, CUBE_SIZE]} />
+        <meshStandardMaterial color={wallColor} />
+      </mesh>
+      <mesh position={[half - 0.025, CUBE_HEIGHT / 2, 0]} castShadow>
+        <boxGeometry args={[0.05, CUBE_HEIGHT, CUBE_SIZE]} />
+        <meshStandardMaterial color={wallColor} />
+      </mesh>
+      {/* Front wall, split either side of the doorway (facing the corridor) */}
+      <mesh position={[-(doorGap / 2 + segWidth / 2), CUBE_HEIGHT / 2, facing * (half - 0.025)]} castShadow>
+        <boxGeometry args={[segWidth, CUBE_HEIGHT, 0.05]} />
+        <meshStandardMaterial color={wallColor} />
+      </mesh>
+      <mesh position={[doorGap / 2 + segWidth / 2, CUBE_HEIGHT / 2, facing * (half - 0.025)]} castShadow>
+        <boxGeometry args={[segWidth, CUBE_HEIGHT, 0.05]} />
+        <meshStandardMaterial color={wallColor} />
+      </mesh>
+      {/* Door, standing ajar */}
+      <mesh position={[doorGap / 2 + 0.03, CUBE_HEIGHT * 0.4, facing * (half - doorGap * 0.35)]} rotation={[0, facing * 0.9, 0]}>
+        <boxGeometry args={[doorGap * 0.85, CUBE_HEIGHT * 0.78, 0.025]} />
+        <meshStandardMaterial color="#92400e" />
+      </mesh>
+
+      {/* Blackboard */}
+      <mesh position={[0, CUBE_HEIGHT * 0.58, -facing * (half - 0.06)]}>
+        <boxGeometry args={[CUBE_SIZE * 0.5, 0.2, 0.02]} />
+        <meshStandardMaterial color="#14532d" />
+      </mesh>
+      {/* Teacher's table, just in front of the board */}
+      <mesh position={[0, 0.065, facing * (0.2 - half)]}>
+        <boxGeometry args={[0.26, 0.09, 0.14]} />
+        <meshStandardMaterial color="#a16207" />
+      </mesh>
+
+      {/* Student benches, a simple grid — reads clearly rather than trying
+          to render the exact bench count. */}
+      {rowOffsets.map((off, r) => (
+        <React.Fragment key={r}>
+          {colXs.map((cx, c) => (
+            <mesh key={c} position={[cx, 0.05, facing * (off - half)]}>
+              <boxGeometry args={[0.22, 0.1, 0.14]} />
+              <meshStandardMaterial color="#c58f4a" />
+            </mesh>
+          ))}
+        </React.Fragment>
+      ))}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// A simple stylised staircase filling the wing at one end of the corridor.
+// ---------------------------------------------------------------------------
+function StairsWing({ x, zCenter, depth }: { x: number; zCenter: number; depth: number }) {
+  const steps = 5;
+  const runDepth = depth * 0.72;
+  return (
+    <group position={[x, 0, zCenter]}>
+      <mesh position={[0, 0.012, 0]} receiveShadow>
+        <boxGeometry args={[WING_WIDTH, 0.024, depth]} />
+        <meshStandardMaterial color="#cbd5e1" />
+      </mesh>
+      {Array.from({ length: steps }).map((_, i) => (
+        <mesh key={i} position={[0, 0.03 + i * 0.05, -runDepth / 2 + (runDepth / steps) * (i + 0.5)]}>
+          <boxGeometry args={[WING_WIDTH * 0.8, 0.06, runDepth / steps]} />
+          <meshStandardMaterial color="#94a3b8" />
+        </mesh>
+      ))}
+      <mesh position={[-WING_WIDTH / 2 + 0.025, CUBE_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+        <meshStandardMaterial color="#f8fafc" />
       </mesh>
     </group>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Full building scene: two rows of classroom cubes flanking a labeled
-// corridor strip — a clean, simple block layout rather than a detailed
-// architectural cutaway.
+// A washroom wing — a small walled block (no door drawn, matches the plan
+// view in the reference image) tinted to distinguish boys/girls.
 // ---------------------------------------------------------------------------
-function BuildingScene({ layout, onSelectRoom }: { layout: SceneLayout; onSelectRoom: (id: string) => void }) {
+function ToiletWing({ x, z, depth, color }: { x: number; z: number; depth: number; color: string }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.012, 0]} receiveShadow>
+        <boxGeometry args={[WING_WIDTH, 0.024, depth - 0.05]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <mesh position={[0, CUBE_HEIGHT / 2, -depth / 2 + 0.025]}>
+        <boxGeometry args={[WING_WIDTH, CUBE_HEIGHT, 0.05]} />
+        <meshStandardMaterial color="#f8fafc" />
+      </mesh>
+      <mesh position={[-WING_WIDTH / 2 + 0.025, CUBE_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+        <meshStandardMaterial color="#f8fafc" />
+      </mesh>
+      <mesh position={[WING_WIDTH / 2 - 0.025, CUBE_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+        <meshStandardMaterial color="#f8fafc" />
+      </mesh>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The building's front elevation — a ground-floor podium with a blue
+// fascia band, an entrance canopy and steps, and a line of trees either
+// side — shown only on the lowest floor, matching a real building where
+// only the ground floor meets the plaza.
+// ---------------------------------------------------------------------------
+function BuildingFacade({ width, z }: { width: number; z: number }) {
+  const treeSpacing = 1.15;
+  const count = Math.max(1, Math.floor(width / treeSpacing / 2) - 1);
+  const treeXs: number[] = [];
+  for (let i = 1; i <= count; i++) { treeXs.push(-i * treeSpacing, i * treeSpacing); }
+
+  return (
+    <group position={[0, 0, z]}>
+      {/* Ground-floor podium */}
+      <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
+        <boxGeometry args={[width, 0.44, 0.5]} />
+        <meshStandardMaterial color="#f1f5f9" />
+      </mesh>
+      {/* Blue fascia band along the top, and signage panel — this is where
+          the "COLLEGE BUILDING" label is projected (see labelPoints). */}
+      <mesh position={[0, 0.46, 0.24]}>
+        <boxGeometry args={[width, 0.1, 0.04]} />
+        <meshStandardMaterial color="#2563eb" />
+      </mesh>
+      <mesh position={[0, 0.34, 0.42]}>
+        <boxGeometry args={[1.3, 0.22, 0.03]} />
+        <meshStandardMaterial color="#2563eb" />
+      </mesh>
+      {/* Entrance canopy */}
+      <mesh position={[0, 0.5, 0.45]}>
+        <boxGeometry args={[1.4, 0.06, 0.5]} />
+        <meshStandardMaterial color="#ffffff" />
+      </mesh>
+      {/* Steps down to the plaza */}
+      {[0, 1, 2].map((i) => (
+        <mesh key={i} position={[0, 0.06 - i * 0.05, 0.5 + i * 0.16]}>
+          <boxGeometry args={[1.0 - i * 0.08, 0.05, 0.16]} />
+          <meshStandardMaterial color="#e2e8f0" />
+        </mesh>
+      ))}
+      {/* Trees along the front */}
+      {treeXs.map((tx, i) => (
+        <group key={i} position={[tx, 0, 0.6]}>
+          <mesh position={[0, 0.08, 0]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.16, 6]} />
+            <meshStandardMaterial color="#78350f" />
+          </mesh>
+          <mesh position={[0, 0.2, 0]}>
+            <sphereGeometry args={[0.11, 8, 8]} />
+            <meshStandardMaterial color="#16a34a" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Full building scene: two rows of open-roof classrooms flanking a labeled
+// corridor, a staircase wing at one end, washrooms at the other, and (on
+// the ground floor) the building's front elevation — matching the
+// reference floor-plan render rather than a row of plain colored blocks.
+// ---------------------------------------------------------------------------
+function BuildingScene({ layout, onSelectRoom, isGroundFloor }: { layout: SceneLayout; onSelectRoom: (id: string) => void; isGroundFloor: boolean }) {
+  const wings = computeWings(layout);
+
   return (
     <group>
       {/* Ground plaza — deliberately excluded from the camera auto-fit
-          (userData.excludeFromFit) so the frame hugs the classroom cubes
-          instead of stretching out to include the whole floor plate. */}
+          (userData.excludeFromFit) so the frame hugs the building instead
+          of stretching out to include the whole floor plate. */}
       <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow userData={{ excludeFromFit: true }}>
-        <planeGeometry args={[layout.totalWidth + 2.5, layout.plazaDepth]} />
+        <planeGeometry args={[wings.extendedWidth + 2.5, layout.plazaDepth + (isGroundFloor ? 1.6 : 0)]} />
         <meshStandardMaterial color="#e7e9ee" />
       </mesh>
 
-      {/* Corridor strip */}
+      {/* Corridor strip — runs the full width, connecting the stairs to the washrooms */}
       {layout.hasCorridor && (
         <mesh position={[0, 0.005, 0]} receiveShadow>
-          <boxGeometry args={[layout.totalWidth, 0.01, CORRIDOR_DEPTH]} />
+          <boxGeometry args={[wings.extendedWidth, 0.01, CORRIDOR_DEPTH]} />
           <meshStandardMaterial color="#f1f5f9" />
         </mesh>
       )}
 
       {layout.rooms.map(({ room, x, z }) => (
-        <ClassroomCube key={room.roomId} room={room} x={x} z={z} onClick={() => onSelectRoom(room.roomId)} />
+        <ClassroomBlock key={room.roomId} room={room} x={x} z={z} facing={z <= 0 ? 1 : -1} onClick={() => onSelectRoom(room.roomId)} />
       ))}
+
+      <StairsWing x={wings.leftX} zCenter={wings.wingCenterZ} depth={wings.wingDepth} />
+      {layout.hasCorridor ? (
+        <>
+          <ToiletWing x={wings.rightX} z={wings.minZ} depth={CUBE_SIZE} color="#bae6fd" />
+          <ToiletWing x={wings.rightX} z={wings.maxZ} depth={CUBE_SIZE} color="#fbcfe8" />
+        </>
+      ) : (
+        <ToiletWing x={wings.rightX} z={wings.wingCenterZ} depth={CUBE_SIZE} color="#bae6fd" />
+      )}
+
+      {isGroundFloor && <BuildingFacade width={wings.extendedWidth} z={wings.facadeZ} />}
     </group>
   );
 }
@@ -329,13 +537,28 @@ export const ExamFloor3D: React.FC<{
   const sceneSignature = `${activeFloor}-${activeRooms.map((r) => r.roomId).join(',')}`;
 
   const layout = useMemo(() => computeLayout(activeRooms), [sceneSignature]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The building's front elevation (steps, canopy, trees) only makes sense
+  // on the lowest floor — an upper floor has no ground-level entrance.
+  const isGroundFloor = floors.length > 0 && activeFloor === floors[0];
   const labelPoints = useMemo<LabelPoint[]>(() => {
     const points: LabelPoint[] = layout.rooms.map(({ room, x, z }) => ({
       id: room.roomId, position: [x, CUBE_HEIGHT + 0.32, z]
     }));
     if (layout.hasCorridor) points.push({ id: '__corridor', position: [0, 0.02, 0] });
+    if (activeRooms.length > 0) {
+      const wings = computeWings(layout);
+      if (layout.hasCorridor) {
+        points.push({ id: '__toilet_boys', position: [wings.rightX, 0.3, wings.minZ] });
+        points.push({ id: '__toilet_girls', position: [wings.rightX, 0.3, wings.maxZ] });
+      } else {
+        points.push({ id: '__toilet', position: [wings.rightX, 0.3, wings.wingCenterZ] });
+      }
+      if (isGroundFloor) {
+        points.push({ id: '__facade', position: [0, 0.5, wings.facadeZ] });
+      }
+    }
     return points;
-  }, [layout]);
+  }, [layout, isGroundFloor, activeRooms.length]);
   const [screenPositions, setScreenPositions] = useState<Record<string, ScreenPos>>({});
 
   // Manual zoom, driven only by the magnifier buttons below — mouse-wheel /
@@ -409,7 +632,7 @@ export const ExamFloor3D: React.FC<{
               <directionalLight position={[-6, 6, -4]} intensity={0.3} />
               <Suspense fallback={null}>
                 <group ref={groupRef}>
-                  <BuildingScene layout={layout} onSelectRoom={onSelectRoom} />
+                  <BuildingScene layout={layout} onSelectRoom={onSelectRoom} isGroundFloor={isGroundFloor} />
                 </group>
               </Suspense>
               <FitCameraToScene groupRef={groupRef} controlsRef={controlsRef} signature={sceneSignature} />
@@ -460,6 +683,37 @@ export const ExamFloor3D: React.FC<{
                   }}
                 >
                   CORRIDOR
+                </div>
+              )}
+              {(['__toilet_boys', '__toilet_girls', '__toilet'] as const).map((id) => {
+                const pos = screenPositions[id];
+                if (!pos || pos.behind) return null;
+                const text = id === '__toilet_boys' ? 'TOILET (BOYS)' : id === '__toilet_girls' ? 'TOILET (GIRLS)' : 'TOILET';
+                return (
+                  <div
+                    key={id}
+                    style={{
+                      position: 'absolute', left: 0, top: 0,
+                      transform: `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`,
+                      fontSize: 9, fontWeight: 800, color: '#0f172a', background: 'rgba(255,255,255,0.9)',
+                      padding: '2px 6px', borderRadius: 5, whiteSpace: 'nowrap', textAlign: 'center', lineHeight: 1.2
+                    }}
+                  >
+                    {text}
+                  </div>
+                );
+              })}
+              {screenPositions.__facade && !screenPositions.__facade.behind && (
+                <div
+                  style={{
+                    position: 'absolute', left: 0, top: 0,
+                    transform: `translate3d(${screenPositions.__facade.x}px, ${screenPositions.__facade.y}px, 0) translate(-50%, -50%)`,
+                    fontSize: 11, fontWeight: 800, color: '#ffffff', background: '#2563eb',
+                    padding: '3px 10px', borderRadius: 5, whiteSpace: 'nowrap', letterSpacing: 0.5,
+                    boxShadow: '0 2px 6px rgba(15,23,42,0.25)'
+                  }}
+                >
+                  COLLEGE BUILDING
                 </div>
               )}
             </div>

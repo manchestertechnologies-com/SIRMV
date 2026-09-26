@@ -34,8 +34,11 @@ interface BatchDetail {
 }
 
 const STATUS_STEPS = ['DRAFT', 'ROOMS_SELECTED', 'STUDENTS_ALLOCATED', 'INVIGILATORS_ALLOCATED', 'READY_TO_PUBLISH', 'PUBLISHED'];
+// "Draft" renamed to "Exam Created" — this is the step an exam lands on the
+// moment Create Exam finishes, so the label should say what happened, not
+// read like an unfinished/unsaved state.
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Draft', ROOMS_SELECTED: 'Rooms Selected', STUDENTS_ALLOCATED: 'Students Allocated',
+  DRAFT: 'Exam Created', ROOMS_SELECTED: 'Rooms Selected', STUDENTS_ALLOCATED: 'Students Allocated',
   INVIGILATORS_ALLOCATED: 'Invigilators Allocated', READY_TO_PUBLISH: 'Ready to Publish', PUBLISHED: 'Published'
 };
 
@@ -787,17 +790,23 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
         </button>
       </div>
 
-      {/* Status progress */}
+      {/* Status progress — each step carries its actual position number
+          (1-6) so it reads as a numbered sequence, not just a row of dots. */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex items-center gap-2 overflow-x-auto">
-        {STATUS_STEPS.map((s, i) => (
+        {STATUS_STEPS.map((s, i) => {
+          const done = STATUS_STEPS.indexOf(exam.status) >= i;
+          return (
           <React.Fragment key={s}>
-            <div className={`flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold ${STATUS_STEPS.indexOf(exam.status) >= i ? 'text-violet-700' : 'text-slate-300'}`}>
-              <span className={`w-2 h-2 rounded-full ${STATUS_STEPS.indexOf(exam.status) >= i ? 'bg-violet-600' : 'bg-slate-200'}`} />
+            <div className={`flex items-center gap-1.5 whitespace-nowrap text-[11px] font-bold ${done ? 'text-violet-700' : 'text-slate-300'}`}>
+              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-extrabold ${done ? 'bg-violet-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                {i + 1}
+              </span>
               {STATUS_LABELS[s]}
             </div>
             {i < STATUS_STEPS.length - 1 && <span className="w-6 h-px bg-slate-200" />}
           </React.Fragment>
-        ))}
+          );
+        })}
       </div>
 
       {/* KPI row */}
