@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { getBatchColor, batchKey } from '../utils/batchColor';
 import { TouchActionFix } from './three/TouchActionFix';
 import {
-  Bench, SeatInfo, EMPTY_SEAT_COLOR, ABSENT_SEAT_COLOR, MAX_SEATS_PER_BENCH_ROW
+  Bench, SeatInfo, EMPTY_SEAT_COLOR, ABSENT_SEAT_COLOR, MAX_SEATS_PER_BENCH_ROW, TARGET_BENCH_COLUMNS
 } from './three/Bench';
 
 // ---------------------------------------------------------------------------
@@ -150,7 +150,11 @@ export const ExamSeatingView3D: React.FC<{
     return map;
   }, [seats]);
 
-  const cols = Math.max(1, Math.round(Math.sqrt(benchCount * 1.6)));
+  // A real classroom is 3 columns of benches wide (a center aisle and two
+  // side aisles) — rows scale with however many benches the room actually
+  // has, matching the building-overview scene's grid instead of a
+  // count-derived guess.
+  const cols = Math.max(1, Math.min(TARGET_BENCH_COLUMNS, benchCount));
   const rows = Math.ceil(benchCount / cols);
   const benchRowCount = Math.ceil(seatsPerBenchN / MAX_SEATS_PER_BENCH_ROW);
   const benchWidth = Math.min(seatsPerBenchN, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;

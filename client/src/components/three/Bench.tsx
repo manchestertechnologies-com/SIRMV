@@ -18,6 +18,12 @@ import { getBatchColor, batchKey } from '../../utils/batchColor';
 
 export const MAX_SEATS_PER_BENCH_ROW = 3;
 
+// A real classroom is laid out in 3 columns of benches (a center and two
+// side aisles) — used as the target bench-grid width by every 3D scene
+// that lays out a room's benches, rather than each one guessing a column
+// count from the total bench count.
+export const TARGET_BENCH_COLUMNS = 3;
+
 export interface SeatInfo {
   allocationId?: string;
   benchNumber: number;

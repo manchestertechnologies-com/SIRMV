@@ -15,7 +15,7 @@ import * as THREE from 'three';
 import { Building2, Grid3x3, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { getBatchColor, batchKey } from '../utils/batchColor';
 import { TouchActionFix } from './three/TouchActionFix';
-import { SeatBlock, type SeatInfo, MAX_SEATS_PER_BENCH_ROW } from './three/Bench';
+import { Bench, type SeatInfo, MAX_SEATS_PER_BENCH_ROW, TARGET_BENCH_COLUMNS } from './three/Bench';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
 
@@ -190,10 +190,11 @@ function ClassroomBlock({
   const segWidth = (CUBE_SIZE - doorGap) / 2;
 
   // The exact configured bench count for this room — never capped or
-  // approximated. Rows/columns scale to fit however many benches the room
-  // actually has, instead of always drawing (at most) a 3x3 grid.
+  // approximated. A real classroom is 3 columns of benches wide (a center
+  // aisle and two side aisles); rows scale with however many benches the
+  // room actually has, instead of guessing a column count from the total.
   const benchCount = Math.max(1, Math.round(room.benches));
-  const cols = Math.max(1, Math.min(6, Math.round(Math.sqrt(benchCount))));
+  const cols = Math.max(1, Math.min(TARGET_BENCH_COLUMNS, benchCount));
   const rows = Math.ceil(benchCount / cols);
   // Benches occupy the floor area between the teacher's table (near the
   // board) and the doorway, with a small margin on every side.
@@ -203,8 +204,11 @@ function ClassroomBlock({
   const usableWidth = CUBE_SIZE - 0.2;
   const rowOffsets = Array.from({ length: rows }, (_, r) => (rows === 1 ? (zStart + zEnd) / 2 : zStart + (usableDepth * r) / (rows - 1)));
   const colXs = Array.from({ length: cols }, (_, c) => (cols === 1 ? 0 : -usableWidth / 2 + (usableWidth * c) / (cols - 1)));
-  const benchW = Math.min(0.22, (usableWidth / cols) * 0.72);
-  const benchD = Math.min(0.14, (usableDepth / Math.max(1, rows - 1 || 1)) * 0.62);
+  // Sized to fit the fixed 3-column grid (rather than the old fixed 0.22/0.14
+  // caps tuned for a variable, often-wider column count), shrinking further
+  // as more rows are needed to fit the room's actual bench count.
+  const benchW = (usableWidth / cols) * 0.82;
+  const benchD = (usableDepth / Math.max(1, rows)) * 0.68;
 
   return (
     <group position={[x, 0, z]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
@@ -269,7 +273,7 @@ function ClassroomBlock({
         const seatsPerRow = Math.min(Math.max(1, room.seatsPerBench), MAX_SEATS_PER_BENCH_ROW);
         const seatSize = benchW / seatsPerRow;
         return (
-          <SeatBlock
+          <Bench
             key={idx}
             seatsPerBench={room.seatsPerBench}
             seatsByNumber={seatsByNumberForBench(room.seats, benchNumber)}
