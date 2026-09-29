@@ -4,6 +4,7 @@ import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import { createNotification } from './notifications';
 import { sendPushToUser } from '../services/pushService';
+import { getBatchColor, batchKey } from '../utils/batchColor';
 import crypto from 'crypto';
 import {
   RoomInfo,
@@ -863,22 +864,162 @@ examManagementRouter.post('/sessions/:sessionId/allocate-seats', authenticate, r
 });
 
 // Full seating list for a session — used by the admin review screen, the
-// lecturer's "View Student Seating", and PDF export in a later phase.
+// lecturer's "View Student Seating" / attendance-taking screen, the
+// batch-color-coded 3D seating view, and PDF export.
+// Includes attendance_status/marked_by/marked_at (added by
+// add-exam-attendance-schema.sql) and a deterministic batch_color per row,
+// computed the same way as server/src/utils/batchColor.ts's client twin, so
+// the 3D view never needs a separate call to color-code seats by batch.
 examManagementRouter.get('/sessions/:sessionId/seating', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { sessionId } = req.params;
-    const seating = await query(
-      `SELECT sa.*, sp.name as student_name, sp.register_number, r.room_number, r.floor, c.name as class_name, s.name as section_name
+    const seating = await query<any>(
+      `SELECT sa.*, sp.name as student_name, sp.register_number, r.room_number, r.floor, c.name as class_name, s.name as section_name,
+              mu.name as marked_by_name
        FROM exam_student_allocations sa
        JOIN student_profiles sp ON sp.id = sa.student_id
        JOIN rooms r ON r.id = sa.room_id
        JOIN classes c ON c.id = sa.class_id
        JOIN sections s ON s.id = sa.section_id
+       LEFT JOIN teacher_profiles mtp ON mtp.id = sa.marked_by
+       LEFT JOIN users mu ON mu.id = mtp.user_id
        WHERE sa.exam_session_id = $1
        ORDER BY r.floor ASC, r.room_number ASC, sa.seat_number ASC`,
       [sessionId]
     );
-    return res.json({ seating });
+    return res.json({ seating: seating.map((r) => ({ ...r, batch_color: getBatchColor(batchKey(r.class_id, r.section_id)) })) });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Attendance (marked at exam time by the invigilating teacher, or anytime
+// afterward by Exam Dept/Admin/Principal for corrections).
+// ---------------------------------------------------------------------------
+
+// Resolves who's allowed to mark attendance for a given seat allocation, and
+// as whom. Never trusts a client-supplied teacher/room id for authorization
+// — a TEACHER's own teacher_profiles row (and their invigilator assignment)
+// is always looked up server-side from the authenticated user.
+async function authorizeAttendanceMarker(
+  req: AuthRequest,
+  sessionId: string,
+  roomId: string
+): Promise<{ ok: true; markedByTeacherId: string | null } | { ok: false; status: number; error: string }> {
+  const role = req.user!.role;
+  if (role === 'ADMIN' || role === 'PRINCIPAL' || role === 'EXAM_DEPARTMENT') {
+    // These roles can always mark/correct attendance. If the person happens
+    // to also have a teacher profile, credit them as the marker; otherwise
+    // marked_by is left null (e.g. a pure admin account).
+    const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    return { ok: true, markedByTeacherId: tp?.id || null };
+  }
+  if (role === 'TEACHER') {
+    const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!tp) return { ok: false, status: 403, error: 'Teacher profile not found.' };
+    const assigned = await queryOne(
+      `SELECT id FROM exam_invigilator_assignments WHERE exam_session_id = $1 AND room_id = $2 AND teacher_id = $3`,
+      [sessionId, roomId, tp.id]
+    );
+    if (!assigned) return { ok: false, status: 403, error: 'You are not the assigned invigilator for this room and session.' };
+    return { ok: true, markedByTeacherId: tp.id };
+  }
+  return { ok: false, status: 403, error: 'You are not permitted to mark attendance for this exam.' };
+}
+
+// Mark a single student PRESENT/ABSENT for a session. Accepts either
+// allocation_id (preferred, unambiguous) or student_id. room_id is never
+// trusted from the body for authorization — it's read back from the
+// allocation row itself.
+examManagementRouter.post('/sessions/:sessionId/attendance', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { allocation_id, student_id, status } = req.body;
+    if (!['PRESENT', 'ABSENT'].includes(status)) {
+      return res.status(400).json({ error: "status must be 'PRESENT' or 'ABSENT'." });
+    }
+    if (!allocation_id && !student_id) {
+      return res.status(400).json({ error: 'allocation_id or student_id is required.' });
+    }
+
+    const session = await queryOne<any>(`SELECT id FROM exam_sessions WHERE id = $1`, [sessionId]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const allocation = allocation_id
+      ? await queryOne<any>(`SELECT * FROM exam_student_allocations WHERE id = $1 AND exam_session_id = $2`, [allocation_id, sessionId])
+      : await queryOne<any>(`SELECT * FROM exam_student_allocations WHERE student_id = $1 AND exam_session_id = $2`, [student_id, sessionId]);
+    if (!allocation) return res.status(404).json({ error: 'Seat allocation not found for this student in this session.' });
+
+    const auth = await authorizeAttendanceMarker(req, sessionId, allocation.room_id);
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
+
+    await execute(
+      `UPDATE exam_student_allocations SET attendance_status = $1, marked_by = $2, marked_at = CURRENT_TIMESTAMP WHERE id = $3`,
+      [status, auth.markedByTeacherId, allocation.id]
+    );
+    const updated = await queryOne(`SELECT * FROM exam_student_allocations WHERE id = $1`, [allocation.id]);
+    await logAudit(req, 'EXAM_ATTENDANCE_MARKED', 'exam_student_allocations', allocation.id, { sessionId, status });
+    return res.json({ success: true, allocation: updated });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk variant — lets an invigilator mark a whole room present in one go,
+// then flip the few absentees, instead of one request per student. Every
+// update is still individually validated against this session/room; a
+// TEACHER's updates are silently skipped for any allocation outside the
+// room they invigilate (never trusted from the client, checked per-row).
+examManagementRouter.post('/sessions/:sessionId/attendance/bulk', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+    const { room_id, updates } = req.body as { room_id?: string; updates?: { allocation_id: string; status: 'PRESENT' | 'ABSENT' }[] };
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ error: 'updates must be a non-empty array of { allocation_id, status }.' });
+    }
+
+    const session = await queryOne<any>(`SELECT id FROM exam_sessions WHERE id = $1`, [sessionId]);
+    if (!session) return res.status(404).json({ error: 'Exam session not found.' });
+
+    const role = req.user!.role;
+    let markedByTeacherId: string | null = null;
+    let restrictedRoomId: string | null = null;
+
+    if (role === 'ADMIN' || role === 'PRINCIPAL' || role === 'EXAM_DEPARTMENT') {
+      const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+      markedByTeacherId = tp?.id || null;
+    } else if (role === 'TEACHER') {
+      if (!room_id) return res.status(400).json({ error: 'room_id is required.' });
+      const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+      if (!tp) return res.status(403).json({ error: 'Teacher profile not found.' });
+      const assigned = await queryOne(
+        `SELECT id FROM exam_invigilator_assignments WHERE exam_session_id = $1 AND room_id = $2 AND teacher_id = $3`,
+        [sessionId, room_id, tp.id]
+      );
+      if (!assigned) return res.status(403).json({ error: 'You are not the assigned invigilator for this room and session.' });
+      markedByTeacherId = tp.id;
+      restrictedRoomId = room_id;
+    } else {
+      return res.status(403).json({ error: 'You are not permitted to mark attendance for this exam.' });
+    }
+
+    let updated = 0;
+    const skipped: string[] = [];
+    for (const u of updates) {
+      if (!u || !u.allocation_id || !['PRESENT', 'ABSENT'].includes(u.status)) { skipped.push(u?.allocation_id); continue; }
+      const alloc = await queryOne<any>(`SELECT * FROM exam_student_allocations WHERE id = $1 AND exam_session_id = $2`, [u.allocation_id, sessionId]);
+      if (!alloc) { skipped.push(u.allocation_id); continue; }
+      if (restrictedRoomId && alloc.room_id !== restrictedRoomId) { skipped.push(u.allocation_id); continue; }
+      await execute(
+        `UPDATE exam_student_allocations SET attendance_status = $1, marked_by = $2, marked_at = CURRENT_TIMESTAMP WHERE id = $3`,
+        [u.status, markedByTeacherId, alloc.id]
+      );
+      updated++;
+    }
+
+    await logAudit(req, 'EXAM_ATTENDANCE_BULK_MARKED', 'exam_student_allocations', sessionId, { room_id, updated, skipped: skipped.length });
+    return res.json({ success: true, updated, skipped });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -1036,6 +1177,83 @@ examManagementRouter.get('/exams/:id/seating-report', authenticate, requireRoles
       params
     );
     return res.json({ exam, rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Persistent, historical 3D seating view for a whole exam: every session,
+// every allocated room (with its exact bench/seat configuration), every
+// seat's batch (for color-coding) and attendance status (for the red
+// absentee overlay). Available for any exam regardless of date — not just
+// during live allocation — so Admin/Principal/Exam Dept can look back at
+// how any past exam's seating and attendance played out.
+examManagementRouter.get('/exams/:id/seating-visualization', authenticate, requireRoles(...EXAM_ROLES), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const exam = await queryOne<any>(`SELECT * FROM pu_exams WHERE id = $1`, [id]);
+    if (!exam) return res.status(404).json({ error: 'Exam not found.' });
+
+    const sessions = await query<any>(
+      `SELECT s.id, s.exam_date, s.start_time, s.end_time, sub.name as subject_name
+       FROM exam_sessions s JOIN subjects sub ON sub.id = s.subject_id
+       WHERE s.exam_id = $1
+       ORDER BY s.exam_date ASC, s.start_time ASC`,
+      [id]
+    );
+
+    const result: any[] = [];
+    for (const session of sessions) {
+      const rooms = await query<any>(
+        `SELECT r.id as room_id, r.room_number, r.floor,
+                COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 2) as seats_per_bench
+         FROM exam_room_allocations ra
+         JOIN rooms r ON r.id = ra.room_id
+         LEFT JOIN exam_room_configs c ON c.room_id = r.id
+         WHERE ra.exam_session_id = $1
+         ORDER BY r.floor ASC, r.room_number ASC`,
+        [session.id]
+      );
+      const seats = await query<any>(
+        `SELECT sa.id as allocation_id, sa.room_id, sa.student_id, sa.class_id, sa.section_id,
+                sa.bench_number, sa.seat_number, sa.row_number, sa.attendance_status, sa.marked_at,
+                sp.name as student_name, sp.register_number, c.name as class_name, sec.name as section_name,
+                mu.name as marked_by_name
+         FROM exam_student_allocations sa
+         JOIN student_profiles sp ON sp.id = sa.student_id
+         JOIN classes c ON c.id = sa.class_id
+         JOIN sections sec ON sec.id = sa.section_id
+         LEFT JOIN teacher_profiles mtp ON mtp.id = sa.marked_by
+         LEFT JOIN users mu ON mu.id = mtp.user_id
+         WHERE sa.exam_session_id = $1`,
+        [session.id]
+      );
+
+      const seatsByRoom = new Map<string, any[]>();
+      for (const s of seats) {
+        const list = seatsByRoom.get(s.room_id) || [];
+        list.push({ ...s, batch_color: getBatchColor(batchKey(s.class_id, s.section_id)) });
+        seatsByRoom.set(s.room_id, list);
+      }
+
+      result.push({
+        session_id: session.id,
+        exam_date: session.exam_date,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        subject_name: session.subject_name,
+        rooms: rooms.map((r: any) => ({
+          room_id: r.room_id,
+          room_number: r.room_number,
+          floor: r.floor,
+          benches: Number(r.benches),
+          seats_per_bench: Number(r.seats_per_bench),
+          seats: seatsByRoom.get(r.room_id) || []
+        }))
+      });
+    }
+
+    return res.json({ exam, sessions: result });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
@@ -1626,12 +1844,14 @@ examManagementRouter.get('/my-duties', authenticate, async (req: AuthRequest, re
 
     const duties = await query(
       `SELECT ia.room_id, r.room_number, r.floor, s.exam_date, s.start_time, s.end_time, s.reporting_time,
-              sub.name as subject_name, e.name as exam_name, e.pu_level, e.instructions, s.id as session_id
+              sub.name as subject_name, e.name as exam_name, e.pu_level, e.instructions, s.id as session_id,
+              COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 2) as seats_per_bench
        FROM exam_invigilator_assignments ia
        JOIN exam_sessions s ON s.id = ia.exam_session_id
        JOIN pu_exams e ON e.id = s.exam_id
        JOIN subjects sub ON sub.id = s.subject_id
        JOIN rooms r ON r.id = ia.room_id
+       LEFT JOIN exam_room_configs c ON c.room_id = ia.room_id
        WHERE ia.teacher_id = $1 AND e.status = 'PUBLISHED'
        ORDER BY s.exam_date ASC, s.start_time ASC`,
       [teacherProfile.id]

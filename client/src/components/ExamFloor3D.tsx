@@ -158,9 +158,22 @@ function ClassroomBlock({
   const doorGap = CUBE_SIZE * 0.34;
   const segWidth = (CUBE_SIZE - doorGap) / 2;
 
-  const rows = Math.min(3, Math.max(1, Math.ceil(Math.min(room.benches, 9) / 3)));
-  const rowOffsets = [0.4, 0.75, 1.1].slice(0, rows);
-  const colXs = [-0.42, 0, 0.42];
+  // The exact configured bench count for this room — never capped or
+  // approximated. Rows/columns scale to fit however many benches the room
+  // actually has, instead of always drawing (at most) a 3x3 grid.
+  const benchCount = Math.max(1, Math.round(room.benches));
+  const cols = Math.max(1, Math.min(6, Math.round(Math.sqrt(benchCount))));
+  const rows = Math.ceil(benchCount / cols);
+  // Benches occupy the floor area between the teacher's table (near the
+  // board) and the doorway, with a small margin on every side.
+  const zStart = 0.32;
+  const zEnd = CUBE_SIZE - 0.22;
+  const usableDepth = Math.max(0.1, zEnd - zStart);
+  const usableWidth = CUBE_SIZE - 0.2;
+  const rowOffsets = Array.from({ length: rows }, (_, r) => (rows === 1 ? (zStart + zEnd) / 2 : zStart + (usableDepth * r) / (rows - 1)));
+  const colXs = Array.from({ length: cols }, (_, c) => (cols === 1 ? 0 : -usableWidth / 2 + (usableWidth * c) / (cols - 1)));
+  const benchW = Math.min(0.22, (usableWidth / cols) * 0.72);
+  const benchD = Math.min(0.14, (usableDepth / Math.max(1, rows - 1 || 1)) * 0.62);
 
   return (
     <group position={[x, 0, z]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
@@ -210,18 +223,19 @@ function ClassroomBlock({
         <meshStandardMaterial color="#a16207" />
       </mesh>
 
-      {/* Student benches, a simple grid — reads clearly rather than trying
-          to render the exact bench count. */}
-      {rowOffsets.map((off, r) => (
-        <React.Fragment key={r}>
-          {colXs.map((cx, c) => (
-            <mesh key={c} position={[cx, 0.05, facing * (off - half)]}>
-              <boxGeometry args={[0.22, 0.1, 0.14]} />
-              <meshStandardMaterial color="#c58f4a" />
-            </mesh>
-          ))}
-        </React.Fragment>
-      ))}
+      {/* Student benches — one mesh per actual configured bench (never
+          capped), laid out row-major across the computed grid so the count
+          on screen always matches the room's real bench count. */}
+      {Array.from({ length: benchCount }).map((_, idx) => {
+        const r = Math.floor(idx / cols);
+        const c = idx % cols;
+        return (
+          <mesh key={idx} position={[colXs[c], 0.05, facing * (rowOffsets[r] - half)]}>
+            <boxGeometry args={[benchW, 0.1, benchD]} />
+            <meshStandardMaterial color="#c58f4a" />
+          </mesh>
+        );
+      })}
     </group>
   );
 }

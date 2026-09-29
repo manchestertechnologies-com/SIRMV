@@ -3,9 +3,11 @@ import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   Plus, X, ClipboardList, Users, DoorOpen, Wand2, CheckCircle2, AlertTriangle,
-  ArrowLeftRight, Rocket, ShieldCheck, Settings2, ArrowLeft, Download, Send, Clock
+  ArrowLeftRight, Rocket, ShieldCheck, Settings2, ArrowLeft, Download, Send, Clock, Armchair
 } from 'lucide-react';
 import { ExamFloor3D, FloorRoom, RoomStatus } from '../components/ExamFloor3D';
+import { ExamSeatingView3D, SeatInfo } from '../components/ExamSeatingView3D';
+import { StudentSeatDetailPanel, SeatDetailData } from '../components/StudentSeatDetailPanel';
 import { ExamReports } from './ExamReports';
 
 // ---------------------------------------------------------------------------
@@ -781,13 +783,22 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
           <h2 className="text-lg font-bold text-slate-900 font-heading">{exam.name}</h2>
           <StatusBadge status={exam.status} />
         </div>
-        <button
-          onClick={() => document.getElementById('exam-reports-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-          title="Reports & downloads"
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition shrink-0"
-        >
-          <Download className="w-4 h-4" /> Reports
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => document.getElementById('exam-seating-3d-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            title="3D seating & attendance — batch colors, absentees in red"
+            className="flex items-center gap-1.5 px-3 py-2 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded-xl text-xs font-semibold transition shrink-0"
+          >
+            <Armchair className="w-4 h-4" /> 3D Seating & Attendance
+          </button>
+          <button
+            onClick={() => document.getElementById('exam-reports-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            title="Reports & downloads"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition shrink-0"
+          >
+            <Download className="w-4 h-4" /> Reports
+          </button>
+        </div>
       </div>
 
       {/* Status progress — each step carries its actual position number
@@ -880,11 +891,148 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
         </div>
       )}
 
+      {/* 3D Seating & Attendance — persistent, historical view for every
+          session/room of this exam (available regardless of exam date, not
+          only during live allocation), color-coded by batch with absentees
+          shown in red once the invigilator has taken attendance. */}
+      <div id="exam-seating-3d-section" className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 scroll-mt-4">
+        <div className="font-bold text-sm text-slate-900 mb-3 flex items-center gap-1.5"><Armchair className="w-4 h-4 text-violet-600" /> 3D Seating & Attendance</div>
+        <ExamSeatingHistoryView examId={examId} />
+      </div>
+
       {/* Reports */}
       <div id="exam-reports-section" className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 scroll-mt-4">
         <div className="font-bold text-sm text-slate-900 mb-3 flex items-center gap-1.5"><Download className="w-4 h-4 text-violet-600" /> Reports</div>
         <ExamReports examId={examId} />
       </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Post-exam (and pre-exam) 3D seating visualization for Admin/Principal/Exam
+// Dept: every session, every room, batch color-coding, and — once the
+// invigilator has taken attendance for that session — absentees in red.
+// This is the "persistent, available for every exam" historical view called
+// for by the spec, as distinct from the live per-session allocation panel
+// above (SessionAllocationPanel), which only exists while an exam is still
+// being built.
+// ---------------------------------------------------------------------------
+
+const ExamSeatingHistoryView: React.FC<{ examId: string }> = ({ examId }) => {
+  const [data, setData] = useState<{ exam: any; sessions: any[] } | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      try {
+        const res = await apiFetch<any>(`/exam-management/exams/${examId}/seating-visualization`);
+        setData(res);
+        const firstSession = res.sessions?.[0];
+        setActiveSessionId(firstSession?.session_id || null);
+        setActiveRoomId(firstSession?.rooms?.[0]?.room_id || null);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [examId]);
+
+  if (isLoading) return <div className="text-center text-slate-400 text-xs py-6">Loading seating visualization...</div>;
+  if (!data || data.sessions.length === 0) {
+    return <div className="text-center text-slate-400 text-xs py-6">Rooms haven't been allocated for any session yet.</div>;
+  }
+
+  const session = data.sessions.find((s: any) => s.session_id === activeSessionId) || data.sessions[0];
+  const room = (session.rooms || []).find((r: any) => r.room_id === activeRoomId) || session.rooms?.[0];
+
+  const seatInfos: SeatInfo[] = (room?.seats || []).map((s: any) => ({
+    allocationId: s.allocation_id,
+    benchNumber: s.bench_number,
+    seatNumber: s.seat_number,
+    rowNumber: s.row_number,
+    studentId: s.student_id,
+    studentName: s.student_name,
+    registerNumber: s.register_number,
+    classId: s.class_id,
+    sectionId: s.section_id,
+    className: s.class_name,
+    sectionName: s.section_name,
+    attendanceStatus: s.attendance_status,
+    markedByName: s.marked_by_name,
+    markedAt: s.marked_at
+  }));
+
+  const selectedDetail: SeatDetailData | null = selectedSeat && room ? {
+    studentName: selectedSeat.student_name,
+    registerNumber: selectedSeat.register_number,
+    className: selectedSeat.class_name,
+    sectionName: selectedSeat.section_name,
+    examName: data.exam.name,
+    subjectName: session.subject_name,
+    examDate: session.exam_date,
+    startTime: session.start_time,
+    endTime: session.end_time,
+    roomNumber: room.room_number,
+    floor: room.floor,
+    benchNumber: selectedSeat.bench_number,
+    seatNumber: selectedSeat.seat_number,
+    attendanceStatus: selectedSeat.attendance_status,
+    markedByName: selectedSeat.marked_by_name,
+    markedAt: selectedSeat.marked_at
+  } : null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {data.sessions.map((s: any) => (
+          <button
+            key={s.session_id}
+            onClick={() => { setActiveSessionId(s.session_id); setActiveRoomId(s.rooms?.[0]?.room_id || null); setSelectedSeat(null); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${activeSessionId === s.session_id ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+          >
+            {s.subject_name} — {s.exam_date}
+          </button>
+        ))}
+      </div>
+
+      {(!session.rooms || session.rooms.length === 0) ? (
+        <div className="text-center text-slate-400 text-xs py-6">No rooms allocated for this session yet.</div>
+      ) : (
+        <>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {session.rooms.map((r: any) => (
+              <button
+                key={r.room_id}
+                onClick={() => { setActiveRoomId(r.room_id); setSelectedSeat(null); }}
+                className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap ${activeRoomId === r.room_id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}
+              >
+                Room {r.room_number} (Floor {r.floor})
+              </button>
+            ))}
+          </div>
+
+          {room && (
+            <ExamSeatingView3D
+              benches={room.benches}
+              seatsPerBench={room.seats_per_bench}
+              seats={seatInfos}
+              showAttendance
+              onSeatClick={(seat) => {
+                const row = (room.seats || []).find((s: any) => s.allocation_id === seat.allocationId);
+                if (row) setSelectedSeat(row);
+              }}
+            />
+          )}
+
+          {selectedDetail && (
+            <StudentSeatDetailPanel data={selectedDetail} onClose={() => setSelectedSeat(null)} />
+          )}
+        </>
+      )}
     </div>
   );
 };
