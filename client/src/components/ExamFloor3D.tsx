@@ -14,24 +14,18 @@ import * as THREE from 'three';
 // overlay in the outer React tree, so there's only ever one root involved.
 import { Building2, Grid3x3, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { getBatchColor, batchKey } from '../utils/batchColor';
+import { TouchActionFix } from './three/TouchActionFix';
+import { SeatBlock, type SeatInfo, MAX_SEATS_PER_BENCH_ROW } from './three/Bench';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
 
 // A single occupied (or attendance-marked) seat within a room, as needed to
-// color that seat's bench by batch — or red if marked absent — on the
-// building overview. Optional: rooms shown before allocation (e.g. the
-// room-picker) simply omit this and benches render in their plain default
-// color.
-export interface FloorSeat {
-  benchNumber: number;
-  seatNumber: number;
-  studentId?: string | null;
-  classId?: string | null;
-  sectionId?: string | null;
-  className?: string | null;
-  sectionName?: string | null;
-  attendanceStatus?: 'PENDING' | 'PRESENT' | 'ABSENT' | null;
-}
+// color that seat by batch — or red if marked absent — on the building
+// overview. Optional: rooms shown before allocation (e.g. the room-picker)
+// simply omit this and benches render empty. Re-uses the exact same
+// SeatInfo shape as the per-room seating view (./three/Bench), since it's
+// the same design rendered at a smaller scale.
+export type FloorSeat = SeatInfo;
 
 export interface FloorRoom {
   roomId: string;
@@ -58,23 +52,17 @@ export interface FloorRoom {
   seats?: FloorSeat[];
 }
 
-const DEFAULT_BENCH_COLOR = '#c58f4a';
 const ABSENT_BENCH_COLOR = '#dc2626';
 
-// One color per bench: red if any seat there is marked absent, else the
-// batch color of whichever seated student is found first, else the plain
-// wood tone for an empty/unknown bench. A bench is a single small mesh in
-// this building-overview scene (unlike the per-seat ExamSeatingView3D), so
-// it can only show one color even when seatsPerBench > 1; absent takes
-// priority since a missing student matters most at a glance.
-function benchColor(seats: FloorSeat[] | undefined, benchNumber: number): string {
-  if (!seats || seats.length === 0) return DEFAULT_BENCH_COLOR;
-  const here = seats.filter((s) => s.benchNumber === benchNumber);
-  if (here.length === 0) return DEFAULT_BENCH_COLOR;
-  if (here.some((s) => s.attendanceStatus === 'ABSENT')) return ABSENT_BENCH_COLOR;
-  const occupied = here.find((s) => s.studentId);
-  if (occupied) return getBatchColor(batchKey(occupied.classId, occupied.sectionId));
-  return DEFAULT_BENCH_COLOR;
+// A bench's seats, keyed by seat number, for the shared <SeatBlock> — the
+// same lookup shape the per-room seating view builds, just scoped to one
+// bench of one room here instead of a whole room's seating list.
+function seatsByNumberForBench(seats: FloorSeat[] | undefined, benchNumber: number): Map<number, SeatInfo> {
+  const map = new Map<number, SeatInfo>();
+  for (const s of seats || []) {
+    if (s.benchNumber === benchNumber) map.set(s.seatNumber, s);
+  }
+  return map;
 }
 
 const STATUS_COLOR: Record<RoomStatus, string> = {
@@ -266,21 +254,31 @@ function ClassroomBlock({
         <meshStandardMaterial color="#a16207" />
       </mesh>
 
-      {/* Student benches — one mesh per actual configured bench (never
+      {/* Student benches — one bench per actual configured bench (never
           capped), laid out row-major across the computed grid so the count
-          on screen always matches the room's real bench count. Colored by
-          the seated batch (distinct color per class+section), or red if
-          that seat's occupant has been marked absent, whenever seat data
-          is available for this room. */}
+          on screen always matches the room's real bench count. Rendered
+          with the same desk+seat design (capped at 3 seats/bench row) used
+          by the dedicated seating view, colored by the seated batch
+          (distinct color per class+section), or red if that seat's
+          occupant has been marked absent, whenever seat data is available
+          for this room — scaled down to fit the building overview. */}
       {Array.from({ length: benchCount }).map((_, idx) => {
         const r = Math.floor(idx / cols);
         const c = idx % cols;
         const benchNumber = idx + 1;
+        const seatsPerRow = Math.min(Math.max(1, room.seatsPerBench), MAX_SEATS_PER_BENCH_ROW);
+        const seatSize = benchW / seatsPerRow;
         return (
-          <mesh key={idx} position={[colXs[c], 0.05, facing * (rowOffsets[r] - half)]}>
-            <boxGeometry args={[benchW, 0.1, benchD]} />
-            <meshStandardMaterial color={benchColor(room.seats, benchNumber)} />
-          </mesh>
+          <SeatBlock
+            key={idx}
+            seatsPerBench={room.seatsPerBench}
+            seatsByNumber={seatsByNumberForBench(room.seats, benchNumber)}
+            x={colXs[c]}
+            z={facing * (rowOffsets[r] - half)}
+            seatSize={seatSize}
+            rowGap={benchD}
+            showAttendance
+          />
         );
       })}
     </group>
@@ -497,28 +495,9 @@ function LabelProjector({ points, onUpdate }: { points: LabelPoint[]; onUpdate: 
   return null;
 }
 
-// OrbitControls sets its target element's CSS touch-action to 'none' the
-// moment it connects (three.js does this itself, to guarantee it gets every
-// touch event uncontested) — which as a side effect stops a one-finger
-// swipe from ever reaching the page as a scroll. Critically, that target
-// element is NOT the <canvas> (gl.domElement) — react-three-fiber's <Canvas>
-// attaches pointer/touch events to the plain wrapper <div> it renders around
-// the canvas (exposed as state.events.connected), and that's the node whose
-// style OrbitControls actually mutates. Since the touches prop above already
-// makes a one-finger touch a no-op for the controls, nothing here still
-// needs 'none' — re-assert 'pan-y' on the real connected element every
-// frame so a single finger scrolls the page while two fingers still reach
-// the model for pinch-to-zoom.
-function TouchActionFix() {
-  const get = useThree((state) => state.get);
-  useFrame(() => {
-    const el = get().events.connected as HTMLElement | undefined;
-    if (el && el.style && el.style.touchAction !== 'pan-y') {
-      el.style.touchAction = 'pan-y';
-    }
-  });
-  return null;
-}
+// (moved to client/src/components/three/TouchActionFix.tsx so every 3D
+// scene in the app — this one and ExamSeatingView3D — shares the exact
+// same, verified touch/scroll behavior instead of drifting apart.)
 
 // Frames the whole building in view automatically: measures the real
 // rendered geometry each time the floor/room set changes and repositions

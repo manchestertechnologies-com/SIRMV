@@ -3,6 +3,10 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { getBatchColor, batchKey } from '../utils/batchColor';
+import { TouchActionFix } from './three/TouchActionFix';
+import {
+  Bench, SeatInfo, EMPTY_SEAT_COLOR, ABSENT_SEAT_COLOR, MAX_SEATS_PER_BENCH_ROW
+} from './three/Bench';
 
 // ---------------------------------------------------------------------------
 // A per-seat, per-room 3D seating view — one classroom rendered large enough
@@ -12,106 +16,20 @@ import { getBatchColor, batchKey } from '../utils/batchColor';
 // room "blocks" for the room/allocation overview; this one draws a single
 // room's exact bench/seat layout for the seating + attendance experience
 // (during live allocation, at exam time for the invigilator, and
-// persistently afterwards for Admin/Exam Dept review).
+// persistently afterwards for Admin/Exam Dept review). Both share the same
+// desk/seat design and coloring logic from ./three/Bench, and the same
+// touch/scroll behavior from ./three/TouchActionFix, so the two never
+// visually drift apart.
 // ---------------------------------------------------------------------------
 
-export interface SeatInfo {
-  allocationId?: string;
-  benchNumber: number;
-  seatNumber: number;
-  rowNumber?: number | null;
-  studentId?: string | null;
-  studentName?: string | null;
-  registerNumber?: string | null;
-  classId?: string | null;
-  sectionId?: string | null;
-  className?: string | null;
-  sectionName?: string | null;
-  attendanceStatus?: 'PENDING' | 'PRESENT' | 'ABSENT' | null;
-  markedByName?: string | null;
-  markedAt?: string | null;
-}
+export type { SeatInfo };
 
-const EMPTY_SEAT_COLOR = '#cbd5e1';
-const ABSENT_COLOR = '#dc2626';
-const UNBATCHED_COLOR = '#7c3aed';
-
-const SEAT_W = 0.44;
-const SEAT_D = 0.42;
+const SEAT_SIZE = 0.44;
 const BENCH_GAP_X = 0.22;
 const ROW_GAP_Z = 0.55;
-const SEAT_HEIGHT = 0.18;
-
-export function seatFillColor(seat: SeatInfo | undefined, showAttendance: boolean): string {
-  if (!seat || !seat.studentId) return EMPTY_SEAT_COLOR;
-  if (showAttendance && seat.attendanceStatus === 'ABSENT') return ABSENT_COLOR;
-  if (seat.classId || seat.sectionId) return getBatchColor(batchKey(seat.classId, seat.sectionId));
-  return UNBATCHED_COLOR;
-}
-
-function Seat({
-  seat, x, z, showAttendance, onClick
-}: { seat: SeatInfo | undefined; x: number; z: number; showAttendance: boolean; onClick?: (seat: SeatInfo) => void }) {
-  const color = seatFillColor(seat, showAttendance);
-  const clickable = !!(seat && seat.studentId && onClick);
-  return (
-    <group
-      position={[x, 0, z]}
-      onClick={(e) => { if (clickable) { e.stopPropagation(); onClick!(seat!); } }}
-      onPointerOver={(e) => { if (clickable) { e.stopPropagation(); document.body.style.cursor = 'pointer'; } }}
-      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
-    >
-      {/* seat pan */}
-      <mesh position={[0, SEAT_HEIGHT / 2, 0]} castShadow>
-        <boxGeometry args={[SEAT_W * 0.82, SEAT_HEIGHT, SEAT_D * 0.78]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-      {/* backrest */}
-      <mesh position={[0, SEAT_HEIGHT * 1.55, -SEAT_D * 0.34]}>
-        <boxGeometry args={[SEAT_W * 0.82, SEAT_HEIGHT * 1.5, 0.035]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-      {/* legs */}
-      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
-        <mesh key={i} position={[sx * SEAT_W * 0.34, SEAT_HEIGHT * 0.25, sz * SEAT_D * 0.3]}>
-          <boxGeometry args={[0.03, SEAT_HEIGHT * 0.5, 0.03]} />
-          <meshStandardMaterial color="#334155" />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function Bench({
-  seatsPerBench, seatsByNumber, x, z, showAttendance, onSeatClick
-}: {
-  seatsPerBench: number; seatsByNumber: Map<number, SeatInfo>; x: number; z: number;
-  showAttendance: boolean; onSeatClick?: (seat: SeatInfo) => void;
-}) {
-  const width = seatsPerBench * SEAT_W;
-  return (
-    <group position={[x, 0, z]}>
-      {/* desk top, spanning the whole bench */}
-      <mesh position={[0, SEAT_HEIGHT * 1.75, SEAT_D * 0.26]} castShadow>
-        <boxGeometry args={[width - 0.03, 0.035, SEAT_D * 0.5]} />
-        <meshStandardMaterial color="#8a5a2b" />
-      </mesh>
-      {/* desk legs */}
-      {[-1, 1].map((sx, i) => (
-        <mesh key={i} position={[sx * (width / 2 - 0.04), SEAT_HEIGHT * 0.9, SEAT_D * 0.26]}>
-          <boxGeometry args={[0.035, SEAT_HEIGHT * 1.7, 0.035]} />
-          <meshStandardMaterial color="#4b3312" />
-        </mesh>
-      ))}
-      {Array.from({ length: seatsPerBench }).map((_, i) => {
-        const seatNo = i + 1;
-        const seat = seatsByNumber.get(seatNo);
-        const sx = -width / 2 + SEAT_W / 2 + i * SEAT_W;
-        return <Seat key={seatNo} seat={seat} x={sx} z={0} showAttendance={showAttendance} onClick={onSeatClick} />;
-      })}
-    </group>
-  );
-}
+// Gap between a bench's own sub-rows, when seatsPerBench exceeds the
+// 3-per-row cap and wraps onto a second desk right behind the first.
+const BENCH_SUBROW_GAP = 0.5;
 
 function Room({
   benches, seatsPerBench, seatsByBench, cols, rows, roomWidth, roomDepth, showAttendance, onSeatClick
@@ -120,11 +38,15 @@ function Room({
   cols: number; rows: number; roomWidth: number; roomDepth: number;
   showAttendance: boolean; onSeatClick?: (seat: SeatInfo) => void;
 }) {
-  const benchWidth = seatsPerBench * SEAT_W;
+  const benchRowCount = Math.ceil(Math.max(1, seatsPerBench) / MAX_SEATS_PER_BENCH_ROW);
+  const benchWidth = Math.min(seatsPerBench, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;
   const cellWidth = benchWidth + BENCH_GAP_X;
   const rowWidth = cols * cellWidth - BENCH_GAP_X;
   const startX = -rowWidth / 2 + benchWidth / 2;
   const frontMargin = 1.0; // space for the blackboard + teacher's table
+  // Each logical bench row now needs enough depth for its own sub-rows
+  // (almost always just 1, since real configs use <= 3 seats/bench).
+  const effectiveRowGap = ROW_GAP_Z + (benchRowCount - 1) * BENCH_SUBROW_GAP;
 
   return (
     <group>
@@ -165,7 +87,7 @@ function Room({
         const r = Math.floor(idx / cols);
         const c = idx % cols;
         const x = startX + c * cellWidth;
-        const z = frontMargin + r * (SEAT_D + ROW_GAP_Z);
+        const z = frontMargin + r * (effectiveRowGap + SEAT_SIZE * 0.7);
         return (
           <Bench
             key={benchNumber}
@@ -173,6 +95,8 @@ function Room({
             seatsByNumber={seatsByBench.get(benchNumber) || new Map()}
             x={x}
             z={z}
+            seatSize={SEAT_SIZE}
+            rowGap={BENCH_SUBROW_GAP}
             showAttendance={showAttendance}
             onSeatClick={onSeatClick}
           />
@@ -228,9 +152,11 @@ export const ExamSeatingView3D: React.FC<{
 
   const cols = Math.max(1, Math.round(Math.sqrt(benchCount * 1.6)));
   const rows = Math.ceil(benchCount / cols);
-  const benchWidth = seatsPerBenchN * SEAT_W;
+  const benchRowCount = Math.ceil(seatsPerBenchN / MAX_SEATS_PER_BENCH_ROW);
+  const benchWidth = Math.min(seatsPerBenchN, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;
   const roomWidth = cols * (benchWidth + BENCH_GAP_X) - BENCH_GAP_X;
-  const roomDepth = 1.0 + rows * (SEAT_D + ROW_GAP_Z);
+  const effectiveRowGap = ROW_GAP_Z + (benchRowCount - 1) * BENCH_SUBROW_GAP;
+  const roomDepth = 1.0 + rows * (effectiveRowGap + SEAT_SIZE * 0.7);
 
   const controlsRef = useRef<any>(null);
 
@@ -275,6 +201,7 @@ export const ExamSeatingView3D: React.FC<{
             />
           </Suspense>
           <FitCamera width={roomWidth} depth={roomDepth} controlsRef={controlsRef} />
+          <TouchActionFix />
           <OrbitControls
             ref={controlsRef}
             makeDefault
@@ -299,7 +226,7 @@ export const ExamSeatingView3D: React.FC<{
         </div>
         {showAttendance && anyAttendanceTaken && (
           <div className="flex items-center gap-1.5 text-rose-600 font-semibold">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: ABSENT_COLOR }} />
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: ABSENT_SEAT_COLOR }} />
             Absent ({absentCount})
           </div>
         )}
