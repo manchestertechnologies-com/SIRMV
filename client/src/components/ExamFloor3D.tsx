@@ -13,8 +13,25 @@ import * as THREE from 'three';
 // the same "project a 3D point onto the 2D canvas" idea as one normal
 // overlay in the outer React tree, so there's only ever one root involved.
 import { Building2, Grid3x3, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { getBatchColor, batchKey } from '../utils/batchColor';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
+
+// A single occupied (or attendance-marked) seat within a room, as needed to
+// color that seat's bench by batch — or red if marked absent — on the
+// building overview. Optional: rooms shown before allocation (e.g. the
+// room-picker) simply omit this and benches render in their plain default
+// color.
+export interface FloorSeat {
+  benchNumber: number;
+  seatNumber: number;
+  studentId?: string | null;
+  classId?: string | null;
+  sectionId?: string | null;
+  className?: string | null;
+  sectionName?: string | null;
+  attendanceStatus?: 'PENDING' | 'PRESENT' | 'ABSENT' | null;
+}
 
 export interface FloorRoom {
   roomId: string;
@@ -32,6 +49,32 @@ export interface FloorRoom {
   // a label under the room number so exam staff can see at a glance which
   // class/section each classroom is, not just its floor/number.
   homeClassLabel?: string;
+  // Per-seat allocation/attendance detail for this room, when available
+  // (during/after seat allocation for a specific exam session). When
+  // present, each occupied bench is colored for the batch seated at it —
+  // a distinct color per class+section — and forced red if that student
+  // has been marked absent, so the building view itself shows seating and
+  // attendance at a glance, not just aggregate room status.
+  seats?: FloorSeat[];
+}
+
+const DEFAULT_BENCH_COLOR = '#c58f4a';
+const ABSENT_BENCH_COLOR = '#dc2626';
+
+// One color per bench: red if any seat there is marked absent, else the
+// batch color of whichever seated student is found first, else the plain
+// wood tone for an empty/unknown bench. A bench is a single small mesh in
+// this building-overview scene (unlike the per-seat ExamSeatingView3D), so
+// it can only show one color even when seatsPerBench > 1; absent takes
+// priority since a missing student matters most at a glance.
+function benchColor(seats: FloorSeat[] | undefined, benchNumber: number): string {
+  if (!seats || seats.length === 0) return DEFAULT_BENCH_COLOR;
+  const here = seats.filter((s) => s.benchNumber === benchNumber);
+  if (here.length === 0) return DEFAULT_BENCH_COLOR;
+  if (here.some((s) => s.attendanceStatus === 'ABSENT')) return ABSENT_BENCH_COLOR;
+  const occupied = here.find((s) => s.studentId);
+  if (occupied) return getBatchColor(batchKey(occupied.classId, occupied.sectionId));
+  return DEFAULT_BENCH_COLOR;
 }
 
 const STATUS_COLOR: Record<RoomStatus, string> = {
@@ -225,14 +268,18 @@ function ClassroomBlock({
 
       {/* Student benches — one mesh per actual configured bench (never
           capped), laid out row-major across the computed grid so the count
-          on screen always matches the room's real bench count. */}
+          on screen always matches the room's real bench count. Colored by
+          the seated batch (distinct color per class+section), or red if
+          that seat's occupant has been marked absent, whenever seat data
+          is available for this room. */}
       {Array.from({ length: benchCount }).map((_, idx) => {
         const r = Math.floor(idx / cols);
         const c = idx % cols;
+        const benchNumber = idx + 1;
         return (
           <mesh key={idx} position={[colXs[c], 0.05, facing * (rowOffsets[r] - half)]}>
             <boxGeometry args={[benchW, 0.1, benchD]} />
-            <meshStandardMaterial color="#c58f4a" />
+            <meshStandardMaterial color={benchColor(room.seats, benchNumber)} />
           </mesh>
         );
       })}
@@ -588,6 +635,24 @@ export const ExamFloor3D: React.FC<{
   const selectedRoom = activeRooms.find((r) => r.roomId === selectedRoomId) || null;
   const totalAvailableBenches = activeRooms.reduce((sum, r) => sum + benchAvailability(r).availableBenches, 0);
   const totalBenches = activeRooms.reduce((sum, r) => sum + r.benches, 0);
+  // Which batches are actually seated on this floor right now, for the
+  // bench-color legend — computed fresh from whatever seat data the rooms
+  // were given (empty when no allocation has happened yet).
+  const batchLegend = useMemo(() => {
+    const seen = new Map<string, { label: string; color: string }>();
+    for (const room of activeRooms) {
+      for (const s of room.seats || []) {
+        if (!s.studentId || (!s.classId && !s.sectionId)) continue;
+        const key = batchKey(s.classId, s.sectionId);
+        if (!seen.has(key)) {
+          const label = `${s.className || ''} ${s.sectionName || ''}`.trim() || key;
+          seen.set(key, { label, color: getBatchColor(key) });
+        }
+      }
+    }
+    return [...seen.values()];
+  }, [activeRooms]);
+  const anyAbsentOnFloor = activeRooms.some((room) => (room.seats || []).some((s) => s.attendanceStatus === 'ABSENT'));
   // Re-fit the camera whenever the floor changes or the room set on it
   // changes (e.g. a room is added, or rooms load in asynchronously).
   const sceneSignature = `${activeFloor}-${activeRooms.map((r) => r.roomId).join(',')}`;
@@ -841,6 +906,27 @@ export const ExamFloor3D: React.FC<{
           </div>
         ))}
       </div>
+
+      {/* Bench-color key — only shown once seats have actually been
+          allocated for this session, since that's the only time bench
+          colors mean anything beyond the plain wood default. */}
+      {batchLegend.length > 0 && (
+        <div className="px-3 pb-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-2">
+          <span className="text-[11px] text-slate-400 font-semibold">Bench seating:</span>
+          {batchLegend.map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5 text-[11px] text-slate-500">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: l.color }} />
+              {l.label}
+            </div>
+          ))}
+          {anyAbsentOnFloor && (
+            <div className="flex items-center gap-1.5 text-[11px] text-rose-600 font-semibold">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: ABSENT_BENCH_COLOR }} />
+              Absent
+            </div>
+          )}
+        </div>
+      )}
 
       {selectedRoom && (
         <div className="p-4 border-t border-slate-200 bg-violet-50/50 relative">

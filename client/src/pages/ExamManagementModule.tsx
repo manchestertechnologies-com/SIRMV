@@ -1193,10 +1193,18 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
     else if (isSelected && seatedCount > 0) status = 'PARTIALLY_ALLOCATED';
     else if (isSelected) status = 'SELECTED';
     else if (r.isPriorityFor?.length) status = 'PRIORITY';
+    const roomSeats = seating
+      .filter((s) => s.room_id === r.roomId)
+      .map((s) => ({
+        benchNumber: s.bench_number, seatNumber: s.seat_number, studentId: s.student_id,
+        classId: s.class_id, sectionId: s.section_id, className: s.class_name, sectionName: s.section_name,
+        attendanceStatus: s.attendance_status
+      }));
     return {
       roomId: r.roomId, roomNumber: r.roomNumber, floor: r.floor, benches: r.benches,
       seatsPerBench: r.seatsPerBench, capacity: r.capacity, studentsAssigned: seatedCount, status,
-      homeClassLabel: r.priorityLabels?.length ? r.priorityLabels.join(', ') : undefined
+      homeClassLabel: r.priorityLabels?.length ? r.priorityLabels.join(', ') : undefined,
+      seats: roomSeats
     };
   });
   const roomsByFloor: Record<number, FloorRoom[]> = {};
