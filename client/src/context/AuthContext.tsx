@@ -81,9 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const res = await apiFetch<{ branches: Branch[] }>('/branches');
         if (res?.branches && res.branches.length > 0) {
-          const shivamogga = res.branches.find((b) => b.code === 'SMG-02' || b.city === 'Shivamogga') || res.branches[0];
-          setBranches([shivamogga]);
-          setCurrentBranch(shivamogga);
+          // Keep the FULL branch list here — the effect below (lines ~122)
+          // needs it to find the logged-in user's own branch_id. Narrowing
+          // this to a single hard-coded branch (as it did before) meant
+          // that lookup could never match a non-Shivamogga user, so every
+          // admin/teacher/HOD ended up viewing Shivamogga's data (1 student)
+          // regardless of which branch they actually belonged to.
+          const fallback = res.branches.find((b) => b.code === 'SMG-02' || b.city === 'Shivamogga') || res.branches[0];
+          setBranches(res.branches);
+          setCurrentBranch(fallback);
         }
       } catch (err) {
         // Fallback
