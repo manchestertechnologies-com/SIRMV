@@ -35,7 +35,7 @@ examManagementRouter.get('/rooms', authenticate, requireRoles(...EXAM_ROLES), as
     const rooms = await query(
       `SELECT r.id as room_id, r.room_number, r.floor, r.building,
               COALESCE(c.benches, 15) as benches,
-              COALESCE(c.seats_per_bench, 2) as seats_per_bench,
+              COALESCE(c.seats_per_bench, 3) as seats_per_bench,
               COALESCE(c.is_available_for_exams, 1) as is_available_for_exams,
               c.assigned_class_id, c.assigned_section_id,
               ac.name as assigned_class_name, asec.name as assigned_section_name
@@ -160,7 +160,7 @@ examManagementRouter.post('/rooms', authenticate, requireRoles(...EXAM_ROLES), a
     }
 
     const benchesN = Number.isInteger(benches) && benches > 0 ? benches : 15;
-    const seatsPerBenchN = Number.isInteger(seats_per_bench) && seats_per_bench > 0 ? seats_per_bench : 2;
+    const seatsPerBenchN = Number.isInteger(seats_per_bench) && seats_per_bench > 0 ? seats_per_bench : 3;
     const roomId = 'room-' + crypto.randomUUID();
 
     await transaction(async (client) => {
@@ -303,7 +303,7 @@ examManagementRouter.get('/dashboard', authenticate, requireRoles(...EXAM_ROLES)
         [branchId]
       ),
       queryOne<any>(
-        `SELECT COUNT(*) as room_count, COALESCE(SUM(COALESCE(c.benches, 15) * COALESCE(c.seats_per_bench, 2)), 0) as total_capacity
+        `SELECT COUNT(*) as room_count, COALESCE(SUM(COALESCE(c.benches, 15) * COALESCE(c.seats_per_bench, 3)), 0) as total_capacity
          FROM exam_room_allocations ra
          JOIN exam_sessions s ON s.id = ra.exam_session_id JOIN pu_exams e ON e.id = s.exam_id
          LEFT JOIN exam_room_configs c ON c.room_id = ra.room_id
@@ -550,7 +550,7 @@ async function loadBranchRooms(branchId: string): Promise<RoomInfo[]> {
   const rows = await query(
     `SELECT r.id as room_id, r.room_number, r.floor,
             COALESCE(c.benches, 15) as benches,
-            COALESCE(c.seats_per_bench, 2) as seats_per_bench,
+            COALESCE(c.seats_per_bench, 3) as seats_per_bench,
             COALESCE(c.is_available_for_exams, 1) as is_available_for_exams
      FROM rooms r
      LEFT JOIN exam_room_configs c ON c.room_id = r.id
@@ -791,7 +791,7 @@ examManagementRouter.post('/sessions/:sessionId/allocate-seats', authenticate, r
 
     const roomAllocations = await query<any>(
       `SELECT ra.room_id, ra.priority_class_id, ra.priority_section_id, r.room_number,
-              COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 2) as seats_per_bench
+              COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 3) as seats_per_bench
        FROM exam_room_allocations ra
        JOIN rooms r ON r.id = ra.room_id
        LEFT JOIN exam_room_configs c ON c.room_id = ra.room_id
@@ -1206,7 +1206,7 @@ examManagementRouter.get('/exams/:id/seating-visualization', authenticate, requi
     for (const session of sessions) {
       const rooms = await query<any>(
         `SELECT r.id as room_id, r.room_number, r.floor,
-                COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 2) as seats_per_bench
+                COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 3) as seats_per_bench
          FROM exam_room_allocations ra
          JOIN rooms r ON r.id = ra.room_id
          LEFT JOIN exam_room_configs c ON c.room_id = r.id
@@ -1845,7 +1845,7 @@ examManagementRouter.get('/my-duties', authenticate, async (req: AuthRequest, re
     const duties = await query(
       `SELECT ia.room_id, r.room_number, r.floor, s.exam_date, s.start_time, s.end_time, s.reporting_time,
               sub.name as subject_name, e.name as exam_name, e.pu_level, e.instructions, s.id as session_id,
-              COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 2) as seats_per_bench
+              COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 3) as seats_per_bench
        FROM exam_invigilator_assignments ia
        JOIN exam_sessions s ON s.id = ia.exam_session_id
        JOIN pu_exams e ON e.id = s.exam_id

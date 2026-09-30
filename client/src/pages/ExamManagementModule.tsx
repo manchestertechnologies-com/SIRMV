@@ -275,7 +275,7 @@ const ExamListView: React.FC<{
 // Room configuration view
 // ---------------------------------------------------------------------------
 
-const NEW_ROOM_DEFAULTS = { room_number: '', floor: 0, building: 'Main Academic Block', benches: 15, seats_per_bench: 2, is_available_for_exams: true };
+const NEW_ROOM_DEFAULTS = { room_number: '', floor: 0, building: 'Main Academic Block', benches: 15, seats_per_bench: 3, is_available_for_exams: true };
 
 const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'error', m: string) => void }> = ({ onBack, flash }) => {
   const { currentBranch } = useAuth();
