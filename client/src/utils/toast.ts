@@ -40,6 +40,17 @@ export function dismissToast(id: string) {
 }
 
 export function showToast(message: string, type: ToastType = 'error', durationMs = 5000) {
+  // If the exact same message/type is already showing, don't stack a
+  // second identical card — this happens whenever a page fires more than
+  // one request in quick succession while its inputs are still settling
+  // (e.g. a default value getting corrected a moment after mount) and
+  // both calls fail the same way. One visible toast is enough; just
+  // refresh its dismiss timer instead of piling up a duplicate.
+  const existing = toasts.find((t) => t.message === message && t.type === type);
+  if (existing) {
+    return existing.id;
+  }
+
   const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   toasts = [...toasts, { id, message, type }];
   emit();

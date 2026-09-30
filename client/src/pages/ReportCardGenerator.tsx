@@ -28,9 +28,14 @@ export const ReportCardGenerator: React.FC = () => {
   const [examSubjects, setExamSubjects] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
 
-  // Generator Selections
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('sp-rahul');
-  const [selectedExamId, setSelectedExamId] = useState<string>('exam-midterm');
+  // Generator Selections — start empty (not a hardcoded demo student/exam)
+  // so handleGenerateReport's own guard below skips the very first render
+  // instead of firing a request for a demo student ('sp-rahul') that isn't
+  // this caller's own child. The real self/child id and the branch's first
+  // exam are filled in by loadMeta below once they're actually known;
+  // until then there's nothing valid to generate yet.
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [selectedExamId, setSelectedExamId] = useState<string>('');
   const [subjectMode, setSubjectMode] = useState<'ALL' | 'SINGLE' | 'MULTI'>('ALL');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedMultiSubjects, setSelectedMultiSubjects] = useState<string[]>([]);
