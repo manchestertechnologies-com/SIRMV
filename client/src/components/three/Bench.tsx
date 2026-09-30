@@ -24,6 +24,63 @@ export const MAX_SEATS_PER_BENCH_ROW = 3;
 // count from the total bench count.
 export const TARGET_BENCH_COLUMNS = 3;
 
+// ---------------------------------------------------------------------------
+// Shared room-sizing math — the exact same per-seat scale used to size and
+// lay out a room's bench grid, wherever a room is drawn: the dedicated
+// per-room seating view (ExamSeatingView3D) and each room "block" in the
+// whole-building overview (ExamFloor3D). A room is always exactly as wide
+// and deep as its own actual bench grid needs, never a fixed size, and
+// never computed twice with numbers that could drift apart.
+// ---------------------------------------------------------------------------
+export const SEAT_SIZE = 0.44;
+export const BENCH_GAP_X = 0.22;
+export const ROW_GAP_Z = 0.55;
+// Gap between a bench's own sub-rows, when seatsPerBench exceeds the
+// 3-per-row cap and wraps onto a second desk right behind the first.
+export const BENCH_SUBROW_GAP = 0.5;
+// Space left at the front of the room, before the first row of benches,
+// for the blackboard + teacher's table (see RoomShell).
+const ROOM_FRONT_MARGIN = 1.0;
+
+export interface RoomFootprint {
+  cols: number;
+  rows: number;
+  roomWidth: number;
+  roomDepth: number;
+  // World-space (x, z) for each bench, in bench order (bench #1 first),
+  // relative to the room's own local origin (see RoomShell).
+  benchPositions: { x: number; z: number }[];
+}
+
+// Computes a room's width/depth — and every bench's position within it —
+// straight from its actual bench count and seats/bench, the same way
+// ExamSeatingView3D always has: a room wide enough for its benches (up to
+// TARGET_BENCH_COLUMNS wide) and deep enough for however many rows that
+// takes, never a fixed cube regardless of bench count.
+export function computeRoomFootprint(benchCount: number, seatsPerBench: number): RoomFootprint {
+  const benches = Math.max(1, Math.round(benchCount));
+  const seatsPerBenchN = Math.max(1, Math.round(seatsPerBench));
+  const cols = Math.max(1, Math.min(TARGET_BENCH_COLUMNS, benches));
+  const rows = Math.ceil(benches / cols);
+  const benchRowCount = Math.ceil(seatsPerBenchN / MAX_SEATS_PER_BENCH_ROW);
+  const benchWidth = Math.min(seatsPerBenchN, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;
+  const cellWidth = benchWidth + BENCH_GAP_X;
+  const roomWidth = cols * cellWidth - BENCH_GAP_X;
+  const effectiveRowGap = ROW_GAP_Z + (benchRowCount - 1) * BENCH_SUBROW_GAP;
+  const rowPitch = effectiveRowGap + SEAT_SIZE * 0.7;
+  const roomDepth = ROOM_FRONT_MARGIN + rows * rowPitch;
+
+  const startX = -roomWidth / 2 + benchWidth / 2;
+  const benchPositions: { x: number; z: number }[] = [];
+  for (let idx = 0; idx < benches; idx++) {
+    const r = Math.floor(idx / cols);
+    const c = idx % cols;
+    benchPositions.push({ x: startX + c * cellWidth, z: ROOM_FRONT_MARGIN + r * rowPitch });
+  }
+
+  return { cols, rows, roomWidth, roomDepth, benchPositions };
+}
+
 export interface SeatInfo {
   allocationId?: string;
   benchNumber: number;

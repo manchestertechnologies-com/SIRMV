@@ -15,7 +15,8 @@ import * as THREE from 'three';
 import { Building2, Grid3x3, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { getBatchColor, batchKey } from '../utils/batchColor';
 import { TouchActionFix } from './three/TouchActionFix';
-import { Bench, type SeatInfo, MAX_SEATS_PER_BENCH_ROW, TARGET_BENCH_COLUMNS } from './three/Bench';
+import { Bench, type SeatInfo, computeRoomFootprint, type RoomFootprint, SEAT_SIZE, BENCH_SUBROW_GAP } from './three/Bench';
+import { RoomShell } from './three/RoomShell';
 
 export type RoomStatus = 'AVAILABLE' | 'PARTIALLY_ALLOCATED' | 'FULL' | 'SELECTED' | 'UNAVAILABLE' | 'PRIORITY';
 
@@ -91,27 +92,42 @@ function benchAvailability(room: FloorRoom) {
 }
 
 // ---------------------------------------------------------------------------
-// Shared layout math: where each room's cube sits (two rows flanking a
-// corridor once there are more than 4 rooms), and where the ground plaza
-// and corridor strip go. Used both to place the actual 3D meshes and,
-// outside the canvas, to know where each label should be projected.
+// Shared layout math: where each room's block sits (two rows flanking a
+// corridor once there are more than ROOMS_PER_ROW rooms), and where the
+// ground plaza and corridor strip go. Used both to place the actual 3D
+// meshes and, outside the canvas, to know where each label should be
+// projected.
+//
+// Each room is sized from its own actual bench grid (see
+// computeRoomFootprint) rather than a fixed cube, so rooms in the same row
+// can have different widths, and rows can have different depths — a room
+// with more benches is simply bigger, like a real floor plan. Rooms are
+// laid out side by side using each one's own width plus a gap, and a row's
+// depth is the max depth of any room placed in it, so the next row (and any
+// wing/corridor sized off it) always clears whatever is tallest in front of
+// it.
 // ---------------------------------------------------------------------------
-const CUBE_SIZE = 1.5;
-const CUBE_GAP = 0.7; // wide enough that neighboring room labels never overlap on screen
-const CUBE_HEIGHT = 0.85;
-const CORRIDOR_DEPTH = 1.3;
+const CUBE_GAP = 0.9; // gap between neighboring rooms in the same row
+// Matches RoomShell's wall height exactly — used by the stairs/toilet wings
+// too so the whole building reads as one consistent structure.
+const WALL_HEIGHT = 2.2;
+const CORRIDOR_DEPTH = 1.8;
+// Fallback footprint span for an empty layout (no rooms yet) — never
+// actually rendered (the caller shows "No rooms on this floor yet"
+// instead), just keeps the math below from producing degenerate output.
+const MIN_ROOM_SPAN = 2;
 // The stairs/toilet wings bookending each row, and the gap that separates
-// them from the nearest classroom — sized narrower than a classroom so they
-// read as end-of-corridor fixtures, not another room.
-const WING_WIDTH = CUBE_SIZE * 0.62;
-const WING_GAP = 0.3;
+// them from the nearest classroom — sized narrower than a typical
+// classroom so they read as end-of-corridor fixtures, not another room.
+const WING_WIDTH = 1.4;
+const WING_GAP = 0.4;
 
 // A row holds at most this many rooms before a new row starts, leaving a
 // corridor gap behind it — matches a real floor plan, where a corridor run
 // only stays legible up to so many doors before it needs a cross-aisle.
 const ROOMS_PER_ROW = 6;
 
-interface RoomLayout { room: FloorRoom; x: number; z: number; rowIndex: number; }
+interface RoomLayout { room: FloorRoom; x: number; z: number; rowIndex: number; footprint: RoomFootprint; }
 interface SceneLayout {
   rooms: RoomLayout[];
   rows: number;
@@ -119,6 +135,10 @@ interface SceneLayout {
   plazaDepth: number;
   hasCorridor: boolean;
   rowZs: number[];
+  // Each row's own depth (the deepest room placed in it, including the
+  // floor/wall padding RoomShell adds) — a fixed CUBE_SIZE no longer
+  // applies once rooms vary in size.
+  rowDepths: number[];
 }
 
 // Shared by BuildingScene (to place the actual meshes) and by the label
@@ -127,164 +147,149 @@ interface SceneLayout {
 function computeWings(layout: SceneLayout) {
   const minZ = layout.rowZs[0];
   const maxZ = layout.rowZs[layout.rowZs.length - 1];
+  const firstDepth = layout.rowDepths[0];
+  const lastDepth = layout.rowDepths[layout.rowDepths.length - 1];
   const wingCenterZ = (minZ + maxZ) / 2;
-  const wingDepth = (maxZ - minZ) + CUBE_SIZE;
+  // The wing spans from the outer edge of the first row to the outer edge
+  // of the last row — half of each end row's own depth, not a fixed size.
+  const wingDepth = (maxZ - minZ) + (firstDepth + lastDepth) / 2;
   const leftX = -(layout.totalWidth / 2) - WING_GAP - WING_WIDTH / 2;
   const rightX = layout.totalWidth / 2 + WING_GAP + WING_WIDTH / 2;
   const extendedWidth = layout.totalWidth + (WING_WIDTH + WING_GAP) * 2;
-  const facadeZ = maxZ + CUBE_SIZE / 2 + 0.32;
+  const facadeZ = maxZ + lastDepth / 2 + 0.32;
   return { minZ, maxZ, wingCenterZ, wingDepth, leftX, rightX, extendedWidth, facadeZ };
 }
 
 // Chunks rooms into rows of up to ROOMS_PER_ROW, stacking additional rows
 // further back (in +z) with a corridor gap between every adjacent pair —
 // so a 7th, 13th, 19th... room starts a new row instead of just widening
-// the existing one indefinitely.
+// the existing one indefinitely. Every room's own footprint (width/depth)
+// is computed once here from its actual bench grid and carried along in
+// RoomLayout, so nothing downstream ever recomputes it differently.
 function computeLayout(rooms: FloorRoom[]): SceneLayout {
   const rowCount = Math.max(1, Math.ceil(rooms.length / ROOMS_PER_ROW));
-  const rowRooms: FloorRoom[][] = [];
-  for (let i = 0; i < rowCount; i++) rowRooms.push(rooms.slice(i * ROOMS_PER_ROW, (i + 1) * ROOMS_PER_ROW));
+  const rowRoomsList: FloorRoom[][] = [];
+  for (let i = 0; i < rowCount; i++) rowRoomsList.push(rooms.slice(i * ROOMS_PER_ROW, (i + 1) * ROOMS_PER_ROW));
 
-  const cellW = CUBE_SIZE + CUBE_GAP;
-  const totalWidth = Math.max(...rowRooms.map((r) => r.length * cellW - CUBE_GAP), CUBE_SIZE);
+  const rowFootprints = rowRoomsList.map((rs) => rs.map((r) => computeRoomFootprint(r.benches, r.seatsPerBench)));
 
-  const rowPitch = CUBE_SIZE + CORRIDOR_DEPTH;
-  const startZ = rowCount === 1 ? 0 : -((rowCount - 1) * rowPitch) / 2;
-  const rowZs = rowRooms.map((_, i) => (rowCount === 1 ? 0 : startZ + i * rowPitch));
+  // A room's on-screen footprint is (roomWidth + 0.6) wide and
+  // (roomDepth + 0.8) deep — the same padding RoomShell adds around the
+  // bench grid for its floor/walls.
+  const cellWidths = rowFootprints.map((fps) => fps.map((fp) => fp.roomWidth + 0.6));
+  const cellDepths = rowFootprints.map((fps) => fps.map((fp) => fp.roomDepth + 0.8));
+
+  const rowWidths = cellWidths.map((ws) => ws.reduce((s, w) => s + w, 0) + CUBE_GAP * Math.max(0, ws.length - 1));
+  const rowDepths = cellDepths.map((ds) => Math.max(...ds, MIN_ROOM_SPAN));
+
+  const totalWidth = Math.max(...rowWidths, MIN_ROOM_SPAN);
+
+  // Stack rows back to front (+z): each row centered at `cursor + depth/2`,
+  // then the cursor advances by that row's own depth plus one corridor gap
+  // — so a row of unusually deep rooms pushes the next row further back
+  // instead of overlapping it.
+  const totalDepth = rowDepths.reduce((s, d) => s + d, 0) + CORRIDOR_DEPTH * Math.max(0, rowDepths.length - 1);
+  const rowZs: number[] = [];
+  {
+    let cursor = -totalDepth / 2;
+    for (let i = 0; i < rowDepths.length; i++) {
+      rowZs.push(cursor + rowDepths[i] / 2);
+      cursor += rowDepths[i] + CORRIDOR_DEPTH;
+    }
+  }
 
   const placed: RoomLayout[] = [];
-  rowRooms.forEach((rs, ri) => {
-    const w = rs.length * cellW - CUBE_GAP;
+  rowRoomsList.forEach((rs, ri) => {
+    const widths = cellWidths[ri];
+    const rowW = rowWidths[ri];
+    let cursorX = -rowW / 2;
     rs.forEach((r, i) => {
-      placed.push({ room: r, x: -(w / 2) + cellW * i + CUBE_SIZE / 2, z: rowZs[ri], rowIndex: ri });
+      const w = widths[i];
+      const centerX = cursorX + w / 2;
+      cursorX += w + CUBE_GAP;
+      placed.push({ room: r, x: centerX, z: rowZs[ri], rowIndex: ri, footprint: rowFootprints[ri][i] });
     });
   });
 
-  const plazaDepth = rowCount * CUBE_SIZE + (rowCount - 1) * CORRIDOR_DEPTH + 2;
+  const plazaDepth = totalDepth + 2;
 
-  return { rooms: placed, rows: rowCount, totalWidth, plazaDepth, hasCorridor: rowCount > 1, rowZs };
+  return { rooms: placed, rows: rowCount, totalWidth, plazaDepth, hasCorridor: rowCount > 1, rowZs, rowDepths };
 }
 
 // ---------------------------------------------------------------------------
-// A single classroom, modeled as an open-roof floor-plan block — floor,
-// walls, a door standing ajar, a blackboard + teacher's table, and a grid
-// of benches — rather than a single solid-color cube. The status color
-// still reads at a glance as the floor tint, so the allocation-status
-// legend below the scene stays meaningful. The room number / bench-count
-// label lives outside the canvas (see LabelOverlay) — keeping it there
-// avoids drei's <Html>, which is unreliable when several instances mount in
-// the same tick (see the import comment above). Full detail (benches,
-// seats/bench, occupancy, room ID) is shown in the detail panel on click
-// rather than crammed into the 3D scene.
+// A single classroom, modeled exactly like ExamSeatingView3D's dedicated
+// room view — floor, back wall, two side walls (open on the near/front
+// side, no door), a blackboard + teacher's table, and a grid of benches —
+// via the same shared RoomShell + bench-footprint math, so a room block in
+// the building overview is never a different size, shape or color than the
+// same room would be in its own seating view. Allocation status no longer
+// tints the floor (that would make it look different from the reference);
+// instead it shows as a thin colored strip along the room's open front
+// edge. The room number / bench-count label lives outside the canvas (see
+// LabelOverlay) — keeping it there avoids drei's <Html>, which is
+// unreliable when several instances mount in the same tick (see the import
+// comment above). Full detail (benches, seats/bench, occupancy, room ID) is
+// shown in the detail panel on click rather than crammed into the 3D scene.
 // ---------------------------------------------------------------------------
 function ClassroomBlock({
-  room, x, z, facing, onClick
+  room, x, z, footprint, facing, onClick
 }: {
-  room: FloorRoom; x: number; z: number; facing: 1 | -1;
+  room: FloorRoom; x: number; z: number; footprint: RoomFootprint; facing: 1 | -1;
   onClick: () => void;
 }) {
-  const color = STATUS_COLOR[room.status];
-  const half = CUBE_SIZE / 2;
-  const wallColor = '#f8fafc';
-  const doorGap = CUBE_SIZE * 0.34;
-  const segWidth = (CUBE_SIZE - doorGap) / 2;
-
-  // The exact configured bench count for this room — never capped or
-  // approximated. A real classroom is 3 columns of benches wide (a center
-  // aisle and two side aisles); rows scale with however many benches the
-  // room actually has, instead of guessing a column count from the total.
-  const benchCount = Math.max(1, Math.round(room.benches));
-  const cols = Math.max(1, Math.min(TARGET_BENCH_COLUMNS, benchCount));
-  const rows = Math.ceil(benchCount / cols);
-  // Benches occupy the floor area between the teacher's table (near the
-  // board) and the doorway, with a small margin on every side.
-  const zStart = 0.32;
-  const zEnd = CUBE_SIZE - 0.22;
-  const usableDepth = Math.max(0.1, zEnd - zStart);
-  const usableWidth = CUBE_SIZE - 0.2;
-  const rowOffsets = Array.from({ length: rows }, (_, r) => (rows === 1 ? (zStart + zEnd) / 2 : zStart + (usableDepth * r) / (rows - 1)));
-  const colXs = Array.from({ length: cols }, (_, c) => (cols === 1 ? 0 : -usableWidth / 2 + (usableWidth * c) / (cols - 1)));
-  // Sized to fit the fixed 3-column grid (rather than the old fixed 0.22/0.14
-  // caps tuned for a variable, often-wider column count), shrinking further
-  // as more rows are needed to fit the room's actual bench count.
-  const benchW = (usableWidth / cols) * 0.82;
-  const benchD = (usableDepth / Math.max(1, rows)) * 0.68;
+  const { roomWidth, roomDepth, benchPositions } = footprint;
+  // RoomShell centers its floor/walls on local z = roomDepth/2 - 0.4 (its
+  // bench area starts at z=0, its blackboard sits just in front at small
+  // negative z) rather than on 0 — shift everything back so this block's
+  // own (x, z) is its true footprint center, matching how every room is
+  // placed in computeLayout regardless of its own width/depth.
+  const centerZOffset = roomDepth / 2 - 0.4;
 
   return (
     <group position={[x, 0, z]} onClick={(e) => { e.stopPropagation(); onClick(); }}>
-      {/* Floor — the at-a-glance status color */}
-      <mesh position={[0, 0.012, 0]} receiveShadow>
-        <boxGeometry args={[CUBE_SIZE - 0.02, 0.024, CUBE_SIZE - 0.02]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
+      {/* A row that faces the opposite way (rooms on the far side of a
+          corridor open toward it, same as rooms on the near side) is
+          mirrored on z, rather than every mesh needing its own sign flip —
+          RoomShell and the bench positions never have to know about it. */}
+      <group scale={[1, 1, facing]}>
+        <group position={[0, 0, -centerZOffset]}>
+          <RoomShell roomWidth={roomWidth} roomDepth={roomDepth} />
 
-      {/* Back wall, opposite the doorway, carries the blackboard */}
-      <mesh position={[0, CUBE_HEIGHT / 2, -facing * (half - 0.025)]} castShadow>
-        <boxGeometry args={[CUBE_SIZE, CUBE_HEIGHT, 0.05]} />
-        <meshStandardMaterial color={wallColor} />
-      </mesh>
-      {/* Side walls */}
-      <mesh position={[-half + 0.025, CUBE_HEIGHT / 2, 0]} castShadow>
-        <boxGeometry args={[0.05, CUBE_HEIGHT, CUBE_SIZE]} />
-        <meshStandardMaterial color={wallColor} />
-      </mesh>
-      <mesh position={[half - 0.025, CUBE_HEIGHT / 2, 0]} castShadow>
-        <boxGeometry args={[0.05, CUBE_HEIGHT, CUBE_SIZE]} />
-        <meshStandardMaterial color={wallColor} />
-      </mesh>
-      {/* Front wall, split either side of the doorway (facing the corridor) */}
-      <mesh position={[-(doorGap / 2 + segWidth / 2), CUBE_HEIGHT / 2, facing * (half - 0.025)]} castShadow>
-        <boxGeometry args={[segWidth, CUBE_HEIGHT, 0.05]} />
-        <meshStandardMaterial color={wallColor} />
-      </mesh>
-      <mesh position={[doorGap / 2 + segWidth / 2, CUBE_HEIGHT / 2, facing * (half - 0.025)]} castShadow>
-        <boxGeometry args={[segWidth, CUBE_HEIGHT, 0.05]} />
-        <meshStandardMaterial color={wallColor} />
-      </mesh>
-      {/* Door, standing ajar */}
-      <mesh position={[doorGap / 2 + 0.03, CUBE_HEIGHT * 0.4, facing * (half - doorGap * 0.35)]} rotation={[0, facing * 0.9, 0]}>
-        <boxGeometry args={[doorGap * 0.85, CUBE_HEIGHT * 0.78, 0.025]} />
-        <meshStandardMaterial color="#92400e" />
-      </mesh>
+          {/* Status indicator — a thin colored strip along the open front
+              edge of the floor, in place of tinting the whole floor, so
+              the floor/wall colors stay identical to the reference seating
+              view in every room, while allocation status still reads at a
+              glance. */}
+          <mesh position={[0, 0.02, -0.78]}>
+            <boxGeometry args={[roomWidth + 0.6, 0.02, 0.09]} />
+            <meshStandardMaterial color={STATUS_COLOR[room.status]} />
+          </mesh>
 
-      {/* Blackboard */}
-      <mesh position={[0, CUBE_HEIGHT * 0.58, -facing * (half - 0.06)]}>
-        <boxGeometry args={[CUBE_SIZE * 0.5, 0.2, 0.02]} />
-        <meshStandardMaterial color="#14532d" />
-      </mesh>
-      {/* Teacher's table, just in front of the board */}
-      <mesh position={[0, 0.065, facing * (0.2 - half)]}>
-        <boxGeometry args={[0.26, 0.09, 0.14]} />
-        <meshStandardMaterial color="#a16207" />
-      </mesh>
-
-      {/* Student benches — one bench per actual configured bench (never
-          capped), laid out row-major across the computed grid so the count
-          on screen always matches the room's real bench count. Rendered
-          with the same desk+seat design (capped at 3 seats/bench row) used
-          by the dedicated seating view, colored by the seated batch
-          (distinct color per class+section), or red if that seat's
-          occupant has been marked absent, whenever seat data is available
-          for this room — scaled down to fit the building overview. */}
-      {Array.from({ length: benchCount }).map((_, idx) => {
-        const r = Math.floor(idx / cols);
-        const c = idx % cols;
-        const benchNumber = idx + 1;
-        const seatsPerRow = Math.min(Math.max(1, room.seatsPerBench), MAX_SEATS_PER_BENCH_ROW);
-        const seatSize = benchW / seatsPerRow;
-        return (
-          <Bench
-            key={idx}
-            seatsPerBench={room.seatsPerBench}
-            seatsByNumber={seatsByNumberForBench(room.seats, benchNumber)}
-            x={colXs[c]}
-            z={facing * (rowOffsets[r] - half)}
-            seatSize={seatSize}
-            rowGap={benchD}
-            showAttendance
-          />
-        );
-      })}
+          {/* Student benches — one per actual configured bench (never
+              capped or approximated), laid out on the exact same grid math
+              as the dedicated seating view (see computeRoomFootprint).
+              Rendered with the same desk+seat design (capped at 3
+              seats/bench row), colored by the seated batch (distinct color
+              per class+section), or red if that seat's occupant has been
+              marked absent, whenever seat data is available for this
+              room. */}
+          {benchPositions.map((pos, idx) => {
+            const benchNumber = idx + 1;
+            return (
+              <Bench
+                key={idx}
+                seatsPerBench={room.seatsPerBench}
+                seatsByNumber={seatsByNumberForBench(room.seats, benchNumber)}
+                x={pos.x}
+                z={pos.z}
+                seatSize={SEAT_SIZE}
+                rowGap={BENCH_SUBROW_GAP}
+                showAttendance
+              />
+            );
+          })}
+        </group>
+      </group>
     </group>
   );
 }
@@ -307,8 +312,8 @@ function StairsWing({ x, zCenter, depth }: { x: number; zCenter: number; depth: 
           <meshStandardMaterial color="#94a3b8" />
         </mesh>
       ))}
-      <mesh position={[-WING_WIDTH / 2 + 0.025, CUBE_HEIGHT / 2, 0]}>
-        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+      <mesh position={[-WING_WIDTH / 2 + 0.025, WALL_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, WALL_HEIGHT, depth]} />
         <meshStandardMaterial color="#f8fafc" />
       </mesh>
     </group>
@@ -326,16 +331,16 @@ function ToiletWing({ x, z, depth, color }: { x: number; z: number; depth: numbe
         <boxGeometry args={[WING_WIDTH, 0.024, depth - 0.05]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      <mesh position={[0, CUBE_HEIGHT / 2, -depth / 2 + 0.025]}>
-        <boxGeometry args={[WING_WIDTH, CUBE_HEIGHT, 0.05]} />
+      <mesh position={[0, WALL_HEIGHT / 2, -depth / 2 + 0.025]}>
+        <boxGeometry args={[WING_WIDTH, WALL_HEIGHT, 0.05]} />
         <meshStandardMaterial color="#f8fafc" />
       </mesh>
-      <mesh position={[-WING_WIDTH / 2 + 0.025, CUBE_HEIGHT / 2, 0]}>
-        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+      <mesh position={[-WING_WIDTH / 2 + 0.025, WALL_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, WALL_HEIGHT, depth]} />
         <meshStandardMaterial color="#f8fafc" />
       </mesh>
-      <mesh position={[WING_WIDTH / 2 - 0.025, CUBE_HEIGHT / 2, 0]}>
-        <boxGeometry args={[0.05, CUBE_HEIGHT, depth]} />
+      <mesh position={[WING_WIDTH / 2 - 0.025, WALL_HEIGHT / 2, 0]}>
+        <boxGeometry args={[0.05, WALL_HEIGHT, depth]} />
         <meshStandardMaterial color="#f8fafc" />
       </mesh>
     </group>
@@ -428,12 +433,13 @@ function BuildingScene({ layout, onSelectRoom, isGroundFloor }: { layout: SceneL
         </mesh>
       ))}
 
-      {layout.rooms.map(({ room, x, z, rowIndex }) => (
+      {layout.rooms.map(({ room, x, z, rowIndex, footprint }) => (
         <ClassroomBlock
           key={room.roomId}
           room={room}
           x={x}
           z={z}
+          footprint={footprint}
           facing={rowIndex === layout.rows - 1 && layout.rows > 1 ? -1 : 1}
           onClick={() => onSelectRoom(room.roomId)}
         />
@@ -442,11 +448,11 @@ function BuildingScene({ layout, onSelectRoom, isGroundFloor }: { layout: SceneL
       <StairsWing x={wings.leftX} zCenter={wings.wingCenterZ} depth={wings.wingDepth} />
       {layout.hasCorridor ? (
         <>
-          <ToiletWing x={wings.rightX} z={wings.minZ} depth={CUBE_SIZE} color="#bae6fd" />
-          <ToiletWing x={wings.rightX} z={wings.maxZ} depth={CUBE_SIZE} color="#fbcfe8" />
+          <ToiletWing x={wings.rightX} z={wings.minZ} depth={layout.rowDepths[0]} color="#bae6fd" />
+          <ToiletWing x={wings.rightX} z={wings.maxZ} depth={layout.rowDepths[layout.rowDepths.length - 1]} color="#fbcfe8" />
         </>
       ) : (
-        <ToiletWing x={wings.rightX} z={wings.wingCenterZ} depth={CUBE_SIZE} color="#bae6fd" />
+        <ToiletWing x={wings.rightX} z={wings.wingCenterZ} depth={layout.rowDepths[0]} color="#bae6fd" />
       )}
 
       {isGroundFloor && <BuildingFacade width={wings.extendedWidth} z={wings.facadeZ} />}
@@ -646,7 +652,7 @@ export const ExamFloor3D: React.FC<{
   const isGroundFloor = floors.length > 0 && activeFloor === floors[0];
   const labelPoints = useMemo<LabelPoint[]>(() => {
     const points: LabelPoint[] = layout.rooms.map(({ room, x, z }) => ({
-      id: room.roomId, position: [x, CUBE_HEIGHT + 0.32, z]
+      id: room.roomId, position: [x, WALL_HEIGHT + 0.32, z]
     }));
     // One "CORRIDOR" label per corridor gap — there's one whenever there's
     // more than one row, and more than one gap once there are 3+ rows.

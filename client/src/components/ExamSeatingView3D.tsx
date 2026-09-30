@@ -5,8 +5,10 @@ import * as THREE from 'three';
 import { getBatchColor, batchKey } from '../utils/batchColor';
 import { TouchActionFix } from './three/TouchActionFix';
 import {
-  Bench, SeatInfo, EMPTY_SEAT_COLOR, ABSENT_SEAT_COLOR, MAX_SEATS_PER_BENCH_ROW, TARGET_BENCH_COLUMNS
+  Bench, SeatInfo, EMPTY_SEAT_COLOR, ABSENT_SEAT_COLOR,
+  computeRoomFootprint, RoomFootprint, SEAT_SIZE, BENCH_SUBROW_GAP
 } from './three/Bench';
+import { RoomShell } from './three/RoomShell';
 
 // ---------------------------------------------------------------------------
 // A per-seat, per-room 3D seating view — one classroom rendered large enough
@@ -24,77 +26,29 @@ import {
 
 export type { SeatInfo };
 
-const SEAT_SIZE = 0.44;
-const BENCH_GAP_X = 0.22;
-const ROW_GAP_Z = 0.55;
-// Gap between a bench's own sub-rows, when seatsPerBench exceeds the
-// 3-per-row cap and wraps onto a second desk right behind the first.
-const BENCH_SUBROW_GAP = 0.5;
-
 function Room({
-  benches, seatsPerBench, seatsByBench, cols, rows, roomWidth, roomDepth, showAttendance, onSeatClick
+  benches, seatsPerBench, seatsByBench, footprint, showAttendance, onSeatClick
 }: {
   benches: number; seatsPerBench: number; seatsByBench: Map<number, Map<number, SeatInfo>>;
-  cols: number; rows: number; roomWidth: number; roomDepth: number;
-  showAttendance: boolean; onSeatClick?: (seat: SeatInfo) => void;
+  footprint: RoomFootprint; showAttendance: boolean; onSeatClick?: (seat: SeatInfo) => void;
 }) {
-  const benchRowCount = Math.ceil(Math.max(1, seatsPerBench) / MAX_SEATS_PER_BENCH_ROW);
-  const benchWidth = Math.min(seatsPerBench, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;
-  const cellWidth = benchWidth + BENCH_GAP_X;
-  const rowWidth = cols * cellWidth - BENCH_GAP_X;
-  const startX = -rowWidth / 2 + benchWidth / 2;
-  const frontMargin = 1.0; // space for the blackboard + teacher's table
-  // Each logical bench row now needs enough depth for its own sub-rows
-  // (almost always just 1, since real configs use <= 3 seats/bench).
-  const effectiveRowGap = ROW_GAP_Z + (benchRowCount - 1) * BENCH_SUBROW_GAP;
+  const { roomWidth, roomDepth, benchPositions } = footprint;
 
   return (
     <group>
-      {/* Floor */}
-      <mesh position={[0, -0.01, roomDepth / 2 - 0.4]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[roomWidth + 0.6, roomDepth + 0.8]} />
-        <meshStandardMaterial color="#f8fafc" />
-      </mesh>
-
-      {/* Back wall (behind the last row) */}
-      <mesh position={[0, 1.1, roomDepth - 0.2]} castShadow>
-        <boxGeometry args={[roomWidth + 0.6, 2.2, 0.06]} />
-        <meshStandardMaterial color="#e2e8f0" />
-      </mesh>
-      {/* Side walls */}
-      <mesh position={[-roomWidth / 2 - 0.3, 1.1, roomDepth / 2 - 0.4]} castShadow>
-        <boxGeometry args={[0.06, 2.2, roomDepth + 0.8]} />
-        <meshStandardMaterial color="#e2e8f0" />
-      </mesh>
-      <mesh position={[roomWidth / 2 + 0.3, 1.1, roomDepth / 2 - 0.4]} castShadow>
-        <boxGeometry args={[0.06, 2.2, roomDepth + 0.8]} />
-        <meshStandardMaterial color="#e2e8f0" />
-      </mesh>
-
-      {/* Blackboard + teacher's table at the front */}
-      <mesh position={[0, 1.0, -0.75]}>
-        <boxGeometry args={[Math.min(2.4, roomWidth * 0.6), 0.9, 0.04]} />
-        <meshStandardMaterial color="#14532d" />
-      </mesh>
-      <mesh position={[0, 0.28, -0.35]}>
-        <boxGeometry args={[0.9, 0.35, 0.45]} />
-        <meshStandardMaterial color="#a16207" />
-      </mesh>
+      <RoomShell roomWidth={roomWidth} roomDepth={roomDepth} />
 
       {/* Benches */}
       {Array.from({ length: benches }).map((_, idx) => {
         const benchNumber = idx + 1;
-        const r = Math.floor(idx / cols);
-        const c = idx % cols;
-        const x = startX + c * cellWidth;
-        const z = frontMargin + r * (effectiveRowGap + SEAT_SIZE * 0.7);
+        const pos = benchPositions[idx];
         return (
           <Bench
             key={benchNumber}
             seatsPerBench={seatsPerBench}
             seatsByNumber={seatsByBench.get(benchNumber) || new Map()}
-            x={x}
-            z={z}
+            x={pos.x}
+            z={pos.z}
             seatSize={SEAT_SIZE}
             rowGap={BENCH_SUBROW_GAP}
             showAttendance={showAttendance}
@@ -153,14 +107,11 @@ export const ExamSeatingView3D: React.FC<{
   // A real classroom is 3 columns of benches wide (a center aisle and two
   // side aisles) — rows scale with however many benches the room actually
   // has, matching the building-overview scene's grid instead of a
-  // count-derived guess.
-  const cols = Math.max(1, Math.min(TARGET_BENCH_COLUMNS, benchCount));
-  const rows = Math.ceil(benchCount / cols);
-  const benchRowCount = Math.ceil(seatsPerBenchN / MAX_SEATS_PER_BENCH_ROW);
-  const benchWidth = Math.min(seatsPerBenchN, MAX_SEATS_PER_BENCH_ROW) * SEAT_SIZE;
-  const roomWidth = cols * (benchWidth + BENCH_GAP_X) - BENCH_GAP_X;
-  const effectiveRowGap = ROW_GAP_Z + (benchRowCount - 1) * BENCH_SUBROW_GAP;
-  const roomDepth = 1.0 + rows * (effectiveRowGap + SEAT_SIZE * 0.7);
+  // count-derived guess. Same footprint math used by every 3D scene in the
+  // app (see computeRoomFootprint), so this view and the building overview
+  // never size a room differently.
+  const footprint = useMemo(() => computeRoomFootprint(benchCount, seatsPerBenchN), [benchCount, seatsPerBenchN]);
+  const { roomWidth, roomDepth } = footprint;
 
   const controlsRef = useRef<any>(null);
 
@@ -196,10 +147,7 @@ export const ExamSeatingView3D: React.FC<{
               benches={benchCount}
               seatsPerBench={seatsPerBenchN}
               seatsByBench={seatsByBench}
-              cols={cols}
-              rows={rows}
-              roomWidth={roomWidth}
-              roomDepth={roomDepth}
+              footprint={footprint}
               showAttendance={showAttendance}
               onSeatClick={onSeatClick}
             />
