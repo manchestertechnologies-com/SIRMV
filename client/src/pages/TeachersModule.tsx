@@ -81,7 +81,10 @@ export const TeachersModule: React.FC = () => {
   const [teachers, setTeachers] = useState<any[]>(INITIAL_TEACHERS);
   const [departments, setDepartments] = useState<any[]>(DEFAULT_DEPTS);
   const [designations, setDesignations] = useState<string[]>(DEFAULT_DESIGNATIONS);
-  const [selectedDept, setSelectedDept] = useState<string>('ALL');
+  // '' = no department picked yet (directory tile grid is shown instead of
+  // the faculty list); HOD always sees only their own department anyway, so
+  // it's irrelevant for them.
+  const [selectedDept, setSelectedDept] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -354,16 +357,24 @@ export const TeachersModule: React.FC = () => {
     }
   };
 
+  // A department must be picked (via the tile grid) before the faculty list
+  // appears — HOD has no choice to make, so their single department counts
+  // as already "picked".
+  const hasPickedDept = user?.role === 'HOD' || selectedDept !== '';
+
   // Filter teachers
-  const filteredTeachers = teachers.filter((t) => {
-    const matchesDept = selectedDept === 'ALL' || t.department_id === selectedDept;
-    const matchesSearch =
-      searchQuery === '' ||
-      t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.qualification?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDept && matchesSearch;
-  });
+  const filteredTeachers = !hasPickedDept
+    ? []
+    : teachers.filter((t) => {
+        const matchesDept =
+          user?.role === 'HOD' || selectedDept === 'ALL' || t.department_id === selectedDept;
+        const matchesSearch =
+          searchQuery === '' ||
+          t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.qualification?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesDept && matchesSearch;
+      });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -476,71 +487,101 @@ export const TeachersModule: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'directory' && (
         <div className="space-y-6">
-          {/* Filter Bar */}
-          <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
-            {user?.role !== 'HOD' && (
-              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-                <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-                <div className="flex items-center gap-1.5">
+          {/* Department Picker — full-width tile grid, shown before any faculty cards */}
+          {user?.role !== 'HOD' && (
+            <div className="bg-[#fdfcfb] p-5 rounded-3xl border border-[#ded9cf]">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">
+                <Filter className="w-4 h-4 text-slate-400" />
+                Choose a Department to View Faculty
+              </div>
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDept('ALL')}
+                  className={`flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border-2 transition ${
+                    selectedDept === 'ALL'
+                      ? 'bg-slate-900 border-slate-900 text-white shadow-md'
+                      : 'bg-white border-[#ded9cf] text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+                  }`}
+                >
+                  <LayoutGrid className="w-7 h-7" />
+                  <span className="text-xs font-bold">All</span>
+                  <span className={`text-[10px] font-semibold ${selectedDept === 'ALL' ? 'text-slate-300' : 'text-slate-400'}`}>
+                    {teachers.length} Faculty
+                  </span>
+                </button>
+                {departments.map((d) => {
+                  const DeptIcon = departmentIcon(d.code);
+                  const active = selectedDept === d.id;
+                  const count = teachers.filter((t) => t.department_id === d.id).length;
+                  return (
+                    <button
+                      type="button"
+                      key={d.id}
+                      onClick={() => setSelectedDept(d.id)}
+                      title={d.name}
+                      className={`flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border-2 transition ${
+                        active
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                          : 'bg-white border-[#ded9cf] text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40'
+                      }`}
+                    >
+                      <DeptIcon className="w-7 h-7" />
+                      <span className="text-xs font-bold">{d.code}</span>
+                      <span className={`text-[10px] font-semibold ${active ? 'text-emerald-100' : 'text-slate-400'}`}>
+                        {count} Faculty
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Search Bar */}
+          {hasPickedDept && (
+            <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
+              {user?.role === 'HOD' && (
+                <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  Showing your department's faculty only.
+                </div>
+              )}
+              {user?.role !== 'HOD' && (
+                <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  {selectedDept === 'ALL' ? 'All Departments' : departments.find((d) => d.id === selectedDept)?.name}
                   <button
                     type="button"
-                    onClick={() => setSelectedDept('ALL')}
-                    title="All Departments"
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
-                      selectedDept === 'ALL'
-                        ? 'bg-slate-900 text-white border-slate-900'
-                        : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
-                    }`}
+                    onClick={() => setSelectedDept('')}
+                    className="text-[11px] font-bold text-blue-600 hover:underline"
                   >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    All
+                    Change
                   </button>
-                  {departments.map((d) => {
-                    const DeptIcon = departmentIcon(d.code);
-                    const active = selectedDept === d.id;
-                    return (
-                      <button
-                        type="button"
-                        key={d.id}
-                        onClick={() => setSelectedDept(d.id)}
-                        title={d.name}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
-                          active
-                            ? 'bg-emerald-600 text-white border-emerald-600'
-                            : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
-                        }`}
-                      >
-                        <DeptIcon className="w-3.5 h-3.5" />
-                        {d.code}
-                      </button>
-                    );
-                  })}
                 </div>
-              </div>
-            )}
-            {user?.role === 'HOD' && (
-              <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
-                <Filter className="w-4 h-4 text-slate-400" />
-                Showing your department's faculty only.
-              </div>
-            )}
+              )}
 
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search faculty by name, ID..."
-                className="w-full pl-9 pr-4 py-1.5 bg-white border border-[#ded9cf] rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search faculty by name, ID..."
+                  className="w-full pl-9 pr-4 py-1.5 bg-white border border-[#ded9cf] rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Teacher Cards Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : !hasPickedDept ? (
+            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+              Pick a department above to view its faculty.
             </div>
           ) : filteredTeachers.length === 0 ? (
             <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">

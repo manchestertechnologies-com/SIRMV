@@ -305,3 +305,130 @@ hostelRouter.put('/maintenance/:id', authenticate, requireRoles('WARDEN', 'HEAD_
   logAudit(req, 'HOSTEL_MAINTENANCE_UPDATED', 'hostel_maintenance_requests', id, { status });
   return res.json({ success: true, message: 'Maintenance request updated.' });
 });
+
+// 7. Create a new hostel room under an existing block, with N beds
+//    auto-created (sharing = capacity: 2, 3 or 4), for the Warden's "add a
+//    room" flow in the Room Allotment screen.
+hostelRouter.post('/rooms', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const { block_id, room_number, floor, capacity } = req.body;
+  const cap = Number(capacity);
+
+  if (!block_id || !room_number || floor === undefined || floor === null) {
+    return res.status(400).json({ error: 'block_id, room_number and floor are required.' });
+  }
+  if (![2, 3, 4].includes(cap)) {
+    return res.status(400).json({ error: 'capacity must be 2 (double), 3 (triple) or 4 (quad) sharing.' });
+  }
+
+  const block = await queryOne<any>(`SELECT * FROM hostel_blocks WHERE id = ?`, [block_id]);
+  if (!block) {
+    return res.status(404).json({ error: 'Hostel block not found.' });
+  }
+
+  const roomId = 'hroom-' + crypto.randomUUID();
+  await execute(`
+    INSERT INTO hostel_rooms (id, block_id, room_number, floor, capacity)
+    VALUES (?, ?, ?, ?, ?)
+  `, [roomId, block_id, room_number, Number(floor), cap]);
+
+  for (let i = 1; i <= cap; i++) {
+    await execute(`
+      INSERT INTO hostel_beds (id, room_id, bed_number, student_id)
+      VALUES (?, ?, ?, NULL)
+    `, ['hbed-' + crypto.randomUUID(), roomId, `Bed ${i}`, null]);
+  }
+
+  logAudit(req, 'HOSTEL_ROOM_CREATED', 'hostel_rooms', roomId, { room_number, floor, capacity: cap, block_id });
+
+  return res.status(201).json({ success: true, id: roomId, message: `Room ${room_number} (${cap}-sharing) created with ${cap} beds.` });
+});
+
+// 8. Students in this branch not currently holding any hostel bed — the
+//    picker list for "Allocate a student" on the Room Allotment screen.
+hostelRouter.get('/unallocated-students', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const branchId = (req.query.branch_id as string) || req.user!.branch_id;
+  const search = req.query.search as string;
+
+  // Only students actually marked as hostel residents (set at
+  // registration, or by the Students module) show up here for allocation —
+  // a day scholar never clutters this list, and a student marked as hostel
+  // shows up automatically without any extra step.
+  let sql = `
+    SELECT sp.id, sp.name, sp.register_number, sp.phone, sp.residence_status, sp.photo_url,
+           c.name as class_name, sec.name as section_name, b.name as batch_name
+    FROM student_profiles sp
+    JOIN classes c ON sp.class_id = c.id
+    JOIN sections sec ON sp.section_id = sec.id
+    JOIN batches b ON sp.batch_id = b.id
+    LEFT JOIN hostel_beds hb ON hb.student_id = sp.id
+    WHERE sp.branch_id = ? AND hb.id IS NULL AND sp.residence_status = 'RESIDENT'
+  `;
+  const params: any[] = [branchId];
+  if (search) {
+    sql += ` AND (sp.name ILIKE ? OR sp.register_number ILIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
+  }
+  sql += ` ORDER BY sp.name ASC`;
+
+  const students = await query(sql, params);
+  return res.json({ students });
+});
+
+// 9. Allocate a student into a specific bed. Automatically vacates any
+//    other bed that student currently holds (a room transfer), and flips
+//    their residence_status to RESIDENT so they show up correctly
+//    everywhere else (Students module, their own Hostel Info page, etc.)
+hostelRouter.post('/beds/:bedId/allocate', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const { bedId } = req.params;
+  const { student_id } = req.body;
+  if (!student_id) {
+    return res.status(400).json({ error: 'student_id is required.' });
+  }
+
+  const bed = await queryOne<any>(`SELECT * FROM hostel_beds WHERE id = ?`, [bedId]);
+  if (!bed) {
+    return res.status(404).json({ error: 'Bed not found.' });
+  }
+  if (bed.student_id && bed.student_id !== student_id) {
+    return res.status(400).json({ error: 'This bed is already occupied. Vacate it first.' });
+  }
+  const student = await queryOne<any>(`SELECT id FROM student_profiles WHERE id = ?`, [student_id]);
+  if (!student) {
+    return res.status(404).json({ error: 'Student not found.' });
+  }
+
+  await transaction(async (client) => {
+    // Free any other bed this student currently holds (a transfer).
+    await client.query(`UPDATE hostel_beds SET student_id = NULL WHERE student_id = $1 AND id != $2`, [student_id, bedId]);
+    await client.query(`UPDATE hostel_beds SET student_id = $1 WHERE id = $2`, [student_id, bedId]);
+    await client.query(`
+      UPDATE student_profiles SET residence_status = 'RESIDENT', is_hostelite = 1, hostel_room_id = $1 WHERE id = $2
+    `, [bed.room_id, student_id]);
+  });
+
+  logAudit(req, 'HOSTEL_BED_ALLOCATED', 'hostel_beds', bedId, { student_id, room_id: bed.room_id });
+
+  return res.json({ success: true, message: 'Student allocated to the room successfully.' });
+});
+
+// 10. Vacate a bed (the student moves out / is removed from the room).
+hostelRouter.post('/beds/:bedId/vacate', authenticate, requireRoles('WARDEN', 'HEAD_WARDEN', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const { bedId } = req.params;
+  const bed = await queryOne<any>(`SELECT * FROM hostel_beds WHERE id = ?`, [bedId]);
+  if (!bed) {
+    return res.status(404).json({ error: 'Bed not found.' });
+  }
+
+  await transaction(async (client) => {
+    if (bed.student_id) {
+      await client.query(`
+        UPDATE student_profiles SET residence_status = 'NON_RESIDENT', is_hostelite = 0, hostel_room_id = NULL WHERE id = $1
+      `, [bed.student_id]);
+    }
+    await client.query(`UPDATE hostel_beds SET student_id = NULL WHERE id = $1`, [bedId]);
+  });
+
+  logAudit(req, 'HOSTEL_BED_VACATED', 'hostel_beds', bedId, { previous_student_id: bed.student_id });
+
+  return res.json({ success: true, message: 'Bed vacated successfully.' });
+});

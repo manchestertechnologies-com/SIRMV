@@ -281,7 +281,7 @@ teachersRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
     const departmentId = hodDepartmentId || (req.query.department_id as string);
 
     let sql = `
-      SELECT tp.*, u.name, u.email, u.phone, u.avatar_url, u.is_active,
+      SELECT tp.*, u.name, u.username, u.email, u.phone, u.avatar_url, u.is_active,
              d.name as department_name, d.code as department_code,
              b.name as branch_name,
              (SELECT COUNT(*) FROM teacher_assignments ta WHERE ta.teacher_id = tp.id) as assignment_count,

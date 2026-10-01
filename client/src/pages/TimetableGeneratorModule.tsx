@@ -93,9 +93,12 @@ export const TimetableGeneratorModule: React.FC = () => {
       const res = await apiFetch<any>(`/timetable-generator/configs/${id}`);
       setConfig(res.config);
       setRequirements(res.requirements || []);
-      setAvailability(res.availability || []);
       setUnavailablePeriods(res.unavailablePeriods || []);
       setDrafts(res.drafts || []);
+      // Every teacher on staff should show up in the Availability tab by
+      // default — not just the ones already saved to this config — so the
+      // admin never has to click "Suggest All Teachers" just to see everyone.
+      await loadSuggestedAvailability(id, res.availability || [], res.config?.working_days);
       if (res.drafts && res.drafts.length > 0) {
         await openDraft(res.drafts[0].id);
       }
@@ -186,12 +189,24 @@ export const TimetableGeneratorModule: React.FC = () => {
     }
   };
 
-  const loadSuggestedAvailability = async () => {
+  // baseAvailability/workingDays let this be called right after a fresh
+  // config load (before `availability`/`config` state has settled) as well
+  // as from the "Suggest All Teachers" button (reading current state).
+  const loadSuggestedAvailability = async (
+    configId?: string,
+    baseAvailability?: any[],
+    workingDays?: string[]
+  ) => {
+    const id = configId || activeConfigId;
+    const current = baseAvailability || availability;
+    if (!id) return;
     try {
-      const res = await apiFetch<any>(`/timetable-generator/configs/${activeConfigId}/suggested-availability`);
-      const existingIds = new Set(availability.map((a) => a.teacher_id));
-      const additions = (res.suggestions || []).map((s: any) => ({ ...s, available_days: config?.working_days || DAYS.slice(0, 6) })).filter((s: any) => !existingIds.has(s.teacher_id));
-      setAvailability([...availability, ...additions]);
+      const res = await apiFetch<any>(`/timetable-generator/configs/${id}/suggested-availability`);
+      const existingIds = new Set(current.map((a) => a.teacher_id));
+      const additions = (res.suggestions || [])
+        .map((s: any) => ({ ...s, available_days: workingDays || config?.working_days || DAYS.slice(0, 6) }))
+        .filter((s: any) => !existingIds.has(s.teacher_id));
+      setAvailability([...current, ...additions]);
     } catch (err: any) {
       showToast(err.message, 'error');
     }
@@ -479,20 +494,32 @@ export const TimetableGeneratorModule: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900">Teacher Availability & Weekly Hour Cap</h2>
             <div className="flex gap-2">
-              <button onClick={loadSuggestedAvailability} className={btnSecondary}>Suggest All Teachers</button>
+              <button onClick={() => loadSuggestedAvailability()} className={btnSecondary}>Suggest All Teachers</button>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-slate-500 border-b border-slate-100">
-                  <th className="py-2 pr-2">Teacher</th><th className="py-2 pr-2">Available Days</th><th className="py-2 pr-2">Max Hours/Week</th>
+                  <th className="py-2 pr-2">Teacher</th><th className="py-2 pr-2">Login Credentials</th><th className="py-2 pr-2">Available Days</th><th className="py-2 pr-2">Max Hours/Week</th>
                 </tr>
               </thead>
               <tbody>
-                {availability.map((a, i) => (
+                {availability.map((a, i) => {
+                  const teacherRow = teachers.find((t: any) => t.id === a.teacher_id);
+                  return (
                   <tr key={i} className="border-b border-slate-50">
-                    <td className="py-1.5 pr-2 font-medium text-slate-800">{a.teacher_name || teachers.find((t: any) => t.id === a.teacher_id)?.name}</td>
+                    <td className="py-1.5 pr-2 font-medium text-slate-800">{a.teacher_name || teacherRow?.name}</td>
+                    <td className="py-1.5 pr-2 font-mono text-[10px] text-slate-600">
+                      {teacherRow?.username ? (
+                        <>
+                          <div>User: <span className="font-bold">{teacherRow.username}</span></div>
+                          <div>Pass: <span className="font-bold">Demo@12345</span></div>
+                        </>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
                     <td className="py-1.5 pr-2">
                       <div className="flex flex-wrap gap-1">
                         {(workingDaysArr.length ? workingDaysArr : DAYS).map((d) => {
@@ -520,7 +547,8 @@ export const TimetableGeneratorModule: React.FC = () => {
                       <input type="number" className={inputCls} style={{ width: 70 }} value={a.max_hours_per_week} onChange={(e) => { const next = [...availability]; next[i] = { ...a, max_hours_per_week: Number(e.target.value) }; setAvailability(next); }} />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
