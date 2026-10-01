@@ -10,6 +10,7 @@
     "seed": "tsx server/src/database/postgres-seed.ts",
     "seed:test-duplicates": "tsx server/src/database/seed-test-duplicates.ts",
     "convert:real-to-demo-logins": "tsx server/src/database/convert-real-accounts-to-demo-logins.ts",
+    "diagnose:students": "tsx server/src/database/diagnose-student-visibility.ts",
     "start": "tsx server/src/index.ts",
     "test": "tsx tests/api.test.ts"
   },
