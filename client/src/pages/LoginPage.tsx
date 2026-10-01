@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Select } from '../components/Select';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, LogIn, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
 
@@ -33,10 +32,10 @@ export const LoginPage: React.FC = () => {
 
       {/* Main Login Card */}
       <div className="w-full max-w-md mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-[#ded8cb] overflow-hidden">
-          
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-[#ded8cb]">
+
           {/* Official Institution Brand Header */}
-          <div className="bg-gradient-to-b from-[#faf8f3] to-white p-8 border-b border-[#eae4d5] text-center">
+          <div className="bg-gradient-to-b from-[#faf8f3] to-white p-8 border-b border-[#eae4d5] text-center rounded-t-2xl">
             <div className="flex justify-center mb-4">
               <div className="p-2.5 bg-white rounded-2xl shadow-xs border border-[#ded8cb]">
                 <img
@@ -152,26 +151,30 @@ export const LoginPage: React.FC = () => {
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 Institutional Role Presets
               </label>
-              <Select
+              <select
                 value={identifier}
-                onChange={(v) => {
-                  setIdentifier(v);
-                  setPassword('123456');
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  setPassword('Demo@12345');
                 }}
-                sheetTitle="Institutional Role Presets"
-                options={[
-                  { value: 'admin@sirmv.edu.in', label: 'Administrator (admin@sirmv.edu.in)' },
-                  { value: 'principal@sirmv.edu.in', label: 'Principal Office (principal@sirmv.edu.in)' },
-                  { value: 'hod.physics@sirmv.edu.in', label: 'HOD Physics (hod.physics@sirmv.edu.in)' },
-                  { value: 'lecturer@sirmv.edu.in', label: 'Teaching Faculty (lecturer@sirmv.edu.in)' },
-                  { value: 'attender@sirmv.edu.in', label: 'Floor Attender (attender@sirmv.edu.in)' },
-                  { value: 'staff@sirmv.edu.in', label: 'Office Staff (staff@sirmv.edu.in)' },
-                  { value: 'warden@sirmv.edu.in', label: 'Hostel Warden (warden@sirmv.edu.in)' },
-                  { value: 'student@sirmv.edu.in', label: 'Student Account (student@sirmv.edu.in)' },
-                  { value: 'parent@sirmv.edu.in', label: 'Parent Portal (parent@sirmv.edu.in)' }
-                ]}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition cursor-pointer"
-              />
+              >
+                {/* These now match real, working demo accounts seeded in the
+                    database (username == the login identifier shown,
+                    password Demo@12345 for all of them) — picking one and
+                    signing in actually logs in as that role, rather than
+                    the previous placeholder emails that matched no account. */}
+                <option value="admin.demo@college.test">Administrator (admin.demo@college.test)</option>
+                <option value="principal.demo@college.test">Principal Office (principal.demo@college.test)</option>
+                <option value="hod.demo@college.test">HOD Physics (hod.demo@college.test)</option>
+                <option value="teacher.demo@college.test">Teaching Faculty (teacher.demo@college.test)</option>
+                <option value="floor.demo@college.test">Floor Attender (floor.demo@college.test)</option>
+                <option value="staff.demo@college.test">Office Staff (staff.demo@college.test)</option>
+                <option value="warden.demo@college.test">Hostel Warden (warden.demo@college.test)</option>
+                <option value="student.demo@college.test">Student Account (student.demo@college.test)</option>
+                <option value="parent.demo@college.test">Parent Portal (parent.demo@college.test)</option>
+              </select>
+              <p className="text-[10px] text-slate-400 mt-1.5">Password for every preset: <span className="font-mono font-semibold text-slate-500">Demo@12345</span></p>
             </div>
 
           </div>
