@@ -249,7 +249,7 @@ export function App() {
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
                       ? 'SIR MV PU College • My Room, Roommates & Maintenance'
-                      : 'SIR MV PU College • Blocks, Floors & Night Roll-Call'}
+                      : 'SIR MV PU College • Blocks, Floors & Room Allotment'}
                   </p>
                 </div>
               </div>

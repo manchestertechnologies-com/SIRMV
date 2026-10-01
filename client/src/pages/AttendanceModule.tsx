@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   RotateCcw,
   UserCheck,
-  Layers
+  Layers,
+  Download
 } from 'lucide-react';
 import { IconAttendance } from '../components/ModuleIcons';
 
@@ -363,6 +364,36 @@ export const AttendanceModule: React.FC = () => {
   const absentCount = students.filter((s) => s.status === 'ABSENT').length;
   const lateCount = students.filter((s) => s.status === 'LATE').length;
 
+  // Lets a Floor Attender/Teacher/HOD/Admin revisit any previous day's
+  // marked roster (the date picker above already supports picking any past
+  // date, not just today) and export exactly what's on screen — whichever
+  // date, class and section is currently loaded — as a CSV for their own
+  // records, without needing a server round-trip.
+  const handleDownloadRosterCsv = () => {
+    if (!lectureDetails) return;
+    const header = ['Roll No', 'Name', 'Admission No', 'Residential Status', 'Attendance Status'];
+    const rows = students.map((s) => [
+      s.roll_number || '',
+      s.name || '',
+      s.admission_number || '',
+      s.residential_status || '',
+      s.status || 'NOT_MARKED'
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateLabel = lectureDetails.date || pickerDate;
+    a.href = url;
+    a.download = `attendance_${lectureDetails.class_name || 'class'}_${lectureDetails.section_name || ''}_${dateLabel}.csv`.replace(/\s+/g, '_');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner Card */}
@@ -531,14 +562,18 @@ export const AttendanceModule: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <input
-                type="date"
-                value={pickerDate}
-                onChange={(e) => setPickerDate(e.target.value)}
-                className="bg-transparent font-semibold text-slate-800 outline-none"
-              />
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
+                <Calendar className="w-4 h-4 text-slate-400" />
+                <input
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  value={pickerDate}
+                  onChange={(e) => setPickerDate(e.target.value)}
+                  className="bg-transparent font-semibold text-slate-800 outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 font-semibold">Pick any past date to revisit saved attendance</span>
             </div>
           </div>
 
@@ -766,13 +801,26 @@ export const AttendanceModule: React.FC = () => {
           {/* Student Attendance List */}
           {attendanceMode === 'student' && selectedLectureId && (
           <div className="bg-white rounded-3xl border border-[#ded9cf] overflow-hidden shadow-2xs">
-            <div className="p-4 border-b border-[#ded9cf] flex items-center justify-between bg-[#fdfcfb]">
+            <div className="p-4 border-b border-[#ded9cf] flex flex-wrap items-center justify-between gap-2 bg-[#fdfcfb]">
               <span className="text-xs font-bold text-slate-800">
                 Class Attendance Roster ({filteredStudents.length} Students)
+                {lectureDetails?.date && (
+                  <span className="ml-2 font-normal text-slate-500">— {lectureDetails.date}</span>
+                )}
               </span>
-              <span className="text-[11px] text-slate-500 font-semibold">
-                Click P / A / L to toggle individual student attendance
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-500 font-semibold hidden sm:inline">
+                  Click P / A / L to toggle individual student attendance
+                </span>
+                <button
+                  type="button"
+                  onClick={handleDownloadRosterCsv}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#ded9cf] hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold transition shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  Download CSV
+                </button>
+              </div>
             </div>
 
             {isLoading ? (
