@@ -3,6 +3,7 @@ import { query, queryOne, execute } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import { otpService } from '../services/otpService';
+import { smsService } from '../services/smsService';
 import crypto from 'crypto';
 import multer from 'multer';
 import path from 'path';
@@ -196,6 +197,20 @@ outpassRouter.post('/:id/approve', authenticate, requireRoles('PRINCIPAL', 'ADMI
     verificationCode: outpass.verification_code
   });
 
+  if ((outpass as any).parent_phone) {
+    const student = await queryOne<any>(`SELECT name FROM student_profiles WHERE id = ?`, [(outpass as any).student_id]);
+    smsService.send({
+      branchId: (outpass as any).branch_id,
+      phone: (outpass as any).parent_phone,
+      recipientName: student?.name,
+      message: `SIR MV PU College: Outpass ${outpass.outpass_number} for ${student?.name || 'your ward'} has been APPROVED by the Principal. Gate code: ${outpass.verification_code}.`,
+      trigger: 'OUTPASS_APPROVED',
+      relatedEntityType: 'outpass',
+      relatedEntityId: id,
+      sentBy: principalId
+    }).catch(() => {});
+  }
+
   return res.json({
     success: true,
     message: `Outpass ${outpass.outpass_number} approved. Verification Code: ${outpass.verification_code}`,
@@ -209,6 +224,8 @@ outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN
   const { reason } = req.body;
   const principalId = req.user!.id;
 
+  const outpass = await queryOne<any>(`SELECT * FROM outpasses WHERE id = ?`, [id]);
+
   await execute(`
     UPDATE outpasses SET
       status = 'REJECTED',
@@ -219,6 +236,20 @@ outpassRouter.post('/:id/reject', authenticate, requireRoles('PRINCIPAL', 'ADMIN
   `, [principalId, reason || 'Rejected by Principal', id]);
 
   logAudit(req, 'OUTPASS_REJECTED', 'outpasses', id, { rejection_reason: reason });
+
+  if (outpass?.parent_phone) {
+    const student = await queryOne<any>(`SELECT name FROM student_profiles WHERE id = ?`, [outpass.student_id]);
+    smsService.send({
+      branchId: outpass.branch_id,
+      phone: outpass.parent_phone,
+      recipientName: student?.name,
+      message: `SIR MV PU College: Outpass ${outpass.outpass_number} for ${student?.name || 'your ward'} was REJECTED. Reason: ${reason || 'Not specified'}.`,
+      trigger: 'OUTPASS_REJECTED',
+      relatedEntityType: 'outpass',
+      relatedEntityId: id,
+      sentBy: principalId
+    }).catch(() => {});
+  }
 
   return res.json({ success: true, message: 'Outpass has been rejected.' });
 });

@@ -24,7 +24,16 @@ import {
   Mail,
   GraduationCap,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Dna,
+  FlaskConical,
+  Cpu,
+  Zap,
+  Languages,
+  Sigma,
+  Atom,
+  ScrollText,
+  LayoutGrid
 } from 'lucide-react';
 import { IconStaffs, IconTimetable } from '../components/ModuleIcons';
 import { INITIAL_TEACHERS } from '../data/mockInstitutionalData';
@@ -43,6 +52,26 @@ const DEFAULT_DEPTS = [
 ];
 
 const DEFAULT_DESIGNATIONS = ['Professor & HOD', 'Senior Faculty', 'Faculty', 'Lab Faculty'];
+
+// One recognizable icon per department code, so the filter bar reads at a
+// glance instead of requiring a dropdown to be opened. Falls back to a
+// generic cap for any department code not in this list (new subjects added
+// later still filter correctly, just without a bespoke icon).
+const DEPARTMENT_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+  PHY: Atom,
+  CHEM: FlaskConical,
+  MATH: Sigma,
+  BIO: Dna,
+  CS: Cpu,
+  ELEC: Zap,
+  KAN: Languages,
+  SANS: ScrollText,
+  HIN: Languages,
+  ENG: BookOpen
+};
+function departmentIcon(code?: string): React.ComponentType<{ className?: string }> {
+  return (code && DEPARTMENT_ICON[code]) || GraduationCap;
+}
 
 export const TeachersModule: React.FC = () => {
   const { user, currentBranch } = useAuth();
@@ -450,21 +479,43 @@ export const TeachersModule: React.FC = () => {
           {/* Filter Bar */}
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
             {user?.role !== 'HOD' && (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Filter className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-bold text-slate-700">Department:</span>
-                <select
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                  className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-                >
-                  <option value="ALL">All Departments</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} ({d.code})
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+                <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDept('ALL')}
+                    title="All Departments"
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
+                      selectedDept === 'ALL'
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    All
+                  </button>
+                  {departments.map((d) => {
+                    const DeptIcon = departmentIcon(d.code);
+                    const active = selectedDept === d.id;
+                    return (
+                      <button
+                        type="button"
+                        key={d.id}
+                        onClick={() => setSelectedDept(d.id)}
+                        title={d.name}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
+                          active
+                            ? 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
+                        }`}
+                      >
+                        <DeptIcon className="w-3.5 h-3.5" />
+                        {d.code}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
             {user?.role === 'HOD' && (

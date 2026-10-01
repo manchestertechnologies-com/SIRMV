@@ -13,7 +13,10 @@ import {
   UploadCloud,
   FileCheck2,
   FileX2,
-  X
+  X,
+  LayoutGrid,
+  Building2,
+  Users
 } from 'lucide-react';
 import { IconStudents } from '../components/ModuleIcons';
 import { INITIAL_STUDENTS } from '../data/mockInstitutionalData';
@@ -461,22 +464,56 @@ export const StudentsModule: React.FC = () => {
       {/* Filter Toolbar */}
       <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-wrap gap-3 items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Class Filter */}
-          <select
-            value={selectedClass}
-            onChange={(e) => {
-              setSelectedClass(e.target.value);
-              setSelectedSection('ALL');
-            }}
-            className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-          >
-            <option value="ALL">All Classes</option>
-            {options.classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          {/* Class Filter — icon chips instead of a dropdown, each class
+              badged with its leading number so classes are visually
+              distinct at a glance. */}
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedClass('ALL');
+                setSelectedSection('ALL');
+              }}
+              title="All Classes"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
+                selectedClass === 'ALL'
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              All
+            </button>
+            {options.classes.map((c) => {
+              const active = selectedClass === c.id;
+              const badge = c.name?.trim()?.[0] || '#';
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => {
+                    setSelectedClass(c.id);
+                    setSelectedSection('ALL');
+                  }}
+                  title={c.name}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition shrink-0 ${
+                    active
+                      ? 'bg-sky-600 text-white border-sky-600'
+                      : 'bg-white text-slate-600 border-[#ded9cf] hover:bg-slate-50'
+                  }`}
+                >
+                  <span
+                    className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-extrabold ${
+                      active ? 'bg-white/25 text-white' : 'bg-sky-50 text-sky-800 border border-sky-200'
+                    }`}
+                  >
+                    {badge}
+                  </span>
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Section Filter — cascades from the selected class */}
           <select
@@ -506,17 +543,29 @@ export const StudentsModule: React.FC = () => {
             ))}
           </select>
 
-          {/* Residence Filter — hidden for hostel staff, who only ever see residents */}
+          {/* Residence Toggle — hidden for hostel staff, who only ever see residents */}
           {!isHostelStaff && (
-            <select
-              value={selectedResStatus}
-              onChange={(e) => setSelectedResStatus(e.target.value)}
-              className="bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold outline-none"
-            >
-              <option value="ALL">All Residencies</option>
-              <option value="RESIDENT">Resident</option>
-              <option value="NON_RESIDENT">Non-Resident</option>
-            </select>
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+              {([
+                { value: 'ALL', label: 'All', icon: Users },
+                { value: 'RESIDENT', label: 'Resident', icon: Home },
+                { value: 'NON_RESIDENT', label: 'Non-Resident', icon: Building2 }
+              ] as const).map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => setSelectedResStatus(opt.value)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                    selectedResStatus === opt.value
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <opt.icon className="w-3.5 h-3.5" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
