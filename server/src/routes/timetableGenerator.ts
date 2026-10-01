@@ -777,3 +777,51 @@ timetableGeneratorRouter.post('/drafts/:id/publish', authenticate, requireRoles(
     return res.status(500).json({ error: err.message });
   }
 });
+
+// Self-service: a STUDENT's own published class timetable — every lecture
+// slot for their class/section/batch, across all days. No admin role gate;
+// authorization is simply "your own class" (resolved server-side from the
+// logged-in student's profile, never trusted from the client).
+timetableGeneratorRouter.get('/mine', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const studentId = req.user!.student_id;
+    if (req.user!.role === 'STUDENT' && !studentId) {
+      return res.status(400).json({ error: 'No student profile linked to this account.' });
+    }
+
+    const student = studentId
+      ? await queryOne<any>(`SELECT class_id, section_id, batch_id, branch_id FROM student_profiles WHERE id = $1`, [studentId])
+      : null;
+
+    // Non-student staff can pass class/section/batch explicitly (e.g. a
+    // parent or teacher viewing a specific class); a student always uses
+    // their own, regardless of what's passed.
+    const classId = student?.class_id || (req.query.class_id as string);
+    const sectionId = student?.section_id || (req.query.section_id as string);
+    const batchId = student?.batch_id || (req.query.batch_id as string);
+
+    if (!classId || !sectionId || !batchId) {
+      return res.status(400).json({ error: 'class_id, section_id and batch_id are required (or a linked student profile).' });
+    }
+
+    const entries = await query(`
+      SELECT te.*, s.name as subject_name, r.room_number,
+             u.name as teacher_name
+      FROM timetable_entries te
+      JOIN subjects s ON te.subject_id = s.id
+      JOIN rooms r ON te.room_id = r.id
+      JOIN teacher_profiles tp ON te.teacher_id = tp.id
+      JOIN users u ON tp.user_id = u.id
+      WHERE te.class_id = $1 AND te.section_id = $2 AND te.batch_id = $3
+      ORDER BY
+        CASE te.day_of_week
+          WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+          WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 ELSE 7
+        END, te.period_number ASC
+    `, [classId, sectionId, batchId]);
+
+    return res.json({ entries });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});

@@ -36,6 +36,11 @@ import { SettingsPage } from './pages/SettingsPage';
 import { CounsellingModule } from './pages/CounsellingModule';
 import { CalendarPage } from './pages/CalendarPage';
 import { FloorIssuesPage } from './pages/FloorIssuesPage';
+import { StudentAttendanceView } from './pages/StudentAttendanceView';
+import { StudentTimetableView } from './pages/StudentTimetableView';
+import { StudentTestsView } from './pages/StudentTestsView';
+import { StudentOutpassView } from './pages/StudentOutpassView';
+import { StudentHostelView } from './pages/StudentHostelView';
 import { DisciplineRecordsPage } from './pages/DisciplineRecordsPage';
 import { MyProfilePage } from './pages/MyProfilePage';
 import { useAuth } from './context/AuthContext';
@@ -216,14 +221,16 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    Attendance Center
+                    {user?.role === 'STUDENT' ? 'My Attendance' : 'Attendance Center'}
                   </h1>
                   <p className="text-xs text-slate-500">
-                    SIR MV PU College • Manual & Verified Attendance
+                    {user?.role === 'STUDENT'
+                      ? 'SIR MV PU College • Calendar & Period-wise Record'
+                      : 'SIR MV PU College • Manual & Verified Attendance'}
                   </p>
                 </div>
               </div>
-              <AttendanceModule />
+              {user?.role === 'STUDENT' ? <StudentAttendanceView /> : <AttendanceModule />}
             </div>
           ) : activeTab === 'hostel' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -237,14 +244,16 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    Hostel & Residential Management
+                    {user?.role === 'STUDENT' ? 'Hostel Info' : 'Hostel & Residential Management'}
                   </h1>
                   <p className="text-xs text-slate-500">
-                    SIR MV PU College • Blocks, Floors & Night Roll-Call
+                    {user?.role === 'STUDENT'
+                      ? 'SIR MV PU College • My Room, Roommates & Maintenance'
+                      : 'SIR MV PU College • Blocks, Floors & Night Roll-Call'}
                   </p>
                 </div>
               </div>
-              <HostelDashboard />
+              {user?.role === 'STUDENT' ? <StudentHostelView /> : <HostelDashboard />}
             </div>
           ) : activeTab === 'gate-pass' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -258,14 +267,16 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    Gate Pass & Student Outpass
+                    {user?.role === 'STUDENT' ? 'My Outpass & Grievances' : 'Gate Pass & Student Outpass'}
                   </h1>
                   <p className="text-xs text-slate-500">
-                    SIR MV PU College • 6-Factor Secure Gate Control System
+                    {user?.role === 'STUDENT'
+                      ? 'SIR MV PU College • Outpass Requests & Hostel Grievances'
+                      : 'SIR MV PU College • 6-Factor Secure Gate Control System'}
                   </p>
                 </div>
               </div>
-              <OutpassSystem />
+              {user?.role === 'STUDENT' ? <StudentOutpassView /> : <OutpassSystem />}
             </div>
           ) : activeTab === 'report-card' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -321,14 +332,16 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    Institutional Timetable & Substitutions
+                    {user?.role === 'STUDENT' ? 'My Class Timetable' : 'Institutional Timetable & Substitutions'}
                   </h1>
                   <p className="text-xs text-slate-500">
-                    SIR MV PU College • Daily Lecture Matrices
+                    {user?.role === 'STUDENT'
+                      ? 'SIR MV PU College • Your Weekly Lecture Schedule'
+                      : 'SIR MV PU College • Daily Lecture Matrices'}
                   </p>
                 </div>
               </div>
-              <TeachersModule />
+              {user?.role === 'STUDENT' ? <StudentTimetableView /> : <TeachersModule />}
             </div>
           ) : activeTab === 'timetable-generator' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -401,7 +414,7 @@ export function App() {
                   <p className="text-xs text-slate-500">SIR MV PU College • Online & Offline Tests</p>
                 </div>
               </div>
-              <TestsPage />
+              {user?.role === 'STUDENT' ? <StudentTestsView /> : <TestsPage />}
             </div>
           ) : activeTab === 'board-marks' ? (
             <div className="space-y-6 max-w-7xl mx-auto">

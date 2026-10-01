@@ -188,3 +188,107 @@ attendanceRouter.post('/finalize', authenticate, requireRoles('FLOOR_ATTENDER', 
   });
 });
 
+
+// 5. A student's own attendance calendar for one month — one row per date
+//    they had at least one scheduled lecture, with present/absent/late
+//    counts and a percentage, so the Student Portal can render a calendar.
+// Self-service: a STUDENT can only ever see their own (student_id param is
+// ignored for them); staff roles may pass ?student_id= to view someone else's.
+attendanceRouter.get('/student/:studentId/calendar', authenticate, async (req: AuthRequest, res: Response) => {
+  const requestedId = req.params.studentId;
+  const studentId = req.user!.role === 'STUDENT' ? req.user!.student_id : requestedId;
+  if (req.user!.role === 'STUDENT' && req.user!.student_id !== requestedId) {
+    return res.status(403).json({ error: 'Access denied: you can only view your own attendance.' });
+  }
+  if (!studentId) {
+    return res.status(400).json({ error: 'student_id could not be resolved.' });
+  }
+
+  const month = (req.query.month as string) || new Date().toISOString().slice(0, 7); // YYYY-MM
+
+  const rows = await query(`
+    SELECT ls.date,
+           COUNT(*) as total,
+           COALESCE(SUM(CASE WHEN ar.status = 'PRESENT' THEN 1 ELSE 0 END), 0) as present,
+           COALESCE(SUM(CASE WHEN ar.status = 'ABSENT' THEN 1 ELSE 0 END), 0) as absent,
+           COALESCE(SUM(CASE WHEN ar.status = 'LATE' THEN 1 ELSE 0 END), 0) as late,
+           COALESCE(SUM(CASE WHEN ar.status IN ('EXCUSED', 'MEDICAL', 'ON_LEAVE') THEN 1 ELSE 0 END), 0) as excused
+    FROM attendance_records ar
+    JOIN lecture_sessions ls ON ar.lecture_session_id = ls.id
+    WHERE ar.student_id = ? AND ls.date LIKE ?
+    GROUP BY ls.date
+    ORDER BY ls.date ASC
+  `, [studentId, `${month}%`]);
+
+  const overall = await queryOne<any>(`
+    SELECT COUNT(*) as total,
+           COALESCE(SUM(CASE WHEN ar.status IN ('PRESENT', 'LATE') THEN 1 ELSE 0 END), 0) as attended
+    FROM attendance_records ar
+    WHERE ar.student_id = ?
+  `, [studentId]);
+
+  const overallPercentage = overall && Number(overall.total) > 0
+    ? Math.round((Number(overall.attended) / Number(overall.total)) * 1000) / 10
+    : 0;
+
+  const days = rows.map((r: any) => {
+    const total = Number(r.total);
+    const attended = Number(r.present) + Number(r.late);
+    return {
+      date: r.date,
+      total,
+      present: Number(r.present),
+      absent: Number(r.absent),
+      late: Number(r.late),
+      excused: Number(r.excused),
+      percentage: total > 0 ? Math.round((attended / total) * 1000) / 10 : 0,
+      // Day-level status: ABSENT only if every period that day was ABSENT.
+      status: Number(r.absent) === total ? 'ABSENT' : attended === total ? 'PRESENT' : 'PARTIAL'
+    };
+  });
+
+  return res.json({
+    month,
+    days,
+    overallPercentage,
+    overallTotal: Number(overall?.total || 0),
+    overallAttended: Number(overall?.attended || 0)
+  });
+});
+
+// 6. Period-wise breakdown for one date — what the calendar drills into when
+//    a student clicks a day.
+attendanceRouter.get('/student/:studentId/day', authenticate, async (req: AuthRequest, res: Response) => {
+  const requestedId = req.params.studentId;
+  const studentId = req.user!.role === 'STUDENT' ? req.user!.student_id : requestedId;
+  if (req.user!.role === 'STUDENT' && req.user!.student_id !== requestedId) {
+    return res.status(403).json({ error: 'Access denied: you can only view your own attendance.' });
+  }
+  const date = req.query.date as string;
+  if (!date) {
+    return res.status(400).json({ error: 'date is required (YYYY-MM-DD).' });
+  }
+
+  const periods = await query(`
+    SELECT ls.id as lecture_session_id, ls.scheduled_start, ls.scheduled_end,
+           te.period_number,
+           s.name as subject_name,
+           u.name as teacher_name,
+           r.room_number,
+           COALESCE(ar.status, 'NOT_MARKED') as status,
+           ar.remarks as attendance_remarks
+    FROM lecture_sessions ls
+    JOIN subjects s ON ls.subject_id = s.id
+    JOIN teacher_profiles tp ON ls.teacher_id = tp.id
+    JOIN users u ON tp.user_id = u.id
+    JOIN rooms r ON ls.room_id = r.id
+    LEFT JOIN timetable_entries te ON ls.timetable_entry_id = te.id
+    LEFT JOIN attendance_records ar ON ar.lecture_session_id = ls.id AND ar.student_id = ?
+    WHERE ls.date = ? AND ls.class_id = (SELECT class_id FROM student_profiles WHERE id = ?)
+      AND ls.section_id = (SELECT section_id FROM student_profiles WHERE id = ?)
+      AND ls.batch_id = (SELECT batch_id FROM student_profiles WHERE id = ?)
+    ORDER BY COALESCE(te.period_number, 0) ASC, ls.scheduled_start ASC
+  `, [studentId, date, studentId, studentId, studentId]);
+
+  return res.json({ date, periods });
+});

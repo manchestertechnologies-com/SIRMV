@@ -279,3 +279,23 @@ testsRouter.get('/:id/results', authenticate, async (req: AuthRequest, res: Resp
 
   return res.json({ results });
 });
+
+// 12. The logged-in student's own submission for a test, if any — lets the
+//     client tell "not attempted yet" apart from "attempted, here's your mark"
+//     without pulling the whole leaderboard.
+testsRouter.get('/:id/my-submission', authenticate, async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const studentId = (req.query.student_id as string) || req.user!.student_id;
+  if (!studentId) {
+    return res.status(400).json({ error: 'student_id could not be resolved.' });
+  }
+  if (req.user!.role === 'STUDENT' && req.user!.student_id !== studentId) {
+    return res.status(403).json({ error: 'Access denied: you can only view your own submission.' });
+  }
+
+  const submission = await queryOne<any>(`
+    SELECT * FROM test_submissions WHERE test_id = $1 AND student_id = $2
+  `, [id, studentId]);
+
+  return res.json({ submission: submission || null });
+});
