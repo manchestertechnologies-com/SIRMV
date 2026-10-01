@@ -26,8 +26,12 @@
 
 import { getClient, pgPool } from './postgres';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_ABBR: Record<string, string> = {
+  Monday: 'mon', Tuesday: 'tue', Wednesday: 'wed', Thursday: 'thu', Friday: 'fri', Saturday: 'sat'
+};
 const PERIODS: Array<{ n: number; start: string; end: string }> = [
   { n: 1, start: '08:45', end: '09:30' },
   { n: 2, start: '09:30', end: '10:15' },
@@ -40,8 +44,12 @@ function pick<T>(arr: T[], i: number): T {
   return arr[i % arr.length];
 }
 
-function slug(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+// ids are VARCHAR(64), and class/section/batch ids are already long
+// (e.g. "sec-1PUC-A-branch-dvg"), so a readable concatenation easily blows
+// past 64 characters. A short deterministic hash keeps ids compact while
+// staying stable across re-runs (so ON CONFLICT DO NOTHING still matches).
+function shortHash(s: string): string {
+  return crypto.createHash('sha1').update(s).digest('hex').slice(0, 12);
 }
 
 export async function seedDummyTimetable() {
@@ -125,14 +133,14 @@ export async function seedDummyTimetable() {
           continue; // already has a timetable (hand-seeded or generated)
         }
 
-        const comboSlug = `${slug(combo.class_id)}-${slug(combo.section_id)}-${slug(combo.batch_id)}`;
+        const comboHash = shortHash(`${combo.class_id}|${combo.section_id}|${combo.batch_id}`);
         let seq = 0;
         for (const day of DAYS) {
           for (const period of PERIODS) {
             const subject = pick(subjects, seq);
             const room = pick(rooms, seq + period.n);
             const teacher = pick(teacherIds, seq + period.n * 2);
-            const id = `tt-dummy-${comboSlug}-${slug(day)}-p${period.n}`;
+            const id = `tt-dum-${comboHash}-${DAY_ABBR[day]}-p${period.n}`;
 
             await client.query(
               `INSERT INTO timetable_entries (id, branch_id, day_of_week, period_number, start_time, end_time, subject_id, class_id, section_id, batch_id, room_id, teacher_id)

@@ -16,9 +16,14 @@
 // (needs the same DATABASE_URL as the main seed script / server)
 
 import { getClient, pgPool } from './postgres';
+import crypto from 'crypto';
 
-function slug(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+// ids are VARCHAR(64); class/batch ids are already long (e.g.
+// "batch-neet-branch-dvg"), so a short deterministic hash keeps generated
+// ids compact while staying stable across re-runs (so ON CONFLICT DO
+// NOTHING still matches on a second run).
+function shortHash(s: string): string {
+  return crypto.createHash('sha1').update(s).digest('hex').slice(0, 12);
 }
 
 function tomorrow(): string {
@@ -77,8 +82,8 @@ export async function seedDummyTests() {
       const createdBy = (authorRes.rows[0] as { id: string } | undefined)?.id || null;
 
       for (const combo of combosRes.rows as { class_id: string; batch_id: string }[]) {
-        const comboSlug = `${slug(combo.class_id)}-${slug(combo.batch_id)}`;
-        const testId = `test-dummy-${comboSlug}`;
+        const comboHash = shortHash(`${combo.class_id}|${combo.batch_id}`);
+        const testId = `test-dum-${comboHash}`;
 
         const existing = await client.query(`SELECT 1 FROM tests WHERE id = $1`, [testId]);
         if ((existing.rowCount || 0) > 0) {

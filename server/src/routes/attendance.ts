@@ -3,7 +3,6 @@ import { query, queryOne, execute, transaction } from '../database/pgDb';
 import { authenticate, AuthRequest, requireRoles } from '../middleware/auth';
 import { logAudit } from '../middleware/audit';
 import { faceDetectionService } from '../services/faceDetectionService';
-import { smsService } from '../services/smsService';
 import crypto from 'crypto';
 
 export const attendanceRouter = Router();
@@ -157,36 +156,11 @@ attendanceRouter.post('/finalize', authenticate, requireRoles('FLOOR_ATTENDER', 
 
   // Update lecture session final status
   await execute(`
-    UPDATE lecture_sessions
+    UPDATE lecture_sessions 
     SET finalization_status = 'COMPLETED',
         remarks = COALESCE(?, remarks)
     WHERE id = ?
   `, [remarks || null, lecture_session_id]);
-
-  // Notify parents of students marked ABSENT in this session (workflow-gated).
-  const absentIds = Array.isArray(records)
-    ? records.filter((r: any) => r.status === 'ABSENT').map((r: any) => r.student_id)
-    : [];
-  if (absentIds.length > 0) {
-    const placeholders = absentIds.map(() => '?').join(',');
-    const absentStudents = await query<any>(
-      `SELECT id, name, branch_id, parent_phone, parent_name FROM student_profiles WHERE id IN (${placeholders})`,
-      absentIds
-    );
-    for (const s of absentStudents) {
-      if (!s.parent_phone) continue;
-      smsService.send({
-        branchId: s.branch_id,
-        phone: s.parent_phone,
-        recipientName: `${s.parent_name || 'Parent'} (${s.name})`,
-        message: `SIR MV PU College: ${s.name} was marked ABSENT for a lecture today (${new Date().toLocaleDateString('en-IN')}). Please contact the class teacher if this is unexpected.`,
-        trigger: 'ATTENDANCE_ABSENT',
-        relatedEntityType: 'student',
-        relatedEntityId: s.id,
-        sentBy: req.user!.id
-      }).catch(() => {});
-    }
-  }
 
   // Compute final counts
   const counts = await queryOne(`
