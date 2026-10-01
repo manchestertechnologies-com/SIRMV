@@ -130,9 +130,10 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         roleTitle: 'Floor Operations & Attendance Portal',
         roleSubtitle: 'Manage 1-Page Consolidated Classroom Lecture records, faculty time-in, photo verification & topics taught.',
         menuItems: [
-          { id: 'dashboard', label: 'Floor Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Invigilation QR scanner, ongoing classes & floor room status' },
+          { id: 'dashboard', label: 'Floor Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Ongoing classes & floor room status' },
           { id: 'my-profile', label: 'My Profile', icon: UserCircle, targetTab: 'my-profile', description: 'Your staff profile & contact details' },
           { id: 'attendance', label: 'Daily Lecture Record', icon: IconAttendance, targetTab: 'attendance', description: 'Consolidated classroom log sheet (includes syllabus/topic taught)' },
+          { id: 'invigilation-scan', label: 'Exam Invigilation Attendance', icon: IconExamManagement, targetTab: 'invigilation-scan', description: "Scan an invigilator's duty QR to verify attendance" },
           { id: 'timetable', label: 'Floor Timetable', icon: IconTimetable, targetTab: 'timetable', description: 'Room 201-204 scheduled lectures' },
           { id: 'floor-issues', label: 'Reporting Issues', icon: Wrench, targetTab: 'floor-issues', description: 'Report maintenance/operational issues on your floor' },
           { id: 'noticeboard', label: 'Announcements & Duty Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Daily floor assignments' },
