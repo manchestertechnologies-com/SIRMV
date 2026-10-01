@@ -25,14 +25,19 @@ hostelRouter.get('/hierarchy', authenticate, async (req: AuthRequest, res: Respo
     ORDER BY hr.floor ASC, hr.room_number ASC
   `, [branchId]);
   const beds = await query(`
-    SELECT hbed.*, sp.name as student_name, sp.register_number, sp.photo_url, sp.phone as student_phone,
+    SELECT hbed.*, hr.room_number, hr.floor, hr.block_id, sp.name as student_name,
+           sp.register_number, sp.photo_url, sp.phone as student_phone,
            c.name as class_name, sec.name as section_name, b.name as batch_name
     FROM hostel_beds hbed
+    JOIN hostel_rooms hr ON hbed.room_id = hr.id
+    JOIN hostel_blocks hbl ON hr.block_id = hbl.id
+    JOIN hostels h ON hbl.hostel_id = h.id
     LEFT JOIN student_profiles sp ON hbed.student_id = sp.id
     LEFT JOIN classes c ON sp.class_id = c.id
     LEFT JOIN sections sec ON sp.section_id = sec.id
     LEFT JOIN batches b ON sp.batch_id = b.id
-  `);
+    WHERE h.branch_id = ?
+  `, [branchId]);
 
   return res.json({ hostels, blocks, rooms, beds });
 });

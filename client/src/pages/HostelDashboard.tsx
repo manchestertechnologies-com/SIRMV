@@ -25,6 +25,17 @@ export const HostelDashboard: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Real hostel hierarchy (hostels -> blocks -> rooms -> beds), used to show
+  // allocated vs available rooms/beds — /hostel/attendance only ever returns
+  // occupied beds (it's the night roll-call list), so it can't show vacancy.
+  const [hierarchy, setHierarchy] = useState<{ hostels: any[]; blocks: any[]; rooms: any[]; beds: any[] }>({
+    hostels: [],
+    blocks: [],
+    rooms: [],
+    beds: []
+  });
+  const [hierarchyLoading, setHierarchyLoading] = useState(true);
+
   const loadHostelAttendance = async () => {
     setIsLoading(true);
     try {
@@ -39,9 +50,46 @@ export const HostelDashboard: React.FC = () => {
     }
   };
 
+  const loadHierarchy = async () => {
+    setHierarchyLoading(true);
+    try {
+      const res = await apiFetch<any>(`/hostel/hierarchy?branch_id=${currentBranch?.id || ''}`);
+      setHierarchy({
+        hostels: res.hostels || [],
+        blocks: res.blocks || [],
+        rooms: res.rooms || [],
+        beds: res.beds || []
+      });
+    } catch (err: any) {
+      console.error('Failed to load hostel hierarchy', err);
+    } finally {
+      setHierarchyLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadHostelAttendance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, floor, currentBranch]);
+
+  useEffect(() => {
+    loadHierarchy();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBranch]);
+
+  // Rooms on the currently-selected floor, each with its real occupied/available
+  // bed breakdown computed from the hierarchy (not just the roll-call list).
+  const roomsOnFloor = hierarchy.rooms
+    .filter((r) => r.floor === floor)
+    .map((r) => {
+      const bedsInRoom = hierarchy.beds.filter((b) => b.room_id === r.id);
+      const occupied = bedsInRoom.filter((b) => b.student_id);
+      const available = r.capacity - occupied.length;
+      return { ...r, bedsInRoom, occupiedCount: occupied.length, availableCount: Math.max(available, 0) };
+    });
+  const totalCapacityOnFloor = roomsOnFloor.reduce((sum, r) => sum + r.capacity, 0);
+  const totalOccupiedOnFloor = roomsOnFloor.reduce((sum, r) => sum + r.occupiedCount, 0);
+  const totalAvailableOnFloor = roomsOnFloor.reduce((sum, r) => sum + r.availableCount, 0);
 
   const handleStatusChange = (studentId: string, status: string) => {
     setRecords((prev) =>
@@ -163,6 +211,66 @@ export const HostelDashboard: React.FC = () => {
           <span className="text-xs text-slate-400 block font-medium">Absent / Unauthorized</span>
           <span className="text-2xl font-bold text-rose-600 mt-1">{absentCount}</span>
         </div>
+      </div>
+
+      {/* Room & Bed Availability — real allocated vs. available rooms/beds,
+          pulled from the actual hostel hierarchy rather than just the
+          occupied-only night roll-call list below. */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <Bed className="w-4 h-4 text-indigo-600" />
+            Floor {floor} Room & Bed Availability
+          </h3>
+          <div className="flex items-center gap-2 text-[11px] font-bold">
+            <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+              {totalCapacityOnFloor} Total Beds
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {totalOccupiedOnFloor} Allocated
+            </span>
+            <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+              {totalAvailableOnFloor} Available
+            </span>
+          </div>
+        </div>
+
+        {hierarchyLoading ? (
+          <div className="p-8 text-center text-slate-400 text-xs">Loading room data...</div>
+        ) : roomsOnFloor.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-xs">
+            No hostel rooms set up on Floor {floor} for this branch yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {roomsOnFloor.map((r) => (
+              <div key={r.id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/60">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono font-bold text-indigo-950 text-sm">Room {r.room_number}</span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      r.availableCount > 0
+                        ? 'bg-amber-100 text-amber-900'
+                        : 'bg-emerald-100 text-emerald-900'
+                    }`}
+                  >
+                    {r.availableCount > 0 ? `${r.availableCount} Available` : 'Full'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {r.bedsInRoom.map((b: any) => (
+                    <div key={b.id} className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">{b.bed_number}</span>
+                      <span className={`font-semibold ${b.student_id ? 'text-slate-800' : 'text-amber-700'}`}>
+                        {b.student_id ? b.student_name : 'Available'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bed-by-Bed Room Roster */}

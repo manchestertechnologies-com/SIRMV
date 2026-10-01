@@ -103,11 +103,17 @@ studentsRouter.get('/', authenticate, async (req: AuthRequest, res: Response) =>
   let sql = `
     SELECT sp.id, sp.register_number, sp.name, sp.phone, sp.photo_url, sp.residence_status,
            sp.admission_type, sp.is_active, sp.class_id, sp.section_id, sp.batch_id,
-           c.name as class_name, sec.name as section_name, b.name as batch_name
+           c.name as class_name, sec.name as section_name, b.name as batch_name,
+           hr.room_number as hostel_room_number, hb.bed_number as hostel_bed_number,
+           hbl.name as hostel_block_name, h.name as hostel_name
     FROM student_profiles sp
     JOIN classes c ON sp.class_id = c.id
     JOIN sections sec ON sp.section_id = sec.id
     JOIN batches b ON sp.batch_id = b.id
+    LEFT JOIN hostel_beds hb ON hb.student_id = sp.id
+    LEFT JOIN hostel_rooms hr ON hr.id = hb.room_id
+    LEFT JOIN hostel_blocks hbl ON hbl.id = hr.block_id
+    LEFT JOIN hostels h ON h.id = hbl.hostel_id
     WHERE sp.branch_id = $1
   `;
   const params: any[] = [branchId];
