@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { apiFetch } from '../services/api';
 import { showToast } from '../utils/toast';
@@ -67,7 +67,6 @@ export const MyExamDutiesPage: React.FC = () => {
   const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
   const [qrFor, setQrFor] = useState<Duty | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrInfo, setQrInfo] = useState<{ validUntil: string } | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
 
@@ -147,25 +146,66 @@ export const MyExamDutiesPage: React.FC = () => {
     }
   };
 
-  const openQr = async (duty: Duty) => {
-    setQrFor(duty);
-    setQrDataUrl(null);
-    setQrInfo(null);
+  // The QR is redrawn onto a <canvas> (never an <img>), so there's no image
+  // file for a long-press/right-click "Save Image As" to grab, and it
+  // auto-rotates to a fresh one-time token every 15s — a screenshot or photo
+  // of it is worthless within seconds. None of this can stop an OS-level
+  // screenshot (no webpage can), but it does mean a captured image expires
+  // almost immediately, same principle as a bank app's rotating QR/OTP.
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const qrRotateTimerRef = useRef<number | null>(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(15);
+
+  const generateQr = async (duty: Duty) => {
     setQrLoading(true);
     try {
       const res = await apiFetch<{ token: string; validUntil: string }>(`/exam-management/duties/${duty.assignment_id}/qr-token`, {
         method: 'POST'
       });
-      const dataUrl = await QRCode.toDataURL(res.token, { width: 280, margin: 1 });
-      setQrDataUrl(dataUrl);
       setQrInfo({ validUntil: res.validUntil });
+      if (qrCanvasRef.current) {
+        await QRCode.toCanvas(qrCanvasRef.current, res.token, { width: 260, margin: 1 });
+      }
+      setQrSecondsLeft(15);
     } catch (err: any) {
+      // A duty already marked present, or outside its time window, stops
+      // the rotation instead of repeatedly erroring every 15s.
       showToast(err.message || 'Could not generate QR code.', 'error');
-      setQrFor(null);
+      closeQr();
     } finally {
       setQrLoading(false);
     }
   };
+
+  const openQr = async (duty: Duty) => {
+    setQrFor(duty);
+    await generateQr(duty);
+    if (qrRotateTimerRef.current) window.clearInterval(qrRotateTimerRef.current);
+    qrRotateTimerRef.current = window.setInterval(() => {
+      setQrSecondsLeft((s) => {
+        if (s <= 1) {
+          generateQr(duty);
+          return 15;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const closeQr = () => {
+    if (qrRotateTimerRef.current) {
+      window.clearInterval(qrRotateTimerRef.current);
+      qrRotateTimerRef.current = null;
+    }
+    setQrFor(null);
+    setQrInfo(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (qrRotateTimerRef.current) window.clearInterval(qrRotateTimerRef.current);
+    };
+  }, []);
 
   const seatInfos: SeatInfo[] = seating.map((s) => ({
     allocationId: s.id,
@@ -441,27 +481,36 @@ export const MyExamDutiesPage: React.FC = () => {
       )}
 
       {qrFor && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setQrFor(null)}>
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 text-center space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={closeQr}>
+          <div
+            className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 text-center space-y-4 select-none [-webkit-touch-callout:none]"
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <QrCode className="w-4 h-4 text-indigo-600" /> Invigilation Duty QR
               </h3>
-              <button onClick={() => setQrFor(null)} className="p-1.5 rounded-lg hover:bg-slate-100">
+              <button onClick={closeQr} className="p-1.5 rounded-lg hover:bg-slate-100">
                 <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
             <p className="text-xs text-slate-500">
               Show this to the Floor Attender for Room {qrFor.room_number} — they'll scan it to confirm you're present for{' '}
-              {qrFor.subject_name}. It only works until {qrInfo?.validUntil || qrFor.end_time} today.
+              {qrFor.subject_name}.
             </p>
-            {qrLoading ? (
-              <div className="flex items-center justify-center p-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              </div>
-            ) : qrDataUrl ? (
-              <img src={qrDataUrl} alt="Invigilation duty QR code" className="mx-auto rounded-xl border border-slate-200" />
-            ) : null}
+            <div className="relative mx-auto w-fit">
+              {qrLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+              <canvas ref={qrCanvasRef} className="mx-auto rounded-xl border border-slate-200 pointer-events-none" />
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Refreshes to a new one-time code in {qrSecondsLeft}s — a screenshot stops working as soon as it rotates.
+              Valid only until {qrInfo?.validUntil || qrFor.end_time} today, and only until a Floor Attender scans it once.
+            </p>
           </div>
         </div>
       )}

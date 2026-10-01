@@ -30,7 +30,6 @@ const ExamManagementModule = React.lazy(() =>
   import('./pages/ExamManagementModule').then((m) => ({ default: m.ExamManagementModule }))
 );
 import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
-import { InvigilationScanPage } from './pages/InvigilationScanPage';
 import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
 import { ExamSeatingPage } from './pages/ExamSeatingPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -371,10 +370,6 @@ export function App() {
           ) : activeTab === 'my-exam-duty' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <MyExamDutiesPage />
-            </div>
-          ) : activeTab === 'invigilation-scan' ? (
-            <div className="space-y-6 max-w-7xl mx-auto">
-              <InvigilationScanPage />
             </div>
           ) : activeTab === 'invigilator-requests' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
