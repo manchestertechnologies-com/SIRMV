@@ -18,7 +18,9 @@ import {
   Moon,
   Building2,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  UserCheck,
+  Layers
 } from 'lucide-react';
 import { IconAttendance } from '../components/ModuleIcons';
 
@@ -43,12 +45,29 @@ export const AttendanceModule: React.FC = () => {
 
   // Lecture Attendance State
   const [lectureSessions, setLectureSessions] = useState<any[]>([]);
-  const [selectedLectureId, setSelectedLectureId] = useState<string>('lec-session-101');
+  const [selectedLectureId, setSelectedLectureId] = useState<string>('');
   const [lectureDetails, setLectureDetails] = useState<any | null>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFinalized, setIsFinalized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Class-wise scheduled-lecture picker — real timetable entries for the
+  // selected floor/date, replacing the previous hardcoded placeholder
+  // lecture id. Same data source the Floor Attender's own operational
+  // dashboard uses, so "today's classes" always matches reality.
+  const [pickerFloor, setPickerFloor] = useState<number>(2);
+  const [pickerDate, setPickerDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [scheduledLectures, setScheduledLectures] = useState<any[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [savingFacultyEntryId, setSavingFacultyEntryId] = useState<string | null>(null);
+
+  // Faculty vs Student attendance toggle. Marking a teacher's own presence
+  // is a Floor Attender / institutional-oversight action, not something a
+  // TEACHER does to themselves, so the toggle only appears for roles that
+  // are actually permitted to record faculty time-in/status.
+  const [attendanceMode, setAttendanceMode] = useState<'student' | 'faculty'>('student');
+  const canMarkFaculty = ['FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL', 'HOD'].includes(user?.role || '');
 
   // Evening Study State
   const [eveningDate, setEveningDate] = useState(new Date().toISOString().split('T')[0]);
@@ -68,6 +87,11 @@ export const AttendanceModule: React.FC = () => {
 
   // Load Lecture Attendance Sheet
   const loadLectureAttendance = async () => {
+    if (!selectedLectureId) {
+      setLectureDetails(null);
+      setStudents([]);
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await apiFetch<any>(`/attendance/lecture/${selectedLectureId}`);
@@ -78,6 +102,97 @@ export const AttendanceModule: React.FC = () => {
       console.error('Failed to load lecture attendance', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Load today's (or the picked date's) real scheduled classes for a floor —
+  // the same source the Floor Attender operational dashboard uses — so both
+  // the student-attendance picker and the faculty-attendance list are
+  // class-wise and backed by real timetable entries, not a placeholder id.
+  const loadScheduledLectures = async () => {
+    setScheduleLoading(true);
+    try {
+      const res = await apiFetch<any>(
+        `/floor-attender/dashboard?branch_id=${currentBranch?.id || ''}&floor=${pickerFloor}&date=${pickerDate}`
+      );
+      setScheduledLectures(res.lectures || []);
+    } catch (err: any) {
+      console.error('Failed to load scheduled classes', err);
+      setScheduledLectures([]);
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  // Picking a class to take STUDENT attendance for: reuse its lecture
+  // session if the teacher's already been checked in today, otherwise
+  // create one first (minimal fields) so there's a real session id to
+  // attach attendance records to.
+  const handleSelectScheduledLecture = async (item: any) => {
+    const entry = item.timetableEntry;
+    let sessionId: string | undefined = item.session?.id;
+    if (!sessionId) {
+      try {
+        const res = await apiFetch<any>('/floor-attender/lecture-session', {
+          method: 'POST',
+          body: JSON.stringify({
+            timetable_entry_id: entry.id,
+            date: pickerDate,
+            class_id: entry.class_id,
+            section_id: entry.section_id,
+            batch_id: entry.batch_id,
+            subject_id: entry.subject_id,
+            teacher_id: entry.teacher_id,
+            room_id: entry.room_id,
+            floor: entry.floor,
+            scheduled_start: entry.start_time,
+            scheduled_end: entry.end_time,
+            teacher_status: 'PRESENT'
+          })
+        });
+        sessionId = res.sessionId;
+      } catch (err: any) {
+        showToast(err.message || 'Could not start this lecture session.', 'error');
+        return;
+      }
+    }
+    setSelectedLectureId(sessionId!);
+  };
+
+  // Quick faculty status toggle — marks the actual teacher for this real,
+  // scheduled period PRESENT/ABSENT/LATE/SUBSTITUTE, the same write the
+  // Floor Attender operational dashboard makes, just inline here.
+  const handleFacultyStatusToggle = async (item: any, status: string) => {
+    const entry = item.timetableEntry;
+    setSavingFacultyEntryId(entry.id);
+    try {
+      await apiFetch('/floor-attender/lecture-session', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: item.session?.id,
+          timetable_entry_id: entry.id,
+          date: pickerDate,
+          class_id: entry.class_id,
+          section_id: entry.section_id,
+          batch_id: entry.batch_id,
+          subject_id: entry.subject_id,
+          teacher_id: entry.teacher_id,
+          room_id: entry.room_id,
+          floor: entry.floor,
+          scheduled_start: entry.start_time,
+          scheduled_end: entry.end_time,
+          teacher_status: status,
+          teacher_time_in:
+            item.session?.teacher_time_in ||
+            new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+        })
+      });
+      showToast(`Marked ${entry.teacher_name} as ${status.toLowerCase()} for this period.`, 'success');
+      loadScheduledLectures();
+    } catch (err: any) {
+      showToast(err.message || 'Could not update faculty attendance.', 'error');
+    } finally {
+      setSavingFacultyEntryId(null);
     }
   };
 
@@ -110,13 +225,21 @@ export const AttendanceModule: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'lecture') {
-      loadLectureAttendance();
+      setSelectedLectureId('');
+      loadScheduledLectures();
     } else if (activeTab === 'evening-study') {
       loadEveningStudy();
     } else if (activeTab === 'hostel-rollcall') {
       loadHostelRollCall();
     }
-  }, [activeTab, selectedLectureId, eveningDate, hostelDate, currentBranch]);
+  }, [activeTab, pickerFloor, pickerDate, eveningDate, hostelDate, currentBranch]);
+
+  useEffect(() => {
+    if (activeTab === 'lecture') {
+      loadLectureAttendance();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLectureId]);
 
   // Bulk Marking
   const handleMarkAll = (status: 'PRESENT' | 'ABSENT' | 'LATE') => {
@@ -364,8 +487,208 @@ export const AttendanceModule: React.FC = () => {
       {/* ========================================================================= */}
       {activeTab === 'lecture' && (
         <div className="space-y-6">
+          {/* Faculty / Student Attendance Toggle + Class-wise Picker Controls */}
+          <div className="bg-[#fdfcfb] rounded-2xl p-4 border border-[#ded9cf] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {canMarkFaculty && (
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceMode('student')}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                      attendanceMode === 'student' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Student Attendance
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAttendanceMode('faculty')}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                      attendanceMode === 'faculty' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Faculty Attendance
+                  </button>
+                </div>
+              )}
+
+              <div className="flex bg-slate-100 p-1 rounded-xl">
+                {[1, 2, 3].map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setPickerFloor(f)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                      pickerFloor === f ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Floor {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <input
+                type="date"
+                value={pickerDate}
+                onChange={(e) => setPickerDate(e.target.value)}
+                className="bg-transparent font-semibold text-slate-800 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* FACULTY ATTENDANCE — class-wise list of today's real scheduled
+              periods, each with an inline Present/Absent/Late/Substitute
+              toggle that writes straight to the same lecture_sessions row
+              the Floor Attender operational flow uses. */}
+          {attendanceMode === 'faculty' && canMarkFaculty && (
+            <div className="bg-white rounded-3xl border border-[#ded9cf] overflow-hidden shadow-2xs">
+              <div className="p-4 border-b border-[#ded9cf] flex items-center justify-between bg-[#fdfcfb]">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-indigo-600" />
+                  Floor {pickerFloor} Scheduled Classes ({scheduledLectures.length})
+                </span>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  Click a status to mark that teacher for this period
+                </span>
+              </div>
+
+              {scheduleLoading ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                </div>
+              ) : scheduledLectures.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-sm">
+                  No scheduled classes found on Floor {pickerFloor} for {pickerDate}.
+                </div>
+              ) : (
+                <div className="divide-y divide-[#f2eee6]">
+                  {scheduledLectures.map((item: any) => {
+                    const entry = item.timetableEntry;
+                    const currentStatus = item.session?.teacher_status || (item.isAbsent ? 'ABSENT' : null);
+                    return (
+                      <div key={entry.id} className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50/60 transition">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-slate-900 text-sm">{entry.subject_name}</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
+                              {entry.class_name} • {entry.section_name} ({entry.batch_name})
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-mono">
+                              Period {entry.period_number} • Room {entry.room_number}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-600 mt-1">
+                            Faculty: <strong className="text-slate-800">{entry.teacher_name}</strong>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {['PRESENT', 'ABSENT', 'LATE', 'SUBSTITUTE'].map((st) => (
+                            <button
+                              key={st}
+                              type="button"
+                              disabled={savingFacultyEntryId === entry.id}
+                              onClick={() => handleFacultyStatusToggle(item, st)}
+                              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition disabled:opacity-50 ${
+                                currentStatus === st
+                                  ? st === 'PRESENT'
+                                    ? 'bg-emerald-600 text-white'
+                                    : st === 'ABSENT'
+                                    ? 'bg-rose-600 text-white'
+                                    : st === 'LATE'
+                                    ? 'bg-amber-500 text-white'
+                                    : 'bg-purple-600 text-white'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {st}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STUDENT ATTENDANCE — pick a real scheduled class first */}
+          {attendanceMode === 'student' && !selectedLectureId && (
+            <div className="bg-white rounded-3xl border border-[#ded9cf] overflow-hidden shadow-2xs">
+              <div className="p-4 border-b border-[#ded9cf] bg-[#fdfcfb]">
+                <span className="text-xs font-bold text-slate-800">
+                  Pick a class to take attendance for ({scheduledLectures.length} scheduled on Floor {pickerFloor})
+                </span>
+              </div>
+
+              {scheduleLoading ? (
+                <div className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                </div>
+              ) : scheduledLectures.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-sm">
+                  No scheduled classes found on Floor {pickerFloor} for {pickerDate}.
+                </div>
+              ) : (
+                <div className="divide-y divide-[#f2eee6]">
+                  {scheduledLectures.map((item: any) => {
+                    const entry = item.timetableEntry;
+                    const isFinalizedAlready = item.session?.finalization_status === 'COMPLETED';
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => handleSelectScheduledLecture(item)}
+                        className="w-full text-left p-4 flex items-center justify-between gap-4 hover:bg-emerald-50/60 transition"
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-slate-900 text-sm">{entry.subject_name}</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                              {entry.class_name} • {entry.section_name} ({entry.batch_name})
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-mono">
+                              Period {entry.period_number} • Room {entry.room_number}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-600 mt-1">
+                            Faculty: <strong className="text-slate-800">{entry.teacher_name}</strong>
+                            {isFinalizedAlready && (
+                              <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                                FINALIZED
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-emerald-700 shrink-0">Take Attendance →</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {attendanceMode === 'student' && selectedLectureId && (
+            <button
+              type="button"
+              onClick={() => setSelectedLectureId('')}
+              className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Choose a different class
+            </button>
+          )}
+
           {/* Lecture Metadata Card */}
-          {lectureDetails && (
+          {attendanceMode === 'student' && selectedLectureId && lectureDetails && (
             <div className="bg-[#fdfcfb] rounded-2xl p-5 border border-[#ded9cf] flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col items-center justify-center font-bold text-emerald-900 shrink-0">
@@ -405,6 +728,7 @@ export const AttendanceModule: React.FC = () => {
           )}
 
           {/* Quick Marking Actions Bar */}
+          {attendanceMode === 'student' && selectedLectureId && (
           <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs font-bold text-slate-600 mr-1">Quick Mark:</span>
@@ -437,8 +761,10 @@ export const AttendanceModule: React.FC = () => {
               />
             </div>
           </div>
+          )}
 
           {/* Student Attendance List */}
+          {attendanceMode === 'student' && selectedLectureId && (
           <div className="bg-white rounded-3xl border border-[#ded9cf] overflow-hidden shadow-2xs">
             <div className="p-4 border-b border-[#ded9cf] flex items-center justify-between bg-[#fdfcfb]">
               <span className="text-xs font-bold text-slate-800">
@@ -524,6 +850,7 @@ export const AttendanceModule: React.FC = () => {
               </div>
             )}
           </div>
+          )}
         </div>
       )}
 
