@@ -30,6 +30,7 @@ const ExamManagementModule = React.lazy(() =>
   import('./pages/ExamManagementModule').then((m) => ({ default: m.ExamManagementModule }))
 );
 import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
+import { InvigilationScanPage } from './pages/InvigilationScanPage';
 import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
 import { ExamSeatingPage } from './pages/ExamSeatingPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -38,6 +39,8 @@ import { CalendarPage } from './pages/CalendarPage';
 import { FloorIssuesPage } from './pages/FloorIssuesPage';
 import { StudentAttendanceView } from './pages/StudentAttendanceView';
 import { StudentTimetableView } from './pages/StudentTimetableView';
+import { AdminTimetableView } from './pages/AdminTimetableView';
+import { SmsModule } from './pages/SmsModule';
 import { StudentTestsView } from './pages/StudentTestsView';
 import { StudentOutpassView } from './pages/StudentOutpassView';
 import { StudentHostelView } from './pages/StudentHostelView';
@@ -249,7 +252,7 @@ export function App() {
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
                       ? 'SIR MV PU College • My Room, Roommates & Maintenance'
-                      : 'SIR MV PU College • Blocks, Floors & Night Roll-Call'}
+                      : 'SIR MV PU College • Blocks, Floors & Room Allotment'}
                   </p>
                 </div>
               </div>
@@ -332,16 +335,28 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">
-                    {user?.role === 'STUDENT' ? 'My Class Timetable' : 'Institutional Timetable & Substitutions'}
+                    {user?.role === 'STUDENT'
+                      ? 'My Class Timetable'
+                      : user?.role === 'ADMIN' || user?.role === 'PRINCIPAL'
+                      ? 'Institutional Timetable — All Classes'
+                      : 'Institutional Timetable & Substitutions'}
                   </h1>
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
                       ? 'SIR MV PU College • Your Weekly Lecture Schedule'
+                      : user?.role === 'ADMIN' || user?.role === 'PRINCIPAL'
+                      ? 'SIR MV PU College • Published Timetables for Every Class, Section & Batch'
                       : 'SIR MV PU College • Daily Lecture Matrices'}
                   </p>
                 </div>
               </div>
-              {user?.role === 'STUDENT' ? <StudentTimetableView /> : <TeachersModule />}
+              {user?.role === 'STUDENT' ? (
+                <StudentTimetableView />
+              ) : user?.role === 'ADMIN' || user?.role === 'PRINCIPAL' ? (
+                <AdminTimetableView />
+              ) : (
+                <TeachersModule />
+              )}
             </div>
           ) : activeTab === 'timetable-generator' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -356,6 +371,10 @@ export function App() {
           ) : activeTab === 'my-exam-duty' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <MyExamDutiesPage />
+            </div>
+          ) : activeTab === 'invigilation-scan' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <InvigilationScanPage />
             </div>
           ) : activeTab === 'invigilator-requests' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -453,6 +472,27 @@ export function App() {
                 </div>
               </div>
               <LiveClassModule />
+            </div>
+          ) : activeTab === 'sms' ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    SMS Notification Workflow
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • Automated Alerts & Manual Messaging to Parents
+                  </p>
+                </div>
+              </div>
+              <SmsModule />
             </div>
           ) : activeTab === 'noticeboard' ? (
             <div className="space-y-6 max-w-5xl mx-auto">

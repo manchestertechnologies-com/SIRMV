@@ -394,6 +394,50 @@ export const AttendanceModule: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const downloadCsv = (filename: string, header: string[], rows: (string | number)[][]) => {
+    const csv = [header, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.replace(/\s+/g, '_');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadEveningStudyCsv = () => {
+    downloadCsv(
+      `evening_study_${eveningDate}.csv`,
+      ['Name', 'Class', 'Section', 'Hostel Block', 'Room No.', 'Status'],
+      eveningRoster.map((s) => [
+        s.name || '',
+        s.class_name || '',
+        s.section_name || '',
+        s.hostel_block_name || '',
+        s.hostel_room_number || '',
+        s.status || 'NOT_MARKED'
+      ])
+    );
+  };
+
+  const handleDownloadHostelRollCallCsv = () => {
+    downloadCsv(
+      `hostel_night_rollcall_${hostelDate}.csv`,
+      ['Student', 'Block', 'Room No.', 'Bed No.', 'Status'],
+      hostelRollCall.map((r) => [
+        r.student_name || r.name || '',
+        r.block_name || '',
+        r.room_number || '',
+        r.bed_number || '',
+        r.status || 'NOT_MARKED'
+      ])
+    );
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner Card */}
@@ -923,6 +967,7 @@ export const AttendanceModule: React.FC = () => {
               <input
                 type="date"
                 value={eveningDate}
+                max={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setEveningDate(e.target.value)}
                 className="bg-transparent font-semibold text-slate-800 outline-none"
               />
@@ -934,9 +979,18 @@ export const AttendanceModule: React.FC = () => {
               <span className="text-xs font-bold text-slate-800">
                 Evening Study Roster ({eveningRoster.length} Hostellers)
               </span>
-              <span className="text-[11px] text-slate-500 font-semibold">
-                Supervised by Residential Warden / Floor Staff
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="hidden sm:inline text-[11px] text-slate-500 font-semibold">
+                  Supervised by Residential Warden / Floor Staff
+                </span>
+                <button
+                  onClick={handleDownloadEveningStudyCsv}
+                  disabled={eveningRoster.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#ded9cf] hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold transition shadow-2xs disabled:opacity-40"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download CSV
+                </button>
+              </div>
             </div>
 
             {eveningLoading ? (
@@ -1017,6 +1071,7 @@ export const AttendanceModule: React.FC = () => {
               <input
                 type="date"
                 value={hostelDate}
+                max={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setHostelDate(e.target.value)}
                 className="bg-transparent font-semibold text-slate-800 outline-none"
               />
@@ -1028,9 +1083,18 @@ export const AttendanceModule: React.FC = () => {
               <span className="text-xs font-bold text-slate-800">
                 Night Roll-Call Roster ({hostelRollCall.length} Residents)
               </span>
-              <span className="text-[11px] text-slate-500 font-semibold">
-                Statuses: Present • Outpass • Medical • Late Return
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="hidden md:inline text-[11px] text-slate-500 font-semibold">
+                  Statuses: Present • Outpass • Medical • Late Return
+                </span>
+                <button
+                  onClick={handleDownloadHostelRollCallCsv}
+                  disabled={hostelRollCall.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#ded9cf] hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold transition shadow-2xs disabled:opacity-40"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download CSV
+                </button>
+              </div>
             </div>
 
             {hostelLoading ? (

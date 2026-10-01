@@ -134,6 +134,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'my-profile', label: 'My Profile', icon: UserCircle, targetTab: 'my-profile', description: 'Your staff profile & contact details' },
           { id: 'attendance', label: 'Daily Lecture Record', icon: IconAttendance, targetTab: 'attendance', description: 'Consolidated classroom log sheet (includes syllabus/topic taught)' },
           { id: 'timetable', label: 'Floor Timetable', icon: IconTimetable, targetTab: 'timetable', description: 'Room 201-204 scheduled lectures' },
+          { id: 'invigilation-scan', label: 'Scan Invigilation QR', icon: IconExamManagement, targetTab: 'invigilation-scan', description: "Verify an invigilator's exam duty attendance" },
           { id: 'floor-issues', label: 'Reporting Issues', icon: Wrench, targetTab: 'floor-issues', description: 'Report maintenance/operational issues on your floor' },
           { id: 'noticeboard', label: 'Announcements & Duty Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Daily floor assignments' },
           { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }

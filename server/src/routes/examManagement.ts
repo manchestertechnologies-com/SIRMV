@@ -1845,8 +1845,9 @@ examManagementRouter.get('/my-duties', authenticate, async (req: AuthRequest, re
     if (!teacherProfile) return res.json({ duties: [] });
 
     const duties = await query(
-      `SELECT ia.room_id, r.room_number, r.floor, s.exam_date, s.start_time, s.end_time, s.reporting_time,
+      `SELECT ia.id as assignment_id, ia.room_id, r.room_number, r.floor, s.exam_date, s.start_time, s.end_time, s.reporting_time,
               sub.name as subject_name, e.name as exam_name, e.pu_level, e.instructions, s.id as session_id,
+              ia.duty_attendance_status, ia.duty_marked_at,
               COALESCE(c.benches, 15) as benches, COALESCE(c.seats_per_bench, 3) as seats_per_bench
        FROM exam_invigilator_assignments ia
        JOIN exam_sessions s ON s.id = ia.exam_session_id
@@ -1859,6 +1860,139 @@ examManagementRouter.get('/my-duties', authenticate, async (req: AuthRequest, re
       [teacherProfile.id]
     );
     return res.json({ duties });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Invigilator: generate (or re-generate) a one-time QR token for their own
+// duty, valid only inside that exam session's reporting window. Printed or
+// shown on the invigilator's phone; a Floor Attender scans it in person to
+// confirm the invigilator is physically present in the room.
+examManagementRouter.post('/duties/:assignmentId/qr-token', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { assignmentId } = req.params;
+    const teacherProfile = await queryOne<any>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
+    if (!teacherProfile) return res.status(403).json({ error: 'No teacher profile linked to this account.' });
+
+    const assignment = await queryOne<any>(
+      `SELECT ia.*, s.exam_date, s.start_time, s.end_time, r.room_number, sub.name as subject_name, e.name as exam_name
+       FROM exam_invigilator_assignments ia
+       JOIN exam_sessions s ON s.id = ia.exam_session_id
+       JOIN pu_exams e ON e.id = s.exam_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = ia.room_id
+       WHERE ia.id = $1`,
+      [assignmentId]
+    );
+    if (!assignment) return res.status(404).json({ error: 'Duty not found.' });
+    if (assignment.teacher_id !== teacherProfile.id) {
+      return res.status(403).json({ error: 'This duty is not assigned to you.' });
+    }
+
+    if (assignment.duty_attendance_status === 'PRESENT') {
+      return res.status(400).json({ error: 'Your invigilation attendance for this duty is already marked present.' });
+    }
+
+    // Valid from 30 minutes before reporting to the session's end time —
+    // a QR generated outside that window is refused outright, so a token
+    // can never be minted far in advance and saved for later.
+    const windowStart = new Date(`${assignment.exam_date}T${assignment.start_time}`);
+    windowStart.setMinutes(windowStart.getMinutes() - 30);
+    const windowEnd = new Date(`${assignment.exam_date}T${assignment.end_time}`);
+    const now = new Date();
+    if (now < windowStart || now > windowEnd) {
+      return res.status(400).json({
+        error: `This QR code can only be generated between 30 minutes before the exam starts and when it ends (${assignment.start_time}–${assignment.end_time} on ${assignment.exam_date}).`
+      });
+    }
+
+    const token = crypto.randomBytes(16).toString('hex');
+    await execute(
+      `UPDATE exam_invigilator_assignments SET qr_token = ?, qr_token_generated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [token, assignmentId]
+    );
+
+    return res.json({
+      token,
+      examName: assignment.exam_name,
+      subjectName: assignment.subject_name,
+      roomNumber: assignment.room_number,
+      validUntil: assignment.end_time
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Floor Attender (or Admin/Principal) scans the invigilator's QR to confirm
+// they are physically present. The token is single-use and time-boxed —
+// scanning it re-validates the exam window server-side rather than trusting
+// whatever the QR image claims.
+examManagementRouter.post('/invigilation-scan', authenticate, requireRoles('FLOOR_ATTENDER', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { token } = req.body as { token?: string };
+    if (!token) return res.status(400).json({ error: 'token is required.' });
+
+    const assignment = await queryOne<any>(
+      `SELECT ia.*, s.exam_date, s.start_time, s.end_time, r.room_number, sub.name as subject_name, e.name as exam_name,
+              u.name as teacher_name
+       FROM exam_invigilator_assignments ia
+       JOIN exam_sessions s ON s.id = ia.exam_session_id
+       JOIN pu_exams e ON e.id = s.exam_id
+       JOIN subjects sub ON sub.id = s.subject_id
+       JOIN rooms r ON r.id = ia.room_id
+       JOIN teacher_profiles tp ON tp.id = ia.teacher_id
+       JOIN users u ON u.id = tp.user_id
+       WHERE ia.qr_token = ?`,
+      [token]
+    );
+    if (!assignment) {
+      return res.status(404).json({ error: 'Invalid or expired QR code.' });
+    }
+
+    if (assignment.duty_attendance_status === 'PRESENT') {
+      return res.json({
+        success: true,
+        alreadyMarked: true,
+        message: `${assignment.teacher_name} was already marked present for this duty.`,
+        teacherName: assignment.teacher_name,
+        roomNumber: assignment.room_number,
+        subjectName: assignment.subject_name,
+        examName: assignment.exam_name
+      });
+    }
+
+    const windowStart = new Date(`${assignment.exam_date}T${assignment.start_time}`);
+    windowStart.setMinutes(windowStart.getMinutes() - 30);
+    const windowEnd = new Date(`${assignment.exam_date}T${assignment.end_time}`);
+    const now = new Date();
+    if (now < windowStart || now > windowEnd) {
+      return res.status(400).json({ error: 'This QR code has expired — it is only valid during the exam window.' });
+    }
+
+    await execute(
+      `UPDATE exam_invigilator_assignments
+       SET duty_attendance_status = 'PRESENT', duty_marked_by = ?, duty_marked_at = CURRENT_TIMESTAMP, qr_token = NULL
+       WHERE id = ?`,
+      [req.user!.id, assignment.id]
+    );
+
+    logAudit(req, 'EXAM_INVIGILATION_ATTENDANCE_MARKED', 'exam_invigilator_assignments', assignment.id, {
+      teacher: assignment.teacher_name,
+      room: assignment.room_number,
+      exam: assignment.exam_name
+    });
+
+    return res.json({
+      success: true,
+      alreadyMarked: false,
+      message: `${assignment.teacher_name} marked present for invigilation duty.`,
+      teacherName: assignment.teacher_name,
+      roomNumber: assignment.room_number,
+      subjectName: assignment.subject_name,
+      examName: assignment.exam_name
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

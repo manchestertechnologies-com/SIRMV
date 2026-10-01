@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import { apiFetch } from '../services/api';
-import { ClipboardList, DoorOpen, Clock, Users, Eye, ClipboardCheck, CheckCircle2, XCircle } from 'lucide-react';
+import { showToast } from '../utils/toast';
+import {
+  ClipboardList, DoorOpen, Clock, Users, Eye, ClipboardCheck, CheckCircle2, XCircle,
+  Box, Table2, QrCode, X, ShieldCheck
+} from 'lucide-react';
 import { ExamSeatingView3D, SeatInfo } from '../components/ExamSeatingView3D';
 import { StudentSeatDetailPanel, SeatDetailData } from '../components/StudentSeatDetailPanel';
+import { ExamStudentProfileModal } from '../components/ExamStudentProfileModal';
 
 interface Duty {
+  assignment_id: string;
   session_id: string;
   room_id: string;
   room_number: string;
@@ -19,6 +26,8 @@ interface Duty {
   instructions: string | null;
   benches: number;
   seats_per_bench: number;
+  duty_attendance_status: 'PENDING' | 'PRESENT' | 'ABSENT';
+  duty_marked_at: string | null;
 }
 
 interface SeatRow {
@@ -38,21 +47,29 @@ interface SeatRow {
   marked_at: string | null;
 }
 
-// Invigilator-facing: their published duty list, a read-only seating table,
-// and (new) a 3D take-attendance view for the room/session they're
-// invigilating. Marking attendance here calls the server-side-authorized
-// attendance endpoint, which independently re-checks that this teacher is
-// actually the assigned invigilator for that room/session — the client
-// never gets to just assert it.
+// Invigilator-facing: their published duty list, a 3D (or tabular) read-only
+// seating chart, a 3D-or-tabular take-attendance view for the room/session
+// they're invigilating, and a self-service QR code that proves to a Floor
+// Attender that they physically showed up for the duty. Marking student
+// attendance calls the server-side-authorized attendance endpoint, which
+// independently re-checks that this teacher is actually the assigned
+// invigilator for that room/session — the client never gets to just assert it.
 export const MyExamDutiesPage: React.FC = () => {
   const [duties, setDuties] = useState<Duty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [seatingFor, setSeatingFor] = useState<Duty | null>(null);
+  const [seatingView, setSeatingView] = useState<'3d' | 'list'>('3d');
   const [seating, setSeating] = useState<SeatRow[]>([]);
   const [attendanceFor, setAttendanceFor] = useState<Duty | null>(null);
+  const [attendanceView, setAttendanceView] = useState<'3d' | 'list'>('list');
   const [selectedSeat, setSelectedSeat] = useState<SeatRow | null>(null);
   const [marking, setMarking] = useState(false);
   const [flash, setFlash] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [profileStudentId, setProfileStudentId] = useState<string | null>(null);
+  const [qrFor, setQrFor] = useState<Duty | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrInfo, setQrInfo] = useState<{ validUntil: string } | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   const loadDuties = async () => {
     try {
@@ -74,6 +91,7 @@ export const MyExamDutiesPage: React.FC = () => {
   const viewSeating = async (duty: Duty) => {
     setAttendanceFor(null);
     setSeatingFor(duty);
+    setSeatingView('3d');
     const res = await apiFetch<{ seating: SeatRow[] }>(`/exam-management/sessions/${duty.session_id}/seating`);
     setSeating((res.seating || []).filter((s) => s.room_number === duty.room_number));
   };
@@ -99,8 +117,6 @@ export const MyExamDutiesPage: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({ allocation_id: seat.id, status })
       });
-      // Optimistic local update, then a real refetch so marked_by/marked_at
-      // (and any other invigilator's concurrent marks) stay accurate.
       setSeating((prev) => prev.map((s) => (s.id === seat.id ? { ...s, attendance_status: status } : s)));
       setSelectedSeat((prev) => (prev && prev.id === seat.id ? { ...prev, attendance_status: status } : prev));
       setFlash({ type: 'success', message: `${seat.student_name} marked ${status.toLowerCase()}.` });
@@ -131,6 +147,26 @@ export const MyExamDutiesPage: React.FC = () => {
     }
   };
 
+  const openQr = async (duty: Duty) => {
+    setQrFor(duty);
+    setQrDataUrl(null);
+    setQrInfo(null);
+    setQrLoading(true);
+    try {
+      const res = await apiFetch<{ token: string; validUntil: string }>(`/exam-management/duties/${duty.assignment_id}/qr-token`, {
+        method: 'POST'
+      });
+      const dataUrl = await QRCode.toDataURL(res.token, { width: 280, margin: 1 });
+      setQrDataUrl(dataUrl);
+      setQrInfo({ validUntil: res.validUntil });
+    } catch (err: any) {
+      showToast(err.message || 'Could not generate QR code.', 'error');
+      setQrFor(null);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
   const seatInfos: SeatInfo[] = seating.map((s) => ({
     allocationId: s.id,
     benchNumber: s.bench_number,
@@ -151,7 +187,8 @@ export const MyExamDutiesPage: React.FC = () => {
   const absentCount = seating.filter((s) => s.attendance_status === 'ABSENT').length;
   const pendingCount = seating.filter((s) => s.attendance_status === 'PENDING').length;
 
-  const selectedDetail: SeatDetailData | null = selectedSeat && attendanceFor ? {
+  const selectedDetail: (SeatDetailData & { studentId: string }) | null = selectedSeat && attendanceFor ? {
+    studentId: selectedSeat.student_id,
     studentName: selectedSeat.student_name,
     registerNumber: selectedSeat.register_number,
     className: selectedSeat.class_name,
@@ -169,6 +206,27 @@ export const MyExamDutiesPage: React.FC = () => {
     markedByName: selectedSeat.marked_by_name,
     markedAt: selectedSeat.marked_at
   } : null;
+
+  const ViewToggle: React.FC<{ value: '3d' | 'list'; onChange: (v: '3d' | 'list') => void }> = ({ value, onChange }) => (
+    <div className="flex bg-slate-100 p-1 rounded-xl">
+      <button
+        onClick={() => onChange('3d')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition ${
+          value === '3d' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+        }`}
+      >
+        <Box className="w-3.5 h-3.5" /> 3D View
+      </button>
+      <button
+        onClick={() => onChange('list')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition ${
+          value === 'list' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+        }`}
+      >
+        <Table2 className="w-3.5 h-3.5" /> List View
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -196,7 +254,18 @@ export const MyExamDutiesPage: React.FC = () => {
             <div key={`${d.session_id}-${d.room_id}`} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-900 text-sm">{d.exam_name}</span>
-                <span className="text-[11px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full">{d.pu_level}</span>
+                <div className="flex items-center gap-1.5">
+                  {d.duty_attendance_status === 'PRESENT' ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <ShieldCheck className="w-3 h-3" /> Duty Verified
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                      Duty Pending
+                    </span>
+                  )}
+                  <span className="text-[11px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full">{d.pu_level}</span>
+                </div>
               </div>
               <div className="text-xs text-slate-600">{d.subject_name} — {d.exam_date}</div>
               <div className="flex flex-wrap gap-3 text-xs text-slate-500">
@@ -205,13 +274,18 @@ export const MyExamDutiesPage: React.FC = () => {
               </div>
               {d.reporting_time && <div className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1">Report by {d.reporting_time}</div>}
               {d.instructions && <div className="text-[11px] text-slate-500 italic">{d.instructions}</div>}
-              <div className="flex items-center gap-3 pt-1">
+              <div className="flex items-center gap-3 pt-1 flex-wrap">
                 <button onClick={() => viewSeating(d)} className="flex items-center gap-1.5 text-xs font-semibold text-violet-600">
                   <Eye className="w-3.5 h-3.5" /> View Student Seating
                 </button>
                 <button onClick={() => openAttendance(d)} className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
                   <ClipboardCheck className="w-3.5 h-3.5" /> Take Attendance
                 </button>
+                {d.duty_attendance_status !== 'PRESENT' && (
+                  <button onClick={() => openQr(d)} className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
+                    <QrCode className="w-3.5 h-3.5" /> Show Duty QR
+                  </button>
+                )}
               </div>
             </div>
           ))
@@ -220,27 +294,45 @@ export const MyExamDutiesPage: React.FC = () => {
 
       {seatingFor && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="p-4 border-b border-slate-100 font-bold text-sm text-slate-900 flex items-center gap-2">
-            <Users className="w-4 h-4 text-violet-600" /> Room {seatingFor.room_number} — {seatingFor.subject_name}
+          <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <div className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-violet-600" /> Room {seatingFor.room_number} — {seatingFor.subject_name}
+            </div>
+            <ViewToggle value={seatingView} onChange={setSeatingView} />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead><tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-                <th className="py-2 px-4">Bench</th><th className="py-2 px-4">Seat</th><th className="py-2 px-4">Student</th><th className="py-2 px-4">Reg No.</th><th className="py-2 px-4">Batch</th>
-              </tr></thead>
-              <tbody className="divide-y divide-slate-100">
-                {seating.sort((a, b) => a.seat_number - b.seat_number).map((s, i) => (
-                  <tr key={i}>
-                    <td className="py-2 px-4">{s.bench_number}</td>
-                    <td className="py-2 px-4 font-bold text-violet-700">{s.seat_number}</td>
-                    <td className="py-2 px-4 font-bold text-slate-900">{s.student_name}</td>
-                    <td className="py-2 px-4 text-slate-500">{s.register_number}</td>
-                    <td className="py-2 px-4">{s.class_name} {s.section_name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="p-3 text-[11px] text-slate-500 border-b border-slate-100">
+            Click a student (3D view) or their row (list view) to see their full 360° profile — attendance % and previous exam marks included.
           </div>
+          {seatingView === '3d' ? (
+            <div className="p-4">
+              <ExamSeatingView3D
+                benches={seatingFor.benches}
+                seatsPerBench={seatingFor.seats_per_bench}
+                seats={seatInfos}
+                showAttendance={false}
+                onSeatClick={(seat) => setProfileStudentId(seat.studentId || null)}
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead><tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <th className="py-2 px-4">Bench</th><th className="py-2 px-4">Seat</th><th className="py-2 px-4">Student</th><th className="py-2 px-4">Reg No.</th><th className="py-2 px-4">Batch</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {seating.sort((a, b) => a.seat_number - b.seat_number).map((s, i) => (
+                    <tr key={i} className="hover:bg-violet-50/50 cursor-pointer" onClick={() => setProfileStudentId(s.student_id)}>
+                      <td className="py-2 px-4">{s.bench_number}</td>
+                      <td className="py-2 px-4 font-bold text-violet-700">{s.seat_number}</td>
+                      <td className="py-2 px-4 font-bold text-slate-900">{s.student_name}</td>
+                      <td className="py-2 px-4 text-slate-500">{s.register_number}</td>
+                      <td className="py-2 px-4">{s.class_name} {s.section_name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -261,34 +353,116 @@ export const MyExamDutiesPage: React.FC = () => {
               >
                 Mark All Present
               </button>
+              <ViewToggle value={attendanceView} onChange={setAttendanceView} />
             </div>
           </div>
           <div className="p-4 text-[11px] text-slate-500 border-b border-slate-100">
-            Tap a seat with a student to mark them present or absent. Batch (class/section) colors match the legend below; marked-absent seats turn red.
+            {attendanceView === '3d'
+              ? 'Tap a seat with a student to mark them present or absent. Batch (class/section) colors match the legend below; marked-absent seats turn red.'
+              : 'Toggle Present/Absent directly in the table below.'}
           </div>
-          <div className="p-4">
-            <ExamSeatingView3D
-              benches={attendanceFor.benches}
-              seatsPerBench={attendanceFor.seats_per_bench}
-              seats={seatInfos}
-              showAttendance
-              onSeatClick={(seat) => {
-                const row = seating.find((s) => s.id === seat.allocationId);
-                if (row) setSelectedSeat(row);
-              }}
-            />
-          </div>
-          {selectedDetail && (
-            <div className="p-4 border-t border-slate-100">
-              <StudentSeatDetailPanel
-                data={selectedDetail}
-                onClose={() => setSelectedSeat(null)}
-                canMarkAttendance
-                marking={marking}
-                onMark={(status) => selectedSeat && markSeat(selectedSeat, status)}
-              />
+
+          {attendanceView === '3d' ? (
+            <>
+              <div className="p-4">
+                <ExamSeatingView3D
+                  benches={attendanceFor.benches}
+                  seatsPerBench={attendanceFor.seats_per_bench}
+                  seats={seatInfos}
+                  showAttendance
+                  onSeatClick={(seat) => {
+                    const row = seating.find((s) => s.id === seat.allocationId);
+                    if (row) setSelectedSeat(row);
+                  }}
+                />
+              </div>
+              {selectedDetail && (
+                <div className="p-4 border-t border-slate-100">
+                  <StudentSeatDetailPanel
+                    data={selectedDetail}
+                    onClose={() => setSelectedSeat(null)}
+                    canMarkAttendance
+                    marking={marking}
+                    onMark={(status) => selectedSeat && markSeat(selectedSeat, status)}
+                    onViewProfile={() => setProfileStudentId(selectedDetail.studentId)}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead><tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <th className="py-2 px-4">Bench</th><th className="py-2 px-4">Seat</th><th className="py-2 px-4">Student</th><th className="py-2 px-4">Reg No.</th><th className="py-2 px-4">Batch</th><th className="py-2 px-4">Attendance</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {seating.sort((a, b) => a.seat_number - b.seat_number).map((s) => (
+                    <tr key={s.id}>
+                      <td className="py-2 px-4">{s.bench_number}</td>
+                      <td className="py-2 px-4 font-bold text-violet-700">{s.seat_number}</td>
+                      <td className="py-2 px-4 font-bold text-slate-900 cursor-pointer hover:underline" onClick={() => setProfileStudentId(s.student_id)}>
+                        {s.student_name}
+                      </td>
+                      <td className="py-2 px-4 text-slate-500">{s.register_number}</td>
+                      <td className="py-2 px-4">{s.class_name} {s.section_name}</td>
+                      <td className="py-2 px-4">
+                        <div className="flex gap-1.5">
+                          <button
+                            disabled={marking}
+                            onClick={() => markSeat(s, 'PRESENT')}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition disabled:opacity-40 ${
+                              s.attendance_status === 'PRESENT' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50'
+                            }`}
+                          >
+                            Present
+                          </button>
+                          <button
+                            disabled={marking}
+                            onClick={() => markSeat(s, 'ABSENT')}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition disabled:opacity-40 ${
+                              s.attendance_status === 'ABSENT' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-rose-50'
+                            }`}
+                          >
+                            Absent
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+        </div>
+      )}
+
+      {profileStudentId && (
+        <ExamStudentProfileModal studentId={profileStudentId} onClose={() => setProfileStudentId(null)} />
+      )}
+
+      {qrFor && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setQrFor(null)}>
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 text-center space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-indigo-600" /> Invigilation Duty QR
+              </h3>
+              <button onClick={() => setQrFor(null)} className="p-1.5 rounded-lg hover:bg-slate-100">
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              Show this to the Floor Attender for Room {qrFor.room_number} — they'll scan it to confirm you're present for{' '}
+              {qrFor.subject_name}. It only works until {qrInfo?.validUntil || qrFor.end_time} today.
+            </p>
+            {qrLoading ? (
+              <div className="flex items-center justify-center p-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : qrDataUrl ? (
+              <img src={qrDataUrl} alt="Invigilation duty QR code" className="mx-auto rounded-xl border border-slate-200" />
+            ) : null}
+          </div>
         </div>
       )}
     </div>

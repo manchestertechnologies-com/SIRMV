@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Printer, CheckCircle2, XCircle } from 'lucide-react';
+import { X, Printer, CheckCircle2, XCircle, UserCircle2 } from 'lucide-react';
 
 // A downloadable "seat slip" for one student, opened by clicking their seat
 // in the 3D seating view. Uses the same client-side window.print() +
@@ -40,7 +40,8 @@ export const StudentSeatDetailPanel: React.FC<{
   canMarkAttendance?: boolean;
   onMark?: (status: 'PRESENT' | 'ABSENT') => void;
   marking?: boolean;
-}> = ({ data, onClose, canMarkAttendance, onMark, marking }) => {
+  onViewProfile?: () => void;
+}> = ({ data, onClose, canMarkAttendance, onMark, marking, onViewProfile }) => {
   const statusColor =
     data.attendanceStatus === 'PRESENT' ? 'text-emerald-600' :
     data.attendanceStatus === 'ABSENT' ? 'text-rose-600' : 'text-slate-400';
@@ -90,12 +91,22 @@ export const StudentSeatDetailPanel: React.FC<{
         </div>
       )}
 
-      <button
-        onClick={() => window.print()}
-        className="no-print w-full mt-3 max-w-sm mx-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700"
-      >
-        <Printer className="w-3.5 h-3.5" /> Print / Download
-      </button>
+      <div className="no-print flex gap-2 mt-3 max-w-sm mx-auto">
+        {onViewProfile && (
+          <button
+            onClick={onViewProfile}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200"
+          >
+            <UserCircle2 className="w-3.5 h-3.5" /> View 360° Profile
+          </button>
+        )}
+        <button
+          onClick={() => window.print()}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700"
+        >
+          <Printer className="w-3.5 h-3.5" /> Print / Download
+        </button>
+      </div>
     </div>
   );
 };

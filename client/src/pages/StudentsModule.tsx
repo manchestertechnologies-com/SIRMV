@@ -16,7 +16,8 @@ import {
   X,
   LayoutGrid,
   Building2,
-  Users
+  Users,
+  CalendarCheck2
 } from 'lucide-react';
 import { IconStudents } from '../components/ModuleIcons';
 import { INITIAL_STUDENTS } from '../data/mockInstitutionalData';
@@ -72,6 +73,7 @@ export const StudentsModule: React.FC = () => {
   const [theoryMarks, setTheoryMarks] = useState<any[]>([]);
   const [competitiveMarks, setCompetitiveMarks] = useState<any[]>([]);
   const [boardMarks, setBoardMarks] = useState<any[]>([]);
+  const [attendanceSummary, setAttendanceSummary] = useState<{ overallPercentage: number; overallTotal: number; overallAttended: number } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
@@ -169,17 +171,20 @@ export const StudentsModule: React.FC = () => {
     setTheoryMarks([]);
     setCompetitiveMarks([]);
     setBoardMarks([]);
+    setAttendanceSummary(null);
     try {
-      const [detailRes, theoryRes, competitiveRes, boardRes] = await Promise.all([
+      const [detailRes, theoryRes, competitiveRes, boardRes, attendanceRes] = await Promise.all([
         apiFetch<any>(`/students/${id}`),
         apiFetch<any>(`/students/${id}/marks/theory`).catch(() => ({ exams: [] })),
         apiFetch<any>(`/students/${id}/marks/competitive`).catch(() => ({ exams: [] })),
-        apiFetch<any>(`/students/${id}/marks/board`).catch(() => ({ exams: [] }))
+        apiFetch<any>(`/students/${id}/marks/board`).catch(() => ({ exams: [] })),
+        apiFetch<any>(`/attendance/student/${id}/calendar`).catch(() => null)
       ]);
       setStudentDetail(detailRes);
       setTheoryMarks(theoryRes.exams || []);
       setCompetitiveMarks(competitiveRes.exams || []);
       setBoardMarks(boardRes.exams || []);
+      setAttendanceSummary(attendanceRes);
     } catch (err: any) {
       const found = students.find((s) => s.id === id) || INITIAL_STUDENTS.find((s) => s.id === id);
       setStudentDetail({ profile: found || null, documents: [] });
@@ -194,6 +199,7 @@ export const StudentsModule: React.FC = () => {
     setTheoryMarks([]);
     setCompetitiveMarks([]);
     setBoardMarks([]);
+    setAttendanceSummary(null);
   };
 
   // Open the subject-wise marks card for one exam. Used both from the admin's
@@ -873,6 +879,20 @@ export const StudentsModule: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {/* 4b. Attendance Summary */}
+                <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 flex items-center gap-3">
+                  <CalendarCheck2 className="w-6 h-6 text-emerald-700 shrink-0" />
+                  <div>
+                    <h4 className="font-bold text-emerald-900 text-xs uppercase tracking-wider">Overall Attendance</h4>
+                    <div className="text-lg font-bold text-emerald-900">
+                      {attendanceSummary?.overallPercentage ?? 0}%
+                      <span className="text-xs font-semibold text-emerald-700/70 ml-2">
+                        ({attendanceSummary?.overallAttended ?? 0}/{attendanceSummary?.overallTotal ?? 0} periods attended)
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* 5. Theory Marks — Date / Exam Name / Total Marks / Class Rank / Overall Rank / View */}
                 <div>
