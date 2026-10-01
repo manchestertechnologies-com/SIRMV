@@ -74,9 +74,14 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'students', label: 'Department Students', icon: IconStudents, targetTab: 'students', description: 'All PUC students in department' },
           { id: 'tests', label: 'Department Tests', icon: IconTests, targetTab: 'tests', description: 'Test schedules & question banks' },
           { id: 'board-marks', label: 'Board Marks Matrix', icon: IconBoardMarks, targetTab: 'board-marks', description: 'Marks analysis' },
+          { id: 'live-class', label: 'Class Recordings', icon: IconLiveClass, targetTab: 'live-class', description: 'Upload lecture streams for absent students' },
+          { id: 'my-exam-duty', label: 'My Exam Duties', icon: IconExamManagement, targetTab: 'my-exam-duty', description: 'Invigilation assignments & student seating' },
           { id: 'reports', label: 'Academic Reports', icon: IconReports, targetTab: 'reports', description: 'Performance & syllabus analytics' },
           { id: 'invigilator-requests', label: 'Invigilator Requests', icon: IconExamManagement, targetTab: 'invigilator-requests', description: 'Approve invigilators for exams' },
-          { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Institutional circulars' }
+          { id: 'counsellings', label: 'Counselling', icon: IconCounsellings, targetTab: 'counsellings', description: 'Log & track student counselling sessions' },
+          { id: 'college-calendar', label: 'College Calendar', icon: CalendarDays, targetTab: 'college-calendar', description: 'Holidays, exams & institutional events' },
+          { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Institutional circulars' },
+          { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: [
           { id: 'report-card', label: 'Report Card Review', icon: IconReportCard, targetTab: 'report-card', description: 'HOD remarks & verification', isOtherTool: true }

@@ -915,7 +915,9 @@ async function authorizeAttendanceMarker(
     const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
     return { ok: true, markedByTeacherId: tp?.id || null };
   }
-  if (role === 'TEACHER') {
+  if (role === 'TEACHER' || role === 'HOD') {
+    // An HOD is still a teacher day-to-day and can be assigned as an
+    // invigilator the same way a TEACHER can — same lookup, same rule.
     const tp = await queryOne<{ id: string }>(`SELECT id FROM teacher_profiles WHERE user_id = $1`, [req.user!.id]);
     if (!tp) return { ok: false, status: 403, error: 'Teacher profile not found.' };
     const assigned = await queryOne(
