@@ -1,4 +1,4 @@
-﻿import {
+import {
   IconDashboard,
   IconStaffs,
   IconStudents,
@@ -60,6 +60,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: [
+          { id: 'questions', label: 'Question Paper Suite', icon: IconQuestions, targetTab: 'questions', description: 'Institutional 4-Set Question Paper Generator (75k+ Qs)', isOtherTool: true },
           { id: 'report-card', label: 'Report Card Remarks', icon: IconReportCard, targetTab: 'report-card', description: 'Enter subject teacher remarks & grades', isOtherTool: true }
         ]
       };
@@ -200,6 +201,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         menuItems: [
           { id: 'dashboard', label: 'Dashboard', icon: IconDashboard, targetTab: 'dashboard-home' },
           { id: 'exam-management', label: 'Exam Management', icon: IconExamManagement, targetTab: 'exam-management', description: 'Exams, rooms, seating & invigilation' },
+          { id: 'questions', label: 'Question Paper Suite', icon: IconQuestions, targetTab: 'questions', description: 'Institutional 4-Set Question Paper Generator (75k+ Qs)' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard' },
           { id: 'settings', label: 'Settings', icon: IconSettings, targetTab: 'settings' }
         ],

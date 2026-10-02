@@ -9,6 +9,8 @@ import { ExamFloor3D, FloorRoom, RoomStatus } from '../components/ExamFloor3D';
 import { ExamSeatingView3D, SeatInfo } from '../components/ExamSeatingView3D';
 import { StudentSeatDetailPanel, SeatDetailData } from '../components/StudentSeatDetailPanel';
 import { ExamReports } from './ExamReports';
+import { QuestionPaperSuite } from '../components/question-paper/QuestionPaperSuite';
+import { Sparkles, Layers } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,7 +60,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export const ExamManagementModule: React.FC = () => {
   const { currentBranch } = useAuth();
-  const [view, setView] = useState<'list' | 'create' | 'detail' | 'rooms'>('list');
+  const [view, setView] = useState<'list' | 'create' | 'detail' | 'rooms' | 'qp-suite'>('list');
   const [exams, setExams] = useState<ExamRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
@@ -92,6 +94,42 @@ export const ExamManagementModule: React.FC = () => {
         </div>
       )}
 
+      {/* Top Exam Navigation Subtabs */}
+      {(view === 'list' || view === 'qp-suite' || view === 'rooms') && (
+        <div className="flex items-center gap-2 bg-[#ded9cf]/50 p-1 rounded-2xl w-fit">
+          <button
+            onClick={() => setView('list')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+              view === 'list' || view === 'rooms'
+                ? 'bg-white text-slate-900 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5 text-violet-600" />
+            Exam Seating & Invigilation
+          </button>
+
+          <button
+            onClick={() => setView('qp-suite')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+              view === 'qp-suite'
+                ? 'bg-white text-indigo-950 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            Question Paper & 4-Set Suite (P, Q, R, S)
+            <span className="bg-indigo-100 text-indigo-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono">
+              75k+ Qs
+            </span>
+          </button>
+        </div>
+      )}
+
+      {view === 'qp-suite' && (
+        <QuestionPaperSuite />
+      )}
+
       {view === 'list' && (
         <ExamListView
           exams={exams}
@@ -99,6 +137,7 @@ export const ExamManagementModule: React.FC = () => {
           onNew={() => setView('create')}
           onOpen={(id) => { setSelectedExamId(id); setView('detail'); }}
           onRooms={() => setView('rooms')}
+          onQpSuite={() => setView('qp-suite')}
         />
       )}
 
@@ -125,6 +164,7 @@ export const ExamManagementModule: React.FC = () => {
   );
 };
 
+
 // ---------------------------------------------------------------------------
 // List view
 // ---------------------------------------------------------------------------
@@ -136,8 +176,8 @@ interface DashboardStats {
 }
 
 const ExamListView: React.FC<{
-  exams: ExamRow[]; isLoading: boolean; onNew: () => void; onOpen: (id: string) => void; onRooms: () => void;
-}> = ({ exams, isLoading, onNew, onOpen, onRooms }) => {
+  exams: ExamRow[]; isLoading: boolean; onNew: () => void; onOpen: (id: string) => void; onRooms: () => void; onQpSuite?: () => void;
+}> = ({ exams, isLoading, onNew, onOpen, onRooms, onQpSuite }) => {
   const { currentBranch } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [buildingRooms, setBuildingRooms] = useState<RoomRow[]>([]);
@@ -187,6 +227,11 @@ const ExamListView: React.FC<{
         <p className="text-xs text-slate-500 mt-0.5">PU-level examinations: rooms, seating, invigilation, and publishing — 1 PU / 2 PU.</p>
       </div>
       <div className="flex items-center gap-2">
+        {onQpSuite && (
+          <button onClick={onQpSuite} className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition shadow-2xs">
+            <Sparkles className="w-4 h-4 text-indigo-600" /> Question Paper Suite (75k+ Qs)
+          </button>
+        )}
         <button onClick={onRooms} className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
           <Settings2 className="w-4 h-4" /> Configure Rooms
         </button>
@@ -195,6 +240,7 @@ const ExamListView: React.FC<{
         </button>
       </div>
     </div>
+
 
     {stats && (
       // Trimmed to the counts that are either actionable (need someone to do

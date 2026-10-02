@@ -30,6 +30,7 @@ import { counsellingRouter } from './routes/counselling';
 import { disciplineRouter } from './routes/discipline';
 import { floorIssuesRouter } from './routes/floorIssues';
 import { grievancesRouter } from './routes/grievances';
+import { questionPapersRouter } from './routes/questionPapers';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -79,6 +80,7 @@ app.use('/api/counselling', counsellingRouter);
 app.use('/api/discipline', disciplineRouter);
 app.use('/api/floor-issues', floorIssuesRouter);
 app.use('/api/grievances', grievancesRouter);
+app.use('/api/question-papers', questionPapersRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

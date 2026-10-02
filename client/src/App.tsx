@@ -46,6 +46,7 @@ import { StudentOutpassView } from './pages/StudentOutpassView';
 import { StudentHostelView } from './pages/StudentHostelView';
 import { DisciplineRecordsPage } from './pages/DisciplineRecordsPage';
 import { MyProfilePage } from './pages/MyProfilePage';
+import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -96,7 +97,8 @@ export function App() {
     batches: 'Batches',
     tests: 'Tests',
     'board-marks': 'Board Marks',
-    questions: 'Questions',
+    questions: 'Questions Bank',
+    'question-papers': 'Question Paper & 4-Set Suite',
     reports: 'Reports',
     attendance: 'Attendance',
     fee: 'Fee',
@@ -452,6 +454,27 @@ export function App() {
                 </div>
               </div>
               <BoardMarksPage />
+            </div>
+          ) : (activeTab === 'questions' || activeTab === 'question-papers') ? (
+            <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
+                <button
+                  onClick={() => setActiveTab('dashboard-home')}
+                  className="p-2 bg-[#fdfcfb] hover:bg-white border border-[#ded9cf] rounded-xl text-slate-600 transition"
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 font-heading">
+                    Question Paper Generator & 4-Set Examination Suite
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    SIR MV PU College • 8-Database Pool (75k+ Qs) • Sets P, Q, R, S • A4 Print Engine • OMR Evaluation
+                  </p>
+                </div>
+              </div>
+              <QuestionPaperSuite />
             </div>
           ) : activeTab === 'live-class' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
