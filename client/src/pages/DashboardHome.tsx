@@ -26,7 +26,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 {user?.role?.replace('_', ' ') || 'INSTITUTIONAL ACCESS'}
               </span>
               <span className="text-xs text-slate-500 font-medium">
-                • {currentBranch?.name || 'Davangere Campus'}
+                {/* TEMPORARY: displaying as Davangere regardless of the
+                    account's real assigned branch, per request — swap this
+                    back to the plain currentBranch?.name line below once
+                    the proper multi-campus display is sorted out. */}
+                • {(currentBranch?.name || 'Davangere Campus').replace('Shivamogga', 'Davangere')}
               </span>
             </div>
             <h1 className="text-lg sm:text-xl font-black text-slate-900 font-heading">
