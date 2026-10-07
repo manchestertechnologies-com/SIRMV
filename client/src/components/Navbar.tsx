@@ -169,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
             </div>
             <div className="hidden sm:flex text-[11px] text-blue-700 font-bold items-center gap-1">
               <Building2 className="w-3 h-3 text-slate-400" />
-              <span>Shivamogga PU Campus</span>
+              <span>Davangere PU Campus</span>
             </div>
           </div>
         </div>

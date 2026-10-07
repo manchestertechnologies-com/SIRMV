@@ -26,7 +26,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 {user?.role?.replace('_', ' ') || 'INSTITUTIONAL ACCESS'}
               </span>
               <span className="text-xs text-slate-500 font-medium">
-                • {currentBranch?.name || 'Shivamogga Campus'}
+                • {currentBranch?.name || 'Davangere Campus'}
               </span>
             </div>
             <h1 className="text-lg sm:text-xl font-black text-slate-900 font-heading">

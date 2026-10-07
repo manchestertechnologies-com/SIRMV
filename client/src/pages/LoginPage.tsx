@@ -48,7 +48,7 @@ export const LoginPage: React.FC = () => {
 
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ede8dc] text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2 border border-[#ded8cb]">
               <Shield className="w-3 h-3 text-blue-700" />
-              <span>Shivamogga Campus</span>
+              <span>Davangere Campus</span>
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
       {/* Institutional Footer */}
       <footer className="w-full text-center mt-6">
         <p className="text-xs text-slate-500 font-medium">
-          © 2026-2027 Manchester Technologies, Shivamogga Campus. All rights reserved.
+          © 2026-2027 Manchester Technologies, Davangere Campus. All rights reserved.
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
           Secured Institutional ERP • Authorized Access Only
