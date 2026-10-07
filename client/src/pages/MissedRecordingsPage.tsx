@@ -159,7 +159,7 @@ export const MissedRecordingsPage: React.FC = () => {
             </div>
 
             <div className="p-4 bg-slate-950 flex items-center justify-between text-xs text-slate-400">
-              <span>SIR MV PU College Lecture Stream</span>
+              <span>Manchester Technologies Lecture Stream</span>
               <a
                 href={activeVideoUrl}
                 target="_blank"

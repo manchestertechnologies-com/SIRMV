@@ -53,7 +53,7 @@ export const StudentSeatDetailPanel: React.FC<{
       </button>
 
       <div className="text-center border-b border-slate-200 pb-3 mb-3">
-        <div className="font-bold text-slate-900">SIR MV PU College</div>
+        <div className="font-bold text-slate-900">Manchester Technologies</div>
         <div className="text-xs text-slate-500">Exam Seat Slip</div>
       </div>
 

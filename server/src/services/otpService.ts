@@ -33,7 +33,7 @@ export const otpService = {
   // Send OTP to Parent Phone
   async sendParentOTP(outpassId: string, parentPhone: string, studentName: string): Promise<{ success: boolean; simulatedOtp?: string }> {
     const otp = this.generateOTP(outpassId);
-    const message = `SIR MV PU College: Security Outpass OTP for ${studentName} is ${otp}. Valid for 15 minutes. Do not share with unknown persons.`;
+    const message = `Manchester Technologies: Security Outpass OTP for ${studentName} is ${otp}. Valid for 15 minutes. Do not share with unknown persons.`;
     
     await smsProvider.sendSMS(parentPhone, message);
     return { success: true, simulatedOtp: otp };

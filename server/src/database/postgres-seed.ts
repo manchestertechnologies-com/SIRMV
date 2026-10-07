@@ -36,9 +36,9 @@ export async function seedPostgresDatabase() {
         principal_name = EXCLUDED.principal_name;
     `;
 
-    await upsert(branchSql, ['branch-dvg', 'SIR MV PU College - Davangere', 'SIRMV-DVG', 'Davangere', 'MCC B Block, Kuvempu Road, Davangere, Karnataka 577004', '08192-234567', 'info.dvg@sirmv.edu.in', 'Dr. B. N. Vishwanath'], 'branches');
-    await upsert(branchSql, ['branch-smg', 'SIR MV PU College - Shivamogga', 'SIRMV-SMG', 'Shivamogga', 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201', '08182-278901', 'info.smg@sirmv.edu.in', 'Prof. K. R. Suresh'], 'branches');
-    await upsert(branchSql, ['branch-bly', 'SIR MV PU College - Ballari', 'SIRMV-BLY', 'Ballari', 'Cantonment Area, Infotech Campus, Ballari, Karnataka 583104', '08392-256789', 'info.bly@sirmv.edu.in', 'Dr. H. M. Manjunath'], 'branches');
+    await upsert(branchSql, ['branch-dvg', 'Manchester Technologies - Davangere', 'SIRMV-DVG', 'Davangere', 'MCC B Block, Kuvempu Road, Davangere, Karnataka 577004', '08192-234567', 'info.dvg@sirmv.edu.in', 'Dr. B. N. Vishwanath'], 'branches');
+    await upsert(branchSql, ['branch-smg', 'Manchester Technologies - Shivamogga', 'SIRMV-SMG', 'Shivamogga', 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201', '08182-278901', 'info.smg@sirmv.edu.in', 'Prof. K. R. Suresh'], 'branches');
+    await upsert(branchSql, ['branch-bly', 'Manchester Technologies - Ballari', 'SIRMV-BLY', 'Ballari', 'Cantonment Area, Infotech Campus, Ballari, Karnataka 583104', '08392-256789', 'info.bly@sirmv.edu.in', 'Dr. H. M. Manjunath'], 'branches');
 
     // 2. Academic Years
     const aySql = `

@@ -20,9 +20,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       devOptions: { enabled: false },
       manifest: {
-        name: 'SIR MV PU College - Campus ERP',
-        short_name: 'SIR MV ERP',
-        description: 'Institutional management ERP for SIR MV PU College',
+        name: 'Manchester Technologies - Campus ERP',
+        short_name: 'MT ERP',
+        description: 'Institutional management ERP for Manchester Technologies',
         start_url: '/',
         display: 'standalone',
         background_color: '#ebe7de',

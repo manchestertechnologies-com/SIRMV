@@ -1,4 +1,4 @@
-// Institutional Data for SIR MV PU College - Shivamogga Campus
+// Institutional Data for Manchester Technologies - Shivamogga Campus
 export const INITIAL_STUDENTS = [
   {
     "id": "sp-smg-001",
@@ -1519,7 +1519,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-02",
@@ -1537,7 +1537,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-03",
@@ -1555,7 +1555,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-04",
@@ -1573,7 +1573,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-05",
@@ -1591,7 +1591,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-06",
@@ -1609,7 +1609,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-07",
@@ -1627,7 +1627,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-08",
@@ -1645,7 +1645,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-09",
@@ -1663,7 +1663,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   },
   {
     "id": "tp-smg-10",
@@ -1681,7 +1681,7 @@ export const INITIAL_TEACHERS = [
     "assignment_count": 4,
     "period_count": 18,
     "is_active": 1,
-    "branch_name": "SIR MV PU College - Shivamogga"
+    "branch_name": "Manchester Technologies - Shivamogga"
   }
 ];
 
@@ -1698,7 +1698,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_1.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1714,7 +1714,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_2.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1730,7 +1730,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_3.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1746,7 +1746,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_4.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1762,7 +1762,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_5.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1778,7 +1778,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_6.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1794,7 +1794,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_7.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1810,7 +1810,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_8.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1826,7 +1826,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_9.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1842,7 +1842,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_10.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1858,7 +1858,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_11.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1874,7 +1874,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_12.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1890,7 +1890,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_13.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1906,7 +1906,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_14.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   },
@@ -1922,7 +1922,7 @@ export const INITIAL_NON_TEACHING_STAFF = [
     "avatar_url": "/avatars/staff_15.png",
     "is_active": 1,
     "created_at": "2026-06-01T00:00:00.000Z",
-    "branch_name": "SIR MV PU College - Shivamogga",
+    "branch_name": "Manchester Technologies - Shivamogga",
     "branch_code": "SIRMV-SMG",
     "branch_city": "Shivamogga"
   }

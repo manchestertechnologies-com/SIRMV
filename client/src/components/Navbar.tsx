@@ -153,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-2xs shrink-0 border border-[#ded8cb]">
             <img
               src="/logo.png"
-              alt="SIR MV Logo"
+              alt="Manchester Technologies Logo"
               className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
             />
           </div>
@@ -161,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-extrabold text-slate-900 text-sm sm:text-base tracking-tight font-heading truncate">
-                SIR MV <span className="text-blue-600">PU COLLEGE</span>
+                MANCHESTER <span className="text-blue-600">TECHNOLOGIES</span>
               </span>
               <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-[#ebe7df] text-slate-700 border border-[#ded8cb] shrink-0">
                 CAMPUS ERP

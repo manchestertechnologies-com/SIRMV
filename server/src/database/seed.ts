@@ -2,7 +2,7 @@ import { db, initDatabase } from './db';
 import bcrypt from 'bcryptjs';
 
 export function seedDatabase() {
-  console.log('Seeding SIR MV PU College database...');
+  console.log('Seeding Manchester Technologies database...');
   initDatabase();
 
   const passwordHash = bcrypt.hashSync('password123', 10);
@@ -13,9 +13,9 @@ export function seedDatabase() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertBranch.run('branch-dvg', 'SIR MV PU College - Davangere', 'SIRMV-DVG', 'Davangere', 'MCC ' + 'B Block, Kuvempu Road, Davangere, Karnataka 577004', '08192-234567', 'info.dvg@sirmv.edu.in', 'Dr. B. N. Vishwanath');
-  insertBranch.run('branch-smg', 'SIR MV PU College - Shivamogga', 'SIRMV-SMG', 'Shivamogga', 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201', '08182-278901', 'info.smg@sirmv.edu.in', 'Prof. K. R. Suresh');
-  insertBranch.run('branch-bly', 'SIR MV PU College - Ballari', 'SIRMV-BLY', 'Ballari', 'Cantonment Area, Infotech Campus, Ballari, Karnataka 583104', '08392-256789', 'info.bly@sirmv.edu.in', 'Dr. H. M. Manjunath');
+  insertBranch.run('branch-dvg', 'Manchester Technologies - Davangere', 'SIRMV-DVG', 'Davangere', 'MCC ' + 'B Block, Kuvempu Road, Davangere, Karnataka 577004', '08192-234567', 'info.dvg@sirmv.edu.in', 'Dr. B. N. Vishwanath');
+  insertBranch.run('branch-smg', 'Manchester Technologies - Shivamogga', 'SIRMV-SMG', 'Shivamogga', 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201', '08182-278901', 'info.smg@sirmv.edu.in', 'Prof. K. R. Suresh');
+  insertBranch.run('branch-bly', 'Manchester Technologies - Ballari', 'SIRMV-BLY', 'Ballari', 'Cantonment Area, Infotech Campus, Ballari, Karnataka 583104', '08392-256789', 'info.bly@sirmv.edu.in', 'Dr. H. M. Manjunath');
 
   // 2. Academic Years
   db.prepare(`INSERT OR REPLACE INTO academic_years (id, name, is_current) VALUES (?, ?, ?)`).run('ay-2026-27', '2026-27', 1);
@@ -440,7 +440,7 @@ export function seedDatabase() {
   insertAudit.run('audit-4', 'usr-prin-dvg', 'Dr. B. N. Vishwanath', 'PRINCIPAL', 'OUTPASS_APPROVED', 'outpasses', 'op-1001', JSON.stringify({ student: 'Darshan Gowda', code: '4827', pickup: 'Mr. Ramegowda' }), '192.168.1.2');
   insertAudit.run('audit-5', 'usr-gate-1', 'Basavarajappa K', 'GATE_STAFF', 'GATE_EXIT_RECORDED', 'outpasses', 'op-1001', JSON.stringify({ student: 'Darshan Gowda', exit_time: '14:30:00' }), '192.168.1.90');
 
-  console.log('SIR MV PU College Database seeded successfully with multi-branch data!');
+  console.log('Manchester Technologies Database seeded successfully with multi-branch data!');
 }
 
 // Run if directly executed

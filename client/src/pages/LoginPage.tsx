@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
               <div className="p-2.5 bg-white rounded-2xl shadow-xs border border-[#ded8cb]">
                 <img
                   src="/logo.png"
-                  alt="SIR MV PU College Logo"
+                  alt="Manchester Technologies Logo"
                   className="w-16 h-16 object-contain"
                 />
               </div>
@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
-              SIR MV PU COLLEGE
+              MANCHESTER TECHNOLOGIES
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-1">
               Integrated Campus ERP & Academic Management System
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
       {/* Institutional Footer */}
       <footer className="w-full text-center mt-6">
         <p className="text-xs text-slate-500 font-medium">
-          © 2026-2027 SIR MV PU College, Shivamogga Campus. All rights reserved.
+          © 2026-2027 Manchester Technologies, Shivamogga Campus. All rights reserved.
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
           Secured Institutional ERP • Authorized Access Only

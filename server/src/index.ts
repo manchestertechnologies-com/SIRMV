@@ -86,7 +86,7 @@ app.use('/api/question-papers', questionPapersRouter);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    institution: 'SIR MV PU COLLEGE',
+    institution: 'MANCHESTER TECHNOLOGIES',
     branches: ['Davangere', 'Shivamogga', 'Ballari'],
     timestamp: new Date().toISOString()
   });
@@ -121,7 +121,7 @@ testConnection().then((res) => {
 
 app.listen(PORT, () => {
   console.log(`================================================================`);
-  console.log(`🚀 SIR MV PU COLLEGE Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 MANCHESTER TECHNOLOGIES Server is running on http://localhost:${PORT}`);
   console.log(`🏢 Branches: Davangere, Shivamogga, Ballari`);
   console.log(`================================================================`);
 });

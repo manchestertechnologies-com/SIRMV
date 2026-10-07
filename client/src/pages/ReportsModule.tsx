@@ -153,7 +153,7 @@ export const ReportsModule: React.FC = () => {
             </div>
 
             <span className="text-xs text-slate-500 font-medium">
-              SIR MV PU College • 2026-27 Academic Session
+              Manchester Technologies • 2026-27 Academic Session
             </span>
           </div>
 

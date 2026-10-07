@@ -493,7 +493,7 @@ export const ReportCardGenerator: React.FC = () => {
               <div className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full border border-slate-200 text-center space-y-4">
                 <div className="border-b border-slate-200 pb-4">
                   <h4 className="font-extrabold text-slate-900 text-base">EVALUATED ANSWER SCRIPT RECORD</h4>
-                  <p className="text-xs text-slate-500">SIR MV PU College Examination Cell</p>
+                  <p className="text-xs text-slate-500">Manchester Technologies Examination Cell</p>
                 </div>
                 <div className="py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500 text-xs space-y-2">
                   <FileCheck2 className="w-12 h-12 text-indigo-600 mx-auto opacity-75" />

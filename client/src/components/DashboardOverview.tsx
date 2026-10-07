@@ -66,7 +66,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
                 </span>
               </div>
               <p className="text-sm font-semibold text-slate-300">
-                {currentBranch?.name || 'SIR MV PU College, Davangere'} • Principal: {currentBranch?.principal_name}
+                {currentBranch?.name || 'Manchester Technologies, Davangere'} • Principal: {currentBranch?.principal_name}
               </p>
             </div>
           </div>

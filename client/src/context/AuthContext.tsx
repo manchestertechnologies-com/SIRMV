@@ -46,7 +46,7 @@ export interface Branch {
 const DEFAULT_BRANCHES: Branch[] = [
   {
     id: 'branch-smg',
-    name: 'SIR MV PU College - Shivamogga',
+    name: 'Manchester Technologies - Shivamogga',
     code: 'SIRMV-SMG',
     city: 'Shivamogga',
     address: 'Jail Road, Tilak Nagar, Shivamogga, Karnataka 577201',
@@ -168,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: identifier.includes('@') ? identifier : `${identifier}@sirmv.edu.in`,
           phone: '+91 81822 55667',
           branch_id: 'branch-smg',
-          branch_name: 'SIR MV PU College - Shivamogga',
+          branch_name: 'Manchester Technologies - Shivamogga',
           branch_code: 'SIRMV-SMG',
           branch_city: 'Shivamogga'
         };

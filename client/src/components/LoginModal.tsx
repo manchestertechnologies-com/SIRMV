@@ -57,7 +57,7 @@ export const LoginModal: React.FC = () => {
             <div className="w-2 h-5 rounded-full bg-[#3B82F6]"></div>
             <div className="w-2 h-6 rounded-full bg-[#0284C7]"></div>
             <div className="w-2 h-4 rounded-full bg-[#0EA5E9]"></div>
-            <span className="text-[11px] font-bold text-slate-700 ml-1">SIR MV PU COLLEGE</span>
+            <span className="text-[11px] font-bold text-slate-700 ml-1">MANCHESTER TECHNOLOGIES</span>
           </div>
           <h2 className="text-xl font-black text-slate-900 font-heading">Sign In to Campus ERP</h2>
           <p className="text-xs text-slate-500 mt-1">Enter your institutional credentials or choose a demo persona below</p>

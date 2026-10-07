@@ -101,7 +101,7 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6">
         <div className="text-center mb-4 border-b border-slate-200 pb-3">
-          <div className="font-bold text-slate-900">SIR MV PU College</div>
+          <div className="font-bold text-slate-900">Manchester Technologies</div>
           <div className="text-sm font-semibold text-slate-700">{exam.name} — {exam.pu_level}</div>
         </div>
 

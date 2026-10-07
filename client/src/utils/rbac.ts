@@ -197,7 +197,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
     case 'EXAM_DEPARTMENT':
       return {
         roleTitle: 'Exam Department Workspace',
-        roleSubtitle: 'PU-level examination scheduling, seating and invigilation for SIR MV PU College.',
+        roleSubtitle: 'PU-level examination scheduling, seating and invigilation for Manchester Technologies.',
         menuItems: [
           { id: 'dashboard', label: 'Dashboard', icon: IconDashboard, targetTab: 'dashboard-home' },
           { id: 'exam-management', label: 'Exam Management', icon: IconExamManagement, targetTab: 'exam-management', description: 'Exams, rooms, seating & invigilation' },
@@ -213,7 +213,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
     default:
       return {
         roleTitle: 'Institutional Management ERP',
-        roleSubtitle: 'Complete executive administration of SIR MV PU College - Shivamogga Campus.',
+        roleSubtitle: 'Complete executive administration of Manchester Technologies - Shivamogga Campus.',
         menuItems: [
           { id: 'dashboard', label: 'Dashboard', icon: IconDashboard, targetTab: 'dashboard-home' },
           { id: 'staffs', label: 'Staffs', icon: IconStaffs, targetTab: 'staffs' },
