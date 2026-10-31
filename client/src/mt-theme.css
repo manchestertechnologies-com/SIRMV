@@ -97,6 +97,17 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #c9a45f; }
 ::-webkit-scrollbar-track { background: #faf6ee; }
 
+
+/* ---------- progress / percentage bars grow from empty ---------- */
+@keyframes mt-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mt-bar-pre { transform: scaleX(0); transform-origin: left center; }
+.mt-bar-grow {
+  transform-origin: left center;
+  animation: mt-bar-grow 1.2s var(--mt-ease) var(--bd, 0ms) backwards;
+}
+[style*="width"][class*="rounded"] { transition: width 0.9s var(--mt-ease); }
+@media (prefers-reduced-motion: reduce) { .mt-bar-pre { transform: none !important; } .mt-bar-grow { animation: none !important; } }
+
 /* ---------- Keyframes ---------- */
 @keyframes mt-fade-up {
   from { opacity: 0; transform: translateY(12px); }

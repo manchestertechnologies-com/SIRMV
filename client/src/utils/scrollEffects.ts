@@ -68,6 +68,9 @@ export function initScrollEffects() {
     scan(document.body);
   }
 
+  // ---------------- count-up numbers + growing bars ----------------
+  initLiveData(reduce);
+
   // ---------------- scroll progress + back to top ----------------
   const bar = document.createElement('div');
   bar.id = 'mt-progress';
@@ -94,4 +97,154 @@ export function initScrollEffects() {
   top.addEventListener('click', () => {
     (current || document.scrollingElement)?.scrollTo({ top: 0, behavior: 'smooth' });
   });
+}
+
+
+// ---------------------------------------------------------------------------
+// Live data: statistics count up from zero to their real value when they scroll
+// into view (and again, from the old value, whenever the data changes), and
+// progress / percentage bars grow from empty to their width.
+// The numbers are changed in place on the existing text node, so React keeps
+// working normally.
+// ---------------------------------------------------------------------------
+const NUM_RE = /^(\s*)([₹$€+-]?)(\d{1,3}(?:,\d{2,3})*|\d+)(\.\d+)?(\s?(?:%|\+|k|K|L|Cr)?)(\s*)$/;
+const NUM_SKIP = 'table, input, select, textarea, option, time, [data-no-count], .font-mono';
+const BAR_SELECTOR =
+  'main [style*="width"][class*="rounded"], main [style*="width"][class*="h-1"], main [style*="width"][class*="h-2"], main [style*="width"][class*="h-3"]';
+
+interface CountState { target: number; shown: number; text: string; raf: number; fmt: (n: number) => string }
+const counts = new WeakMap<Text, CountState>();
+
+function parseNumber(text: string) {
+  const m = NUM_RE.exec(text);
+  if (!m) return null;
+  const [, lead, sym, int, dec, suffix, trail] = m;
+  const plain = int.replace(/,/g, '');
+  if (plain.length > 8) return null; // phone numbers, ids
+  if (!dec && !suffix.trim() && !sym && /^(19|20|21)\d\d$/.test(plain)) return null; // years
+  const decimals = dec ? dec.length - 1 : 0;
+  const value = parseFloat(plain + (dec || ''));
+  const grouped = int.includes(',');
+  const fmt = (n: number) => {
+    const body = grouped
+      ? n.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+      : n.toFixed(decimals);
+    return `${lead}${sym}${body}${suffix}${trail}`;
+  };
+  return { value, fmt };
+}
+
+function initLiveData(reduce: boolean) {
+  if (reduce) return;
+
+  const animate = (node: Text, st: CountState, from: number) => {
+    cancelAnimationFrame(st.raf);
+    const dur = 1300;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - k, 3);
+      st.shown = from + (st.target - from) * eased;
+      st.text = k >= 1 ? st.fmt(st.target) : st.fmt(st.shown);
+      node.nodeValue = st.text;
+      if (k < 1) st.raf = requestAnimationFrame(step);
+    };
+    st.raf = requestAnimationFrame(step);
+  };
+
+  const countIO = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const el = e.target as HTMLElement;
+        countIO.unobserve(el);
+        const node = el.firstChild as Text | null;
+        const st = node && counts.get(node);
+        if (node && st) animate(node, st, 0);
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  const tagCount = (el: HTMLElement) => {
+    if (el.dataset.mtCount) return;
+    if (el.childNodes.length !== 1 || el.firstChild!.nodeType !== 3) return;
+    if (el.closest(NUM_SKIP)) return;
+    const cls = el.className && typeof el.className === 'string' ? el.className : '';
+    if (!/font-(semibold|bold|extrabold|black)/.test(cls)) return;
+    const node = el.firstChild as Text;
+    const parsed = parseNumber(node.nodeValue || '');
+    if (!parsed) return;
+    el.dataset.mtCount = '1';
+    const st: CountState = { target: parsed.value, shown: 0, text: '', raf: 0, fmt: parsed.fmt };
+    counts.set(node, st);
+    node.nodeValue = st.fmt(0); // start at zero before the first paint
+    st.text = node.nodeValue;
+    countIO.observe(el);
+  };
+
+  // bars grow from empty (scaleX keeps React's inline width untouched)
+  const barIO = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const el = e.target as HTMLElement;
+        barIO.unobserve(el);
+        const delay = Number(el.dataset.mtBarDelay || 0);
+        el.style.setProperty('--bd', `${delay}ms`);
+        el.classList.remove('mt-bar-pre');
+        el.classList.add('mt-bar-grow');
+        window.setTimeout(() => el.classList.remove('mt-bar-grow'), 1800 + delay);
+      });
+    },
+    { threshold: 0.1 }
+  );
+  let barSeq = 0;
+  const tagBar = (el: HTMLElement) => {
+    if (el.dataset.mtBar) return;
+    const w = el.style.width;
+    if (!/%$/.test(w) || w === '100%') return;
+    const parent = el.parentElement;
+    if (!parent || el.offsetHeight > 20 || parent.offsetHeight > 24 || el.closest(NUM_SKIP)) return;
+    el.dataset.mtBar = '1';
+    el.dataset.mtBarDelay = String(Math.min(barSeq++, 8) * 90);
+    el.classList.add('mt-bar-pre');
+    barIO.observe(el);
+    window.setTimeout(() => { barSeq = 0; }, 200);
+  };
+
+  const scanAll = (root: ParentNode) => {
+    root.querySelectorAll?.('main *').forEach((n) => {
+      const el = n as HTMLElement;
+      if (el.children.length === 0) tagCount(el);
+    });
+    if (root instanceof HTMLElement && root.matches('main *')) {
+      if (root.children.length === 0) tagCount(root);
+    }
+    if (root instanceof HTMLElement && root.matches(BAR_SELECTOR)) tagBar(root);
+    root.querySelectorAll?.(BAR_SELECTOR).forEach((n) => tagBar(n as HTMLElement));
+  };
+
+  const mo = new MutationObserver((muts) => {
+    for (const m of muts) {
+      if (m.type === 'childList') {
+        m.addedNodes.forEach((n) => { if (n.nodeType === 1) scanAll(n as HTMLElement); });
+      } else if (m.type === 'characterData') {
+        // data changed (e.g. API response replaced the placeholder) -> count to the new value
+        const node = m.target as Text;
+        const st = counts.get(node);
+        if (!st || node.nodeValue === st.text) continue; // our own write
+        const parsed = parseNumber(node.nodeValue || '');
+        if (!parsed) { counts.delete(node); continue; }
+        const from = st.shown;
+        st.target = parsed.value;
+        st.fmt = parsed.fmt;
+        node.nodeValue = parsed.fmt(from);
+        st.text = node.nodeValue;
+        animate(node, st, from);
+      }
+    }
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+  scanAll(document.body);
 }
