@@ -592,7 +592,7 @@ export const QuestionPaperSuite: React.FC = () => {
                         </label>
 
                         {subj.selected && (
-                          <div className="flex items-center gap-3 text-xs">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
                             <div className="flex items-center gap-1">
                               <span className="text-slate-500 text-[11px]">Questions:</span>
                               <input

@@ -5,6 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { initScrollEffects } from './utils/scrollEffects';
 import { initUiEffects } from './utils/uiEffects';
+import { initSelectMenu } from './utils/selectMenu';
 
 // Registers our custom service worker (client/src/sw.ts) and keeps it updated.
 // Registration itself is silent/automatic — this only makes the background
@@ -38,6 +39,7 @@ if ('serviceWorker' in navigator) {
 
 initScrollEffects();
 initUiEffects();
+initSelectMenu();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

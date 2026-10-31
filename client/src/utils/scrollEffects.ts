@@ -24,7 +24,7 @@ export function initScrollEffects() {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left)
           .forEach((e) => {
             const el = e.target as HTMLElement;
-            el.style.setProperty('--d', `${Math.min(batch, 10) * 70}ms`);
+            el.style.setProperty('--d', `${Math.min(batch, 10) * 35}ms`);
             batch += 1;
             el.classList.add('mt-in');
             io.unobserve(el);
@@ -32,7 +32,7 @@ export function initScrollEffects() {
             window.setTimeout(() => {
               el.classList.remove('mt-pre', 'mt-in', 'mt-from-left', 'mt-from-right');
               el.style.removeProperty('--d');
-            }, 1900);
+            }, 900);
           });
         if (batchTimer) window.clearTimeout(batchTimer);
         batchTimer = window.setTimeout(() => { batch = 0; }, 160);
@@ -139,7 +139,7 @@ function initLiveData(reduce: boolean) {
 
   const animate = (node: Text, st: CountState, from: number) => {
     cancelAnimationFrame(st.raf);
-    const dur = 1300;
+    const dur = 900;
     const t0 = performance.now();
     const step = (now: number) => {
       const k = Math.min(1, (now - t0) / dur);
@@ -207,7 +207,7 @@ function initLiveData(reduce: boolean) {
     const parent = el.parentElement;
     if (!parent || el.offsetHeight > 20 || parent.offsetHeight > 24 || el.closest(NUM_SKIP)) return;
     el.dataset.mtBar = '1';
-    el.dataset.mtBarDelay = String(Math.min(barSeq++, 8) * 90);
+    el.dataset.mtBarDelay = String(Math.min(barSeq++, 8) * 50);
     el.classList.add('mt-bar-pre');
     barIO.observe(el);
     window.setTimeout(() => { barSeq = 0; }, 200);

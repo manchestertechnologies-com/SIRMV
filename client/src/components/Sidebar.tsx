@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       return !c;
     });
   };
-  const label = 'transition-opacity duration-300 md:group-data-[collapsed=true]/sb:opacity-0 md:group-data-[collapsed=true]/sb:group-hover/sb:opacity-100';
+  const label = 'transition-opacity duration-200 md:group-data-[collapsed=true]/sb:opacity-0 md:group-data-[collapsed=true]/sb:group-hover/sb:opacity-100';
 
   // Selecting a tab always navigates; on mobile it also closes the drawer
   // so the newly chosen page is immediately visible instead of staying
@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
   return (
     <div
       data-collapsed={collapsed}
-      className="group/sb md:relative md:shrink-0 md:h-full md:w-[var(--sbw)] transition-[width] duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+      className="group/sb md:relative md:shrink-0 md:h-full md:w-[var(--sbw)] transition-[width] duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
       style={{ ['--sbw' as any]: collapsed ? '68px' : '224px' }}
     >
       {/* Backdrop — mobile only, shown while the drawer is open */}
@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           fixed md:absolute top-0 left-0 h-screen md:h-full z-50
           mt-sidebar w-72 sm:w-64 md:w-[var(--sbw)] md:group-data-[collapsed=true]/sb:hover:w-56 overflow-hidden
           flex flex-col select-none safe-top safe-bottom
-          transform [transition-property:transform,width] duration-[450ms] [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]
+          transform [transition-property:transform,width] duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         `}
       >

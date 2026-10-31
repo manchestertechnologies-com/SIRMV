@@ -128,6 +128,16 @@ export function App() {
     'report-card': 'Report Card'
   };
 
+  // While the saved session is being checked, show a light splash instead of an empty app shell
+  if (!user && isLoading) {
+    return (
+      <div className="mt-splash" role="status" aria-label="Loading">
+        <img src="/logo.png" alt="" />
+        <div className="mt-splash-bar" />
+      </div>
+    );
+  }
+
   // Show Login Page if unauthenticated
   if (!user && !isLoading) {
     return <LoginPage />;

@@ -563,7 +563,7 @@ export const StudentsModule: React.FC = () => {
                   onClick={() => setSelectedResStatus(opt.value)}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${
                     selectedResStatus === opt.value
-                      ? 'bg-amber-600 text-white shadow-xs'
+                      ? 'bg-[#a3161b] text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
