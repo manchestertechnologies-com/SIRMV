@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-[#fdfcf9] border-b border-[#ded8cb] shadow-2xs">
+    <header className="mt-navbar sticky top-0 z-40 border-b border-[#ecdcc6] shadow-2xs">
       <div className="px-3 sm:px-4 md:px-6 flex items-center justify-between h-16 gap-2">
         
         {/* Left: Hamburger (mobile) + Brand & Campus Identification */}
@@ -150,11 +150,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           </button>
 
           {/* Official Institution Logo */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-2xs shrink-0 border border-[#ded8cb]">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black flex items-center justify-center p-0.5 shadow-md shrink-0 ring-1 ring-[#c28535]/60 transition-transform duration-500 hover:rotate-6 hover:scale-110">
             <img
               src="/logo.png"
               alt="Manchester Technologies Logo"
-              className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+              className="w-full h-full object-contain rounded-lg"
             />
           </div>
 

@@ -45,31 +45,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       <aside
         className={`
           fixed md:relative top-0 left-0 h-screen md:h-auto md:min-h-screen z-50 md:z-auto
-          w-72 sm:w-64 md:w-56 shrink-0 bg-[#ebe7de] border-r border-[#ded9cf]
+          mt-sidebar w-72 sm:w-64 md:w-56 shrink-0
           flex flex-col select-none safe-top safe-bottom
           transform transition-transform duration-[380ms] [transition-timing-function:var(--ease-ios)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         `}
       >
         {/* Top Brand / Official Logo */}
-        <div className="p-3.5 flex items-center gap-2.5 border-b border-[#ded9cf]/60">
+        <div className="p-3.5 flex items-center gap-2.5 border-b border-white/10">
           <img
             src="/logo.png"
             alt="Manchester Technologies Logo"
-            className="w-10 h-10 object-contain drop-shadow-xs shrink-0"
+            className="w-10 h-10 object-contain rounded-xl ring-1 ring-[#c28535]/60 shadow-lg shadow-black/40 shrink-0 transition-transform duration-500 hover:rotate-6 hover:scale-110"
           />
           <div className="min-w-0 flex-1">
-            <div className="font-extrabold text-slate-900 text-[13px] tracking-tight font-heading leading-tight truncate">
+            <div className="font-extrabold text-white text-[13px] tracking-tight font-heading leading-tight truncate">
               MANCHESTER TECHNOLOGIES
             </div>
-            <div className="text-[10px] text-blue-700 font-extrabold uppercase tracking-wider truncate">
+            <div className="text-[10px] text-[#f3c392] font-extrabold uppercase tracking-wider truncate">
               DAVANGERE CAMPUS
             </div>
           </div>
           {/* Close button — mobile only */}
           <button
             onClick={onClose}
-            className="press md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-[#dfdbd2] hover:text-slate-800 transition shrink-0"
+            className="press md:hidden p-1.5 rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition shrink-0"
             aria-label="Close menu"
           >
             <X className="w-4.5 h-4.5" />
@@ -88,11 +88,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               return (
                 <button
                   key={item.id}
+                  data-active={isActive}
+                  style={{ ['--i' as any]: menuItems.indexOf(item) }}
                   onClick={() => handleSelect(item.targetTab)}
-                  className={`press w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-colors duration-150 ${
+                  className={`press mt-nav-item mt-slide w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-200 ${
                     isActive
-                      ? 'bg-[#dfdbd2] text-slate-900 font-semibold'
-                      : 'text-slate-700 hover:bg-[#e4dfd6] hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white font-semibold shadow-lg shadow-red-900/40'
+                      : 'text-white/75 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <div className="shrink-0 flex items-center justify-center">
@@ -105,8 +107,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           </nav>
 
           {/* Other Tools Section */}
-          <div className="pt-3 mt-2 border-t border-[#ded9cf]">
-            <div className="px-3 pb-1 text-[11px] font-bold text-slate-500">
+          <div className="pt-3 mt-2 border-t border-white/10">
+            <div className="px-3 pb-1 text-[11px] font-bold text-[#f3c392]/80 uppercase tracking-wider">
               Other Tools
             </div>
             <nav className="space-y-0.5">
@@ -117,11 +119,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 return (
                   <button
                     key={item.id}
+                    data-active={isActive}
                     onClick={() => handleSelect(item.targetTab)}
-                    className={`press w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-colors duration-150 ${
+                    className={`press mt-nav-item w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-200 ${
                       isActive
-                        ? 'bg-[#dfdbd2] text-slate-900 font-semibold'
-                        : 'text-slate-700 hover:bg-[#e4dfd6] hover:text-slate-900'
+                        ? 'bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white font-semibold shadow-lg shadow-red-900/40'
+                        : 'text-white/75 hover:bg-white/10 hover:text-white'
                     }`}
                   >
                     <div className="shrink-0 flex items-center justify-center">

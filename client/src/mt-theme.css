@@ -1,0 +1,364 @@
+/* ==========================================================================
+   Manchester Technologies / SIRMV theme
+   Palette taken from the SIRMV logo: crimson red, white, gold and navy ink.
+
+   1. Design tokens — remaps Tailwind's blue / indigo / sky scales to the
+      brand crimson, so every existing `bg-blue-600`, `text-indigo-700`,
+      `ring-blue-500` ... across the app turns brand-red without touching
+      each file. Semantic colours (emerald, amber, rose, violet...) are
+      left alone so success / warning / error states still read correctly.
+   2. Motion system — page entrance, staggered boxes, hover lift + glow,
+      button shine, input focus, modal pop-in.
+   3. Login page + dashboard tile helpers.
+   ========================================================================== */
+
+@theme {
+  /* Brand crimson (from the logo ring, #E81F25) */
+  --color-blue-50: #fff1f1;
+  --color-blue-100: #ffe0e1;
+  --color-blue-200: #ffc7c9;
+  --color-blue-300: #ff9ea2;
+  --color-blue-400: #f96b72;
+  --color-blue-500: #ef3d46;
+  --color-blue-600: #e81f25;
+  --color-blue-700: #c3141a;
+  --color-blue-800: #a01418;
+  --color-blue-900: #821618;
+  --color-blue-950: #470709;
+
+  --color-indigo-50: #fff1f1;
+  --color-indigo-100: #ffe0e1;
+  --color-indigo-200: #ffc7c9;
+  --color-indigo-300: #ff9ea2;
+  --color-indigo-400: #f96b72;
+  --color-indigo-500: #ef3d46;
+  --color-indigo-600: #e81f25;
+  --color-indigo-700: #c3141a;
+  --color-indigo-800: #a01418;
+  --color-indigo-900: #821618;
+  --color-indigo-950: #470709;
+
+  --color-sky-50: #fff7ed;
+  --color-sky-100: #ffedd5;
+  --color-sky-200: #fed7aa;
+  --color-sky-300: #fdba74;
+  --color-sky-400: #fb923c;
+  --color-sky-500: #f2711c;
+  --color-sky-600: #e8590c;
+  --color-sky-700: #c2410c;
+  --color-sky-800: #9a3412;
+  --color-sky-900: #7c2d12;
+  --color-sky-950: #431407;
+
+  /* Gold (logo turban band, #C28535) and navy ink */
+  --color-gold-50: #fbf6ec;
+  --color-gold-100: #f5e8cc;
+  --color-gold-200: #ecd29b;
+  --color-gold-300: #e0b768;
+  --color-gold-400: #d09e45;
+  --color-gold-500: #c28535;
+  --color-gold-600: #a66b27;
+  --color-gold-700: #86521f;
+  --color-navy-700: #1c2552;
+  --color-navy-800: #141b3f;
+  --color-navy-900: #0e1330;
+  --color-navy-950: #090d22;
+}
+
+:root {
+  --mt-red: #e81f25;
+  --mt-red-dark: #b3121a;
+  --mt-gold: #c28535;
+  --mt-gold-light: #f3c392;
+  --mt-navy: #0e1330;
+  --mt-navy-2: #1c2552;
+  --mt-cream: #fbf8f4;
+  --mt-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------- Canvas ---------- */
+body {
+  background-color: var(--mt-cream);
+  background-image:
+    radial-gradient(900px 500px at 100% -10%, rgba(232, 31, 37, 0.06), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(194, 133, 53, 0.08), transparent 60%);
+  background-attachment: fixed;
+}
+::selection { background: var(--mt-red); color: #fff; }
+::-webkit-scrollbar-thumb { background: #d9c3a3; }
+::-webkit-scrollbar-thumb:hover { background: var(--mt-gold); }
+
+/* ---------- Keyframes ---------- */
+@keyframes mt-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes mt-pop-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes mt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mt-slide-right {
+  from { opacity: 0; transform: translateX(-14px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes mt-shine {
+  from { transform: translateX(-130%) skewX(-18deg); }
+  to   { transform: translateX(260%) skewX(-18deg); }
+}
+@keyframes mt-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(24px, -30px, 0) scale(1.08); }
+}
+@keyframes mt-float-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(-30px, 22px, 0) scale(1.1); }
+}
+@keyframes mt-spin-slow { to { transform: rotate(360deg); } }
+@keyframes mt-pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 31, 37, 0.45); }
+  100% { box-shadow: 0 0 0 16px rgba(232, 31, 37, 0); }
+}
+@keyframes mt-gradient-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Staggered reveal helper: any element with style="--i: N" */
+.mt-reveal {
+  animation: mt-fade-up 0.6s var(--mt-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.mt-pop {
+  animation: mt-pop-in 0.55s var(--mt-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.mt-slide {
+  animation: mt-slide-right 0.5s var(--mt-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* ---------- Page entrance (main re-mounts on tab change, see App.tsx) ----------
+   `backwards` fill + no end transform, so nothing keeps a transform after the
+   animation ends (a lingering transform would trap fixed-position modals). */
+main:not([data-static]) > * { animation: mt-fade-up 0.5s var(--mt-ease) backwards; }
+main:not([data-static]) > * > * { animation: mt-fade-up 0.55s var(--mt-ease) backwards; }
+main:not([data-static]) > * > *:nth-child(1) { animation-delay: 40ms; }
+main:not([data-static]) > * > *:nth-child(2) { animation-delay: 100ms; }
+main:not([data-static]) > * > *:nth-child(3) { animation-delay: 160ms; }
+main:not([data-static]) > * > *:nth-child(4) { animation-delay: 220ms; }
+main:not([data-static]) > * > *:nth-child(5) { animation-delay: 280ms; }
+main:not([data-static]) > * > *:nth-child(n + 6) { animation-delay: 340ms; }
+
+/* ---------- Cards: hover glow ---------- */
+@layer base {
+  [class*="rounded-2xl"][class*="border"],
+  [class*="rounded-xl"][class*="border"],
+  .clean-card, .tardigrade-tile {
+    transition: border-color 0.25s ease, box-shadow 0.3s ease, background-color 0.25s ease, transform 0.3s var(--mt-ease);
+  }
+  button, a, [role="button"], select, input, textarea {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity, filter;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+  }
+}
+main [class*="rounded-2xl"][class*="border"]:hover {
+  border-color: rgba(232, 31, 37, 0.32);
+  box-shadow: 0 14px 34px -16px rgba(232, 31, 37, 0.28), 0 2px 8px rgba(14, 19, 48, 0.05);
+}
+/* Clickable boxes also lift */
+main button[class*="rounded-2xl"]:hover,
+main button[class*="rounded-xl"][class*="border"]:hover,
+main .group[class*="rounded-2xl"]:hover,
+.clean-card-interactive:hover,
+.tardigrade-tile:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 31, 37, 0.45);
+  box-shadow: 0 18px 38px -16px rgba(232, 31, 37, 0.35), 0 4px 10px rgba(14, 19, 48, 0.06);
+}
+main button[class*="rounded-2xl"]:active,
+main button[class*="rounded-xl"][class*="border"]:active { transform: translateY(-1px) scale(0.985); }
+
+/* ---------- Buttons ---------- */
+button:not(:disabled):active { filter: brightness(0.95); }
+
+/* Primary (brand) buttons get a gold-tinted shine sweep on hover */
+button[class*="bg-blue-6"], button[class*="bg-indigo-6"], button[class*="bg-blue-7"], button[class*="bg-indigo-7"],
+.mt-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+button[class*="bg-blue-6"]::after, button[class*="bg-indigo-6"]::after,
+button[class*="bg-blue-7"]::after, button[class*="bg-indigo-7"]::after,
+.mt-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+  pointer-events: none;
+  z-index: -1;
+}
+button[class*="bg-blue-6"]:not(:disabled):hover::after, button[class*="bg-indigo-6"]:not(:disabled):hover::after,
+button[class*="bg-blue-7"]:not(:disabled):hover::after, button[class*="bg-indigo-7"]:not(:disabled):hover::after,
+.mt-btn:not(:disabled):hover::after {
+  animation: mt-shine 0.9s ease;
+}
+button[class*="bg-blue-6"]:not(:disabled):hover, button[class*="bg-indigo-6"]:not(:disabled):hover {
+  box-shadow: 0 10px 24px -8px rgba(232, 31, 37, 0.55);
+}
+
+/* ---------- Inputs ---------- */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus, textarea:focus {
+  border-color: var(--mt-red) !important;
+  box-shadow: 0 0 0 4px rgba(232, 31, 37, 0.12) !important;
+  outline: none;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--mt-red); }
+
+/* ---------- Tables ---------- */
+tbody tr { transition: background-color 0.18s ease; }
+tbody tr:hover { background-color: rgba(232, 31, 37, 0.045); }
+
+/* ---------- Modals / overlays ---------- */
+[class*="fixed"][class*="inset-0"]:not([class*="animate-"]):not([class*="md:hidden"]) {
+  animation: mt-fade-in 0.25s ease backwards;
+}
+[class*="fixed"][class*="inset-0"] > [class*="rounded-2xl"]:not([class*="animate-"]),
+[class*="fixed"][class*="inset-0"] > [class*="rounded-3xl"]:not([class*="animate-"]),
+[class*="fixed"][class*="inset-0"] > div > [class*="rounded-2xl"]:not([class*="animate-"]) {
+  animation: mt-pop-in 0.38s var(--mt-ease) backwards;
+}
+
+/* ==========================================================================
+   Navbar
+   ========================================================================== */
+.mt-navbar { position: sticky; background: rgba(255, 255, 255, 0.86) !important; backdrop-filter: saturate(160%) blur(14px); }
+.mt-navbar::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(90deg, var(--mt-red), var(--mt-gold), var(--mt-red));
+  background-size: 200% 100%;
+  animation: mt-gradient-pan 6s linear infinite alternate;
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   Sidebar (navy chrome)
+   ========================================================================== */
+.mt-sidebar {
+  background:
+    radial-gradient(420px 260px at 0% 0%, rgba(232, 31, 37, 0.28), transparent 65%),
+    radial-gradient(360px 260px at 100% 100%, rgba(194, 133, 53, 0.18), transparent 65%),
+    linear-gradient(180deg, #121940 0%, #0b1030 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+.mt-nav-item { position: relative; overflow: hidden; }
+.mt-nav-item::before {
+  content: "";
+  position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--mt-gold-light), var(--mt-red));
+  transform: scaleY(0); transition: transform 0.3s var(--mt-ease);
+}
+.mt-nav-item:hover { transform: translateX(3px); }
+.mt-nav-item:hover::before, .mt-nav-item[data-active="true"]::before { transform: scaleY(1); }
+
+/* ==========================================================================
+   Dashboard tiles + hero
+   ========================================================================== */
+.mt-hero {
+  position: relative; overflow: hidden; color: #fff;
+  background: linear-gradient(120deg, #0e1330 0%, #1c2552 55%, #3a1226 100%);
+  background-size: 140% 140%;
+  animation: mt-gradient-pan 9s ease-in-out infinite alternate;
+}
+.mt-hero::before, .mt-hero::after { content: ""; position: absolute; border-radius: 9999px; filter: blur(40px); pointer-events: none; }
+.mt-hero::before { width: 260px; height: 260px; right: -60px; top: -90px; background: rgba(232, 31, 37, 0.5); animation: mt-float 11s ease-in-out infinite; }
+.mt-hero::after { width: 200px; height: 200px; left: 25%; bottom: -110px; background: rgba(194, 133, 53, 0.45); animation: mt-float-b 13s ease-in-out infinite; }
+
+.mt-tile { position: relative; overflow: hidden; isolation: isolate; }
+.mt-tile::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity 0.35s ease;
+  background: radial-gradient(260px 160px at var(--mx, 50%) var(--my, 0%), rgba(232, 31, 37, 0.1), transparent 70%);
+}
+.mt-tile:hover::before { opacity: 1; }
+.mt-tile::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: linear-gradient(90deg, var(--mt-red), var(--mt-gold));
+  transform: scaleX(0); transform-origin: left; transition: transform 0.4s var(--mt-ease);
+}
+.mt-tile:hover::after { transform: scaleX(1); }
+.mt-tile .mt-tile-icon { transition: transform 0.4s var(--mt-ease); }
+.mt-tile:hover .mt-tile-icon { transform: translateY(-3px) scale(1.12) rotate(-3deg); }
+
+/* ==========================================================================
+   Login page
+   ========================================================================== */
+.mt-login-bg {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #090d22 0%, #141b3f 50%, #2a1024 100%);
+}
+.mt-blob { position: absolute; border-radius: 9999px; filter: blur(60px); pointer-events: none; }
+.mt-blob-a { width: 380px; height: 380px; background: rgba(232, 31, 37, 0.55); top: -120px; left: -80px; animation: mt-float 12s ease-in-out infinite; }
+.mt-blob-b { width: 320px; height: 320px; background: rgba(194, 133, 53, 0.45); bottom: -100px; right: -60px; animation: mt-float-b 14s ease-in-out infinite; }
+.mt-blob-c { width: 220px; height: 220px; background: rgba(60, 80, 200, 0.35); top: 45%; left: 55%; animation: mt-float 17s ease-in-out infinite; }
+.mt-grid-lines {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+.mt-ring { position: absolute; border-radius: 9999px; border: 1px dashed rgba(243, 195, 146, 0.35); pointer-events: none; animation: mt-spin-slow 40s linear infinite; }
+
+.mt-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  transition: transform 0.35s var(--mt-ease), background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.35s ease;
+}
+.mt-glass:hover {
+  transform: translateY(-5px) scale(1.02);
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(243, 195, 146, 0.5);
+  box-shadow: 0 18px 40px -18px rgba(232, 31, 37, 0.6);
+}
+
+.mt-field { position: relative; }
+.mt-field input { padding-top: 1.35rem; padding-bottom: 0.45rem; }
+.mt-field label {
+  position: absolute; left: 2.5rem; top: 0.95rem; font-size: 0.75rem; font-weight: 700; color: #64748b;
+  pointer-events: none; transform-origin: left top; transition: transform 0.25s var(--mt-ease), color 0.25s ease;
+}
+.mt-field input:focus + label,
+.mt-field input:not(:placeholder-shown) + label { transform: translateY(-0.6rem) scale(0.82); color: var(--mt-red); }
+.mt-field .mt-underline {
+  position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--mt-red), var(--mt-gold));
+  transform: scaleX(0); transform-origin: left; transition: transform 0.4s var(--mt-ease);
+}
+.mt-field:focus-within .mt-underline { transform: scaleX(1); }
+
+.mt-preset { transition: transform 0.25s var(--mt-ease), border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.25s ease; }
+.mt-preset:hover { transform: translateY(-3px); border-color: rgba(232, 31, 37, 0.5); box-shadow: 0 10px 22px -12px rgba(232, 31, 37, 0.45); }
+.mt-preset[data-active="true"] { border-color: var(--mt-red); background: #fff1f1; }
+
+.mt-pulse { animation: mt-pulse-ring 1.8s ease-out infinite; }
+
+/* ---------- Accessibility ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media print {
+  main > *, main > * > * { animation: none !important; }
+}

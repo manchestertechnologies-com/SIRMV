@@ -133,7 +133,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#ebe7de] text-slate-800 font-sans">
+    <div className="min-h-screen flex bg-transparent text-slate-800 font-sans">
       <ToastContainer />
       {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
       <Sidebar
@@ -147,7 +147,7 @@ export function App() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => setActiveTab(tab)} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
+        <main key={activeTab} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => setActiveTab(tab)} />
           ) : activeTab === 'staffs' ? (

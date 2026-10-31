@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, LogIn, AlertCircle, Eye, EyeOff, Shield } from 'lucide-react';
+import {
+  Lock, Mail, LogIn, AlertCircle, Eye, EyeOff, Shield, GraduationCap, CalendarCheck2,
+  BedDouble, FileBarChart2, Sparkles
+} from 'lucide-react';
+
+const FEATURES = [
+  { icon: CalendarCheck2, title: 'Smart Attendance', text: 'Lecture, hostel & exam duty tracking' },
+  { icon: GraduationCap, title: 'Exams & Marks', text: '3D seating, QR invigilation, report cards' },
+  { icon: BedDouble, title: 'Hostel & Outpass', text: 'Rooms, roll-calls and gate control' },
+  { icon: FileBarChart2, title: 'Live Reports', text: 'Insights for every role, in real time' }
+];
+
+const PRESETS = [
+  { id: 'admin.demo@college.test', label: 'Administrator' },
+  { id: 'principal.demo@college.test', label: 'Principal' },
+  { id: 'hod.demo@college.test', label: 'HOD' },
+  { id: 'teacher.demo@college.test', label: 'Faculty' },
+  { id: 'floor.demo@college.test', label: 'Floor Attender' },
+  { id: 'staff.demo@college.test', label: 'Office Staff' },
+  { id: 'warden.demo@college.test', label: 'Warden' },
+  { id: 'student.demo@college.test', label: 'Student' },
+  { id: 'parent.demo@college.test', label: 'Parent' }
+];
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -25,172 +47,218 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f2eb] flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8 font-sans selection:bg-blue-600 selection:text-white">
-      
-      {/* Top Header spacer */}
-      <div />
+    <div className="min-h-screen lg:grid lg:grid-cols-[1.05fr_1fr] font-sans selection:bg-[#e81f25] selection:text-white">
 
-      {/* Main Login Card */}
-      <div className="w-full max-w-md mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-[#ded8cb]">
+      {/* ------------------------- Brand panel ------------------------- */}
+      <aside className="mt-login-bg hidden lg:flex flex-col justify-between p-12 text-white">
+        <div className="mt-blob mt-blob-a" />
+        <div className="mt-blob mt-blob-b" />
+        <div className="mt-blob mt-blob-c" />
+        <div className="mt-grid-lines" />
+        <div className="mt-ring w-[520px] h-[520px] -right-40 top-24" />
+        <div className="mt-ring w-[320px] h-[320px] left-10 bottom-10" style={{ animationDirection: 'reverse' }} />
 
-          {/* Official Institution Brand Header */}
-          <div className="bg-gradient-to-b from-[#faf8f3] to-white p-8 border-b border-[#eae4d5] text-center rounded-t-2xl">
-            <div className="flex justify-center mb-4">
-              <div className="p-2.5 bg-white rounded-2xl shadow-xs border border-[#ded8cb]">
-                <img
-                  src="/logo.png"
-                  alt="Manchester Technologies Logo"
-                  className="w-16 h-16 object-contain"
-                />
-              </div>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ede8dc] text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2 border border-[#ded8cb]">
-              <Shield className="w-3 h-3 text-blue-700" />
-              <span>Davangere Campus</span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
-              MANCHESTER TECHNOLOGIES
-            </h1>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Integrated Campus ERP & Academic Management System
-            </p>
-          </div>
-
-          {/* Form Content */}
-          <div className="p-7 sm:p-8 space-y-5">
-            
-            {/* Error Notification */}
-            {error && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Institutional Email / Username */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Institutional Email / User ID
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. admin@sirmv.edu.in"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white focus:border-transparent transition"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Password
-                  </label>
-                  <span className="text-[11px] font-mono text-slate-500">
-                    Default: <strong className="text-blue-700 font-bold">123456</strong>
-                  </span>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white focus:border-transparent transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-2.5 text-slate-400 hover:text-slate-600 transition"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember Me */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-                  />
-                  <span className="text-xs text-slate-600 font-medium">Remember on this device</span>
-                </label>
-                <span className="text-xs text-slate-400 font-medium hover:text-blue-600 cursor-pointer">
-                  Help / Support
-                </span>
-              </div>
-
-              {/* Sign In Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-bold transition duration-150 flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 disabled:opacity-60 cursor-pointer"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>{loading ? 'Authenticating...' : 'Sign In to Campus ERP'}</span>
-              </button>
-            </form>
-
-            {/* Discreet Role Quick-Selector for Testing */}
-            <div className="pt-4 border-t border-slate-100">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                Institutional Role Presets
-              </label>
-              <select
-                value={identifier}
-                onChange={(e) => {
-                  setIdentifier(e.target.value);
-                  setPassword('Demo@12345');
-                }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition cursor-pointer"
-              >
-                {/* These now match real, working demo accounts seeded in the
-                    database (username == the login identifier shown,
-                    password Demo@12345 for all of them) — picking one and
-                    signing in actually logs in as that role, rather than
-                    the previous placeholder emails that matched no account. */}
-                <option value="admin.demo@college.test">Administrator (admin.demo@college.test)</option>
-                <option value="principal.demo@college.test">Principal Office (principal.demo@college.test)</option>
-                <option value="hod.demo@college.test">HOD Physics (hod.demo@college.test)</option>
-                <option value="teacher.demo@college.test">Teaching Faculty (teacher.demo@college.test)</option>
-                <option value="floor.demo@college.test">Floor Attender (floor.demo@college.test)</option>
-                <option value="staff.demo@college.test">Office Staff (staff.demo@college.test)</option>
-                <option value="warden.demo@college.test">Hostel Warden (warden.demo@college.test)</option>
-                <option value="student.demo@college.test">Student Account (student.demo@college.test)</option>
-                <option value="parent.demo@college.test">Parent Portal (parent.demo@college.test)</option>
-              </select>
-              <p className="text-[10px] text-slate-400 mt-1.5">Password for every preset: <span className="font-mono font-semibold text-slate-500">Demo@12345</span></p>
-            </div>
-
+        <div className="relative z-10 mt-slide flex items-center gap-3" style={{ ['--i' as any]: 0 }}>
+          <img
+            src="/logo.png"
+            alt="Manchester Technologies Logo"
+            className="w-14 h-14 rounded-2xl object-contain bg-black ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
+          />
+          <div>
+            <div className="font-heading font-black tracking-tight text-lg leading-none">MANCHESTER TECHNOLOGIES</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#f3c392] mt-1">Davangere Campus</div>
           </div>
         </div>
-      </div>
 
-      {/* Institutional Footer */}
-      <footer className="w-full text-center mt-6">
-        <p className="text-xs text-slate-500 font-medium">
-          © 2026-2027 Manchester Technologies, Davangere Campus. All rights reserved.
-        </p>
-        <p className="text-[11px] text-slate-400 mt-1">
-          Secured Institutional ERP • Authorized Access Only
-        </p>
-      </footer>
+        <div className="relative z-10 max-w-xl">
+          <div
+            className="mt-reveal inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-wider uppercase text-[#f3c392]"
+            style={{ ['--i' as any]: 1 }}
+          >
+            <Sparkles className="w-3 h-3" /> Integrated Campus ERP
+          </div>
+          <h1
+            className="mt-reveal font-heading font-black text-5xl xl:text-6xl leading-[1.05] tracking-tight mt-5"
+            style={{ ['--i' as any]: 2 }}
+          >
+            Innovate.<br />
+            Develop.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5a5f] via-[#f3c392] to-[#c28535]">Dominate.</span>
+          </h1>
+          <p className="mt-reveal text-white/65 text-sm mt-5 max-w-md leading-relaxed" style={{ ['--i' as any]: 3 }}>
+            One secure workspace for academics, exams, hostel and administration &mdash; built for every role on campus.
+          </p>
 
+          <div className="grid grid-cols-2 gap-3 mt-9">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div key={f.title} className="mt-glass mt-pop rounded-2xl p-4" style={{ ['--i' as any]: i + 4 }}>
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e81f25] to-[#c28535] flex items-center justify-center shadow-lg shadow-red-900/40">
+                    <Icon className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  <div className="font-heading font-bold text-sm mt-3">{f.title}</div>
+                  <div className="text-[11px] text-white/60 mt-0.5 leading-snug">{f.text}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-[11px] text-white/45">
+          &copy; 2026-2027 Manchester Technologies, Davangere Campus. All rights reserved.
+        </p>
+      </aside>
+
+      {/* -------------------------- Form panel -------------------------- */}
+      <main data-static className="relative flex flex-col justify-start lg:justify-center items-center px-4 sm:px-8 pt-10 pb-10 min-h-screen lg:min-h-0 bg-[#fbf8f4]">
+        {/* Mobile-only brand backdrop */}
+        <div className="lg:hidden mt-login-bg inset-x-0 top-0 h-60 rounded-b-[2rem]" style={{ position: 'absolute' }}>
+          <div className="mt-blob mt-blob-a" />
+          <div className="mt-blob mt-blob-b" />
+        </div>
+
+        <div className="relative w-full max-w-md">
+          <div className="lg:hidden mt-reveal flex flex-col items-center text-white mb-6" style={{ ['--i' as any]: 0 }}>
+            <img
+              src="/logo.png"
+              alt="Manchester Technologies Logo"
+              className="w-16 h-16 rounded-2xl object-contain bg-black ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
+            />
+            <div className="font-heading font-black tracking-tight mt-3 text-lg">MANCHESTER TECHNOLOGIES</div>
+          </div>
+
+          <div className="mt-pop bg-white rounded-3xl border border-[#ecdcc6] shadow-2xl shadow-[#0e1330]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
+            <div className="h-1.5 bg-gradient-to-r from-[#e81f25] via-[#c28535] to-[#e81f25] [background-size:200%_100%] animate-[mt-gradient-pan_4s_linear_infinite_alternate]" />
+
+            <div className="p-7 sm:p-9 space-y-6">
+              <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fff1f1] text-[11px] font-bold text-[#c3141a] tracking-wider uppercase border border-[#ffc7c9]">
+                  <Shield className="w-3 h-3" />
+                  <span>Davangere Campus</span>
+                </div>
+                <h2 className="font-heading font-black text-2xl text-[#0e1330] tracking-tight mt-3">Welcome Back!</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  Sign in to your Campus ERP workspace
+                </p>
+              </div>
+
+              {error && (
+                <div className="mt-pop p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="mt-reveal" style={{ ['--i' as any]: 3 }}>
+                  <div className="mt-field">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-4 z-10" />
+                    <input
+                      id="identifier"
+                      type="text"
+                      required
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder=" "
+                      className="w-full pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:bg-white"
+                    />
+                    <label htmlFor="identifier">Institutional Email / User ID</label>
+                    <span className="mt-underline" />
+                  </div>
+                </div>
+
+                <div className="mt-reveal" style={{ ['--i' as any]: 4 }}>
+                  <div className="mt-field">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-4 z-10" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder=" "
+                      className="w-full pl-10 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:bg-white"
+                    />
+                    <label htmlFor="password">Password</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#e81f25] transition z-10"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <span className="mt-underline" />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 mt-1.5 text-right">
+                    Default: <strong className="text-[#c3141a] font-bold">123456</strong>
+                  </div>
+                </div>
+
+                <div className="mt-reveal flex items-center justify-between" style={{ ['--i' as any]: 5 }}>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300"
+                    />
+                    <span className="text-xs text-slate-600 font-medium">Remember on this device</span>
+                  </label>
+                  <span className="text-xs text-slate-400 font-medium hover:text-[#e81f25] cursor-pointer transition">
+                    Help / Support
+                  </span>
+                </div>
+
+                <div className="mt-reveal" style={{ ['--i' as any]: 6 }}>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="mt-btn w-full py-3.5 px-4 bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 hover:shadow-xl hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 cursor-pointer"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{loading ? 'Authenticating...' : 'Sign In to Campus ERP'}</span>
+                  </button>
+                </div>
+              </form>
+
+              <div className="pt-5 border-t border-slate-100">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Quick Role Presets
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PRESETS.map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      data-active={identifier === p.id}
+                      onClick={() => {
+                        setIdentifier(p.id);
+                        setPassword('Demo@12345');
+                      }}
+                      className="mt-preset mt-pop px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 cursor-pointer"
+                      style={{ ['--i' as any]: i + 7 }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">
+                  Password for every preset: <span className="font-mono font-semibold text-slate-500">Demo@12345</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-center text-[11px] text-slate-400 mt-5 lg:hidden">
+            &copy; 2026-2027 Manchester Technologies, Davangere Campus.
+          </p>
+          <p className="text-center text-[11px] text-slate-400 mt-5 hidden lg:block">
+            Secured Institutional ERP &bull; Authorized Access Only
+          </p>
+        </div>
+      </main>
     </div>
   );
 };
