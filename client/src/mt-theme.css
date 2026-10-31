@@ -72,16 +72,17 @@
   --mt-gold-light: #f3c392;
   --mt-navy: #0e1330;
   --mt-navy-2: #1c2552;
-  --mt-cream: #fbf8f4;
-  --mt-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --mt-cream: #ffffff;
+  --mt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mt-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ---------- Canvas ---------- */
 body {
   background-color: var(--mt-cream);
   background-image:
-    radial-gradient(900px 500px at 100% -10%, rgba(232, 31, 37, 0.06), transparent 60%),
-    radial-gradient(700px 420px at -10% 110%, rgba(194, 133, 53, 0.08), transparent 60%);
+    radial-gradient(1100px 520px at 105% -12%, rgba(232, 31, 37, 0.045), transparent 62%),
+    radial-gradient(900px 480px at -12% 112%, rgba(194, 133, 53, 0.06), transparent 62%);
   background-attachment: fixed;
 }
 ::selection { background: var(--mt-red); color: #fff; }
@@ -141,26 +142,19 @@ body {
 /* ---------- Page entrance (main re-mounts on tab change, see App.tsx) ----------
    `backwards` fill + no end transform, so nothing keeps a transform after the
    animation ends (a lingering transform would trap fixed-position modals). */
-main:not([data-static]) > * { animation: mt-fade-up 0.5s var(--mt-ease) backwards; }
-main:not([data-static]) > * > * { animation: mt-fade-up 0.55s var(--mt-ease) backwards; }
-main:not([data-static]) > * > *:nth-child(1) { animation-delay: 40ms; }
-main:not([data-static]) > * > *:nth-child(2) { animation-delay: 100ms; }
-main:not([data-static]) > * > *:nth-child(3) { animation-delay: 160ms; }
-main:not([data-static]) > * > *:nth-child(4) { animation-delay: 220ms; }
-main:not([data-static]) > * > *:nth-child(5) { animation-delay: 280ms; }
-main:not([data-static]) > * > *:nth-child(n + 6) { animation-delay: 340ms; }
+main:not([data-static]) > * { animation: mt-fade-up 0.7s var(--mt-ease) backwards; }
 
 /* ---------- Cards: hover glow ---------- */
 @layer base {
   [class*="rounded-2xl"][class*="border"],
   [class*="rounded-xl"][class*="border"],
   .clean-card, .tardigrade-tile {
-    transition: border-color 0.25s ease, box-shadow 0.3s ease, background-color 0.25s ease, transform 0.3s var(--mt-ease);
+    transition: border-color 0.4s var(--mt-ease-smooth), box-shadow 0.5s var(--mt-ease), background-color 0.35s var(--mt-ease-smooth), transform 0.5s var(--mt-ease);
   }
   button, a, [role="button"], select, input, textarea {
     transition-property: color, background-color, border-color, box-shadow, transform, opacity, filter;
-    transition-duration: 0.2s;
-    transition-timing-function: ease;
+    transition-duration: 0.3s;
+    transition-timing-function: var(--mt-ease-smooth);
   }
 }
 main [class*="rounded-2xl"][class*="border"]:hover {
@@ -237,14 +231,19 @@ tbody tr:hover { background-color: rgba(232, 31, 37, 0.045); }
 /* ==========================================================================
    Navbar
    ========================================================================== */
-.mt-navbar { position: sticky; background: rgba(255, 255, 255, 0.86) !important; backdrop-filter: saturate(160%) blur(14px); }
+.mt-navbar {
+  position: sticky;
+  background:
+    radial-gradient(520px 160px at 8% -40%, rgba(232, 31, 37, 0.55), transparent 70%),
+    radial-gradient(420px 140px at 92% 140%, rgba(194, 133, 53, 0.45), transparent 70%),
+    linear-gradient(100deg, #0e1330 0%, #1c2552 52%, #4a1328 100%) !important;
+}
 .mt-navbar::after {
   content: "";
   position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
-  background: linear-gradient(90deg, var(--mt-red), var(--mt-gold), var(--mt-red));
+  background: linear-gradient(90deg, var(--mt-red), var(--mt-gold), #f3c392, var(--mt-gold), var(--mt-red));
   background-size: 200% 100%;
-  animation: mt-gradient-pan 6s linear infinite alternate;
-  opacity: 0.9;
+  animation: mt-gradient-pan 7s linear infinite alternate;
 }
 
 /* ==========================================================================
@@ -361,4 +360,75 @@ tbody tr:hover { background-color: rgba(232, 31, 37, 0.045); }
 }
 @media print {
   main > *, main > * > * { animation: none !important; }
+}
+
+/* ==========================================================================
+   Premium white surfaces + engagement effects
+   ========================================================================== */
+
+/* Soft, layered depth on white cards so they float on the white canvas */
+main [class*="bg-white"][class*="rounded-2xl"],
+main [class*="bg-[#fdfcfb]"][class*="rounded-2xl"],
+main [class*="bg-white"][class*="rounded-xl"][class*="border"] {
+  box-shadow: 0 1px 2px rgba(14, 19, 48, 0.04), 0 10px 28px -14px rgba(14, 19, 48, 0.12);
+}
+
+/* Cursor-following spotlight on cards (vars set by scrollEffects.ts) */
+main [class*="rounded-2xl"][class*="border"]:not([class*="bg-gradient"]):not([class*="bg-[#0"]):hover {
+  background-image: radial-gradient(420px circle at var(--cx, 50%) var(--cy, 50%), rgba(232, 31, 37, 0.05), transparent 55%);
+}
+
+/* ---------- Scroll reveal ---------- */
+.mt-pre {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0) scale(0.985);
+  will-change: opacity, transform;
+}
+.mt-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.8s var(--mt-ease),
+    transform 0.9s var(--mt-ease),
+    border-color 0.4s var(--mt-ease-smooth),
+    box-shadow 0.5s var(--mt-ease);
+  transition-delay: var(--d, 0ms), var(--d, 0ms), 0ms, 0ms;
+}
+.mt-pre.mt-from-left { transform: translate3d(-34px, 0, 0); }
+.mt-pre.mt-from-right { transform: translate3d(34px, 0, 0); }
+
+/* ---------- Scroll progress + back-to-top ---------- */
+#mt-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 100%;
+  transform-origin: left; transform: scaleX(0);
+  background: linear-gradient(90deg, var(--mt-red), #f3c392, var(--mt-gold));
+  z-index: 9999; pointer-events: none;
+  box-shadow: 0 0 10px rgba(232, 31, 37, 0.55);
+  transition: transform 0.12s linear, opacity 0.3s ease;
+}
+#mt-top {
+  position: fixed; right: 20px; bottom: 22px; width: 44px; height: 44px; border-radius: 9999px;
+  display: grid; place-items: center; cursor: pointer; z-index: 60; border: 0; color: #fff;
+  background: linear-gradient(135deg, var(--mt-red), var(--mt-red-dark));
+  box-shadow: 0 12px 26px -8px rgba(232, 31, 37, 0.6);
+  opacity: 0; transform: translateY(16px) scale(0.8); pointer-events: none;
+  transition: opacity 0.4s var(--mt-ease), transform 0.5s var(--mt-ease), box-shadow 0.3s ease;
+}
+#mt-top.show { opacity: 1; transform: none; pointer-events: auto; }
+#mt-top:hover { transform: translateY(-4px) scale(1.06); box-shadow: 0 18px 32px -10px rgba(232, 31, 37, 0.7); }
+#mt-top svg { width: 20px; height: 20px; }
+
+/* Smoother native scrolling inside the app shell */
+main { scroll-behavior: smooth; }
+
+/* Section headings get a subtle gold underline sweep on hover */
+main h1:not([class*="bg-clip-text"]), main h2:not([class*="bg-clip-text"]) { background-image: linear-gradient(90deg, var(--mt-red), var(--mt-gold)); background-repeat: no-repeat; background-size: 0% 2px; background-position: 0 100%; transition: background-size 0.6s var(--mt-ease); }
+main h1:not([class*="bg-clip-text"]):hover, main h2:not([class*="bg-clip-text"]):hover { background-size: 100% 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-pre { opacity: 1 !important; transform: none !important; }
+}
+@media print {
+  .mt-pre { opacity: 1 !important; transform: none !important; }
+  #mt-progress, #mt-top { display: none !important; }
 }

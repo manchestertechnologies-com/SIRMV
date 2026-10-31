@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   ];
 
   return (
-    <header className="mt-navbar sticky top-0 z-40 border-b border-[#ecdcc6] shadow-2xs">
+    <header className="mt-navbar sticky top-0 z-40 shadow-lg shadow-[#0e1330]/15">
       <div className="px-3 sm:px-4 md:px-6 flex items-center justify-between h-16 gap-2">
         
         {/* Left: Hamburger (mobile) + Brand & Campus Identification */}
@@ -143,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           {/* Mobile menu toggle — opens the Sidebar drawer */}
           <button
             onClick={onMenuClick}
-            className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:bg-[#ebe7df] transition shrink-0"
+            className="md:hidden p-2 -ml-1 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition shrink-0"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
@@ -160,15 +160,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="font-extrabold text-slate-900 text-sm sm:text-base tracking-tight font-heading truncate">
-                MANCHESTER <span className="text-blue-600">TECHNOLOGIES</span>
+              <span className="font-extrabold text-white text-sm sm:text-base tracking-tight font-heading truncate">
+                MANCHESTER <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f3c392] to-[#e0a45a]">TECHNOLOGIES</span>
               </span>
-              <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-[#ebe7df] text-slate-700 border border-[#ded8cb] shrink-0">
+              <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-white/10 text-[#f3c392] border border-white/20 shrink-0">
                 CAMPUS ERP
               </span>
             </div>
-            <div className="hidden sm:flex text-[11px] text-blue-700 font-bold items-center gap-1">
-              <Building2 className="w-3 h-3 text-slate-400" />
+            <div className="hidden sm:flex text-[11px] text-[#f3c392] font-bold items-center gap-1">
+              <Building2 className="w-3 h-3 text-white/60" />
               <span>Davangere PU Campus</span>
             </div>
           </div>
@@ -181,10 +181,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
+              className="relative p-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
               aria-label="Notifications"
             >
-              <Bell className="w-4 h-4 text-slate-600" />
+              <Bell className="w-4 h-4 text-white" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -232,20 +232,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="relative" ref={roleSwitcherRef}>
             <button
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-[#ded8cb] bg-white hover:bg-slate-50 transition shadow-2xs"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-700 text-xs shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e81f25] to-[#c28535] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow">
                 {user?.role?.[0] || 'U'}
               </div>
               <div className="text-left hidden sm:block">
-                <div className="text-xs font-bold text-slate-800 leading-tight">
+                <div className="text-xs font-bold text-white leading-tight">
                   {user?.name || 'Administrator'}
                 </div>
-                <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">
+                <div className="text-[10px] text-[#f3c392] font-bold uppercase tracking-wider">
                   {user?.role || 'ADMIN'}
                 </div>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5 hidden sm:block" />
+              <ChevronDown className="w-3.5 h-3.5 text-white/60 ml-0.5 hidden sm:block" />
             </button>
 
             {/* Dropdown Menu */}
@@ -296,7 +296,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           {/* Logout Button */}
           <button
             onClick={logout}
-            className="p-2 rounded-xl border border-[#ded8cb] bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-600 hover:text-rose-700 transition shadow-2xs"
+            className="p-2 rounded-xl border border-white/15 bg-white/10 hover:bg-rose-500 hover:border-rose-400 text-white transition"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { initScrollEffects } from './utils/scrollEffects';
 
 // Registers our custom service worker (client/src/sw.ts) and keeps it updated.
 // Registration itself is silent/automatic — this only makes the background
@@ -33,6 +34,8 @@ if ('serviceWorker' in navigator) {
       // Not fatal — the app works fine as a plain website without the service worker.
     });
 }
+
+initScrollEffects();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
