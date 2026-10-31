@@ -1,7 +1,6 @@
 // Engagement effects that run once for the whole app (see main.tsx):
 //   - scroll-reveal: cards / tiles fade + rise into view as they enter the
 //     viewport, staggered when several appear together
-//   - cursor spotlight on cards (sets --cx/--cy for the CSS glow)
 //   - thin scroll-progress bar at the top and a back-to-top button
 // Everything is skipped when the user prefers reduced motion.
 
@@ -68,24 +67,6 @@ export function initScrollEffects() {
     mo.observe(document.body, { childList: true, subtree: true });
     scan(document.body);
   }
-
-  // ---------------- cursor spotlight ----------------
-  let raf = 0;
-  document.addEventListener(
-    'pointermove',
-    (ev) => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const card = (ev.target as HTMLElement | null)?.closest?.('main [class*="rounded-2xl"][class*="border"]') as HTMLElement | null;
-        if (!card) return;
-        const r = card.getBoundingClientRect();
-        card.style.setProperty('--cx', `${ev.clientX - r.left}px`);
-        card.style.setProperty('--cy', `${ev.clientY - r.top}px`);
-      });
-    },
-    { passive: true }
-  );
 
   // ---------------- scroll progress + back to top ----------------
   const bar = document.createElement('div');

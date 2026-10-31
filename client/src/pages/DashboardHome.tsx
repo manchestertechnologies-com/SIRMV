@@ -18,11 +18,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
     <div className="space-y-6 max-w-6xl mx-auto py-2 select-none">
       
       {/* Role-Specific Institutional Welcome Banner */}
-      <div className="mt-hero mt-reveal rounded-2xl p-5 sm:p-6 shadow-xl shadow-[#0e1330]/20">
+      <div className="mt-hero rounded-2xl p-5 sm:p-6 shadow-md shadow-[#0e1330]/15">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#e81f25] text-white border border-white/20 uppercase tracking-wider">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#d71920] text-white uppercase tracking-wider">
                 {user?.role?.replace('_', ' ') || 'INSTITUTIONAL ACCESS'}
               </span>
               <span className="text-xs text-white/70 font-medium">
@@ -42,7 +42,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
           </div>
 
           <div className="flex items-center gap-3 shrink-0 bg-white/10 backdrop-blur px-4 py-2.5 rounded-xl border border-white/20">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e81f25] to-[#c28535] flex items-center justify-center font-bold text-white text-sm shadow-md mt-pulse">
+            <div className="w-9 h-9 rounded-xl bg-[#d71920] flex items-center justify-center font-bold text-white text-sm">
               {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div className="text-left">
@@ -75,18 +75,13 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
               <button
                 key={tile.id}
                 style={{ ['--i' as any]: idx }}
-                onMouseMove={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
-                  e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
-                }}
                 onClick={() => onNavigateTab(tile.targetTab)}
-                className="mt-tile mt-pop group bg-white border border-[#ecdcc6] rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
+                className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
               >
                 <div className="mt-tile-icon shrink-0 mb-3">
                   <Icon className="w-12 h-12 sm:w-13 sm:h-13" />
                 </div>
-                <span className="text-[13px] font-bold text-[#0e1330] group-hover:text-[#e81f25] transition-colors tracking-tight">
+                <span className="text-[13px] font-bold text-[#0e1330] group-hover:text-[#1f2b6b] transition-colors tracking-tight">
                   {tile.label}
                 </span>
                 {tile.description && (
@@ -115,12 +110,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                   key={tile.id}
                   style={{ ['--i' as any]: idx }}
                   onClick={() => onNavigateTab(tile.targetTab)}
-                  className="mt-tile mt-pop group bg-white border border-[#ecdcc6] rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
+                  className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
                 >
                   <div className="mt-tile-icon shrink-0 mb-3">
                     <Icon className="w-12 h-12 sm:w-13 sm:h-13" />
                   </div>
-                  <span className="text-[13px] font-bold text-[#0e1330] group-hover:text-[#e81f25] transition-colors tracking-tight">
+                  <span className="text-[13px] font-bold text-[#0e1330] group-hover:text-[#1f2b6b] transition-colors tracking-tight">
                     {tile.label}
                   </span>
                   {tile.description && (

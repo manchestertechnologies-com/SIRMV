@@ -56,13 +56,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           <img
             src="/logo.png"
             alt="Manchester Technologies Logo"
-            className="w-10 h-10 object-contain rounded-xl ring-1 ring-[#c28535]/60 shadow-lg shadow-black/40 shrink-0 transition-transform duration-500 hover:rotate-6 hover:scale-110"
+            className="w-10 h-10 object-contain rounded-xl bg-white p-0.5 ring-1 ring-[#c28535]/60 shadow-lg shadow-black/40 shrink-0 transition-transform duration-500 hover:rotate-6 hover:scale-110"
           />
           <div className="min-w-0 flex-1">
             <div className="font-extrabold text-white text-[13px] tracking-tight font-heading leading-tight truncate">
               MANCHESTER TECHNOLOGIES
             </div>
-            <div className="text-[10px] text-[#f3c392] font-extrabold uppercase tracking-wider truncate">
+            <div className="text-[10px] text-[#e6c28f] font-extrabold uppercase tracking-wider truncate">
               DAVANGERE CAMPUS
             </div>
           </div>
@@ -93,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                   onClick={() => handleSelect(item.targetTab)}
                   className={`press mt-nav-item mt-slide w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white font-semibold shadow-lg shadow-red-900/40'
+                      ? 'bg-white/10 text-white font-semibold'
                       : 'text-white/75 hover:bg-white/10 hover:text-white'
                   }`}
                 >
@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
 
           {/* Other Tools Section */}
           <div className="pt-3 mt-2 border-t border-white/10">
-            <div className="px-3 pb-1 text-[11px] font-bold text-[#f3c392]/80 uppercase tracking-wider">
+            <div className="px-3 pb-1 text-[11px] font-bold text-[#e6c28f]/80 uppercase tracking-wider">
               Other Tools
             </div>
             <nav className="space-y-0.5">
@@ -123,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                     onClick={() => handleSelect(item.targetTab)}
                     className={`press mt-nav-item w-full flex items-center gap-3 px-3 py-2 md:py-1.5 rounded-lg text-sm md:text-[13px] transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white font-semibold shadow-lg shadow-red-900/40'
+                        ? 'bg-white/10 text-white font-semibold'
                         : 'text-white/75 hover:bg-white/10 hover:text-white'
                     }`}
                   >

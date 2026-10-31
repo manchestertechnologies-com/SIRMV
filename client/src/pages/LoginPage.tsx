@@ -62,17 +62,17 @@ export const LoginPage: React.FC = () => {
           <img
             src="/logo.png"
             alt="Manchester Technologies Logo"
-            className="w-14 h-14 rounded-2xl object-contain bg-black ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
+            className="w-14 h-14 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
           />
           <div>
             <div className="font-heading font-black tracking-tight text-lg leading-none">MANCHESTER TECHNOLOGIES</div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#f3c392] mt-1">Davangere Campus</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">Davangere Campus</div>
           </div>
         </div>
 
         <div className="relative z-10 max-w-xl">
           <div
-            className="mt-reveal inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-wider uppercase text-[#f3c392]"
+            className="mt-reveal inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-wider uppercase text-[#e6c28f]"
             style={{ ['--i' as any]: 1 }}
           >
             <Sparkles className="w-3 h-3" /> Integrated Campus ERP
@@ -83,7 +83,7 @@ export const LoginPage: React.FC = () => {
           >
             Innovate.<br />
             Develop.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5a5f] via-[#f3c392] to-[#c28535]">Dominate.</span>
+            <span className="text-[#e6c28f]">Dominate.</span>
           </h1>
           <p className="mt-reveal text-white/65 text-sm mt-5 max-w-md leading-relaxed" style={{ ['--i' as any]: 3 }}>
             One secure workspace for academics, exams, hostel and administration &mdash; built for every role on campus.
@@ -94,7 +94,7 @@ export const LoginPage: React.FC = () => {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="mt-glass mt-pop rounded-2xl p-4" style={{ ['--i' as any]: i + 4 }}>
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e81f25] to-[#c28535] flex items-center justify-center shadow-lg shadow-red-900/40">
+                  <div className="w-9 h-9 rounded-xl bg-[#d71920] flex items-center justify-center">
                     <Icon className="w-4.5 h-4.5 text-white" />
                   </div>
                   <div className="font-heading font-bold text-sm mt-3">{f.title}</div>
@@ -111,7 +111,7 @@ export const LoginPage: React.FC = () => {
       </aside>
 
       {/* -------------------------- Form panel -------------------------- */}
-      <main data-static className="relative flex flex-col justify-start lg:justify-center items-center px-4 sm:px-8 pt-10 pb-10 min-h-screen lg:min-h-0 bg-[#fbf8f4]">
+      <main data-static className="relative flex flex-col justify-start lg:justify-center items-center px-4 sm:px-8 pt-10 pb-10 min-h-screen lg:min-h-0 bg-white">
         {/* Mobile-only brand backdrop */}
         <div className="lg:hidden mt-login-bg inset-x-0 top-0 h-60 rounded-b-[2rem]" style={{ position: 'absolute' }}>
           <div className="mt-blob mt-blob-a" />
@@ -123,17 +123,17 @@ export const LoginPage: React.FC = () => {
             <img
               src="/logo.png"
               alt="Manchester Technologies Logo"
-              className="w-16 h-16 rounded-2xl object-contain bg-black ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
+              className="w-16 h-16 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
             />
             <div className="font-heading font-black tracking-tight mt-3 text-lg">MANCHESTER TECHNOLOGIES</div>
           </div>
 
-          <div className="mt-pop bg-white rounded-3xl border border-[#ecdcc6] shadow-2xl shadow-[#0e1330]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
-            <div className="h-1.5 bg-gradient-to-r from-[#e81f25] via-[#c28535] to-[#e81f25] [background-size:200%_100%] animate-[mt-gradient-pan_4s_linear_infinite_alternate]" />
+          <div className="mt-pop bg-white rounded-3xl border border-slate-200 shadow-xl shadow-[#0e1330]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
+            <div className="h-1 bg-gradient-to-r from-[#d71920] via-[#c28535] to-[#d71920]" />
 
             <div className="p-7 sm:p-9 space-y-6">
               <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fff1f1] text-[11px] font-bold text-[#c3141a] tracking-wider uppercase border border-[#ffc7c9]">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eef0f9] text-[11px] font-bold text-[#1f2b6b] tracking-wider uppercase border border-[#ccd3ec]">
                   <Shield className="w-3 h-3" />
                   <span>Davangere Campus</span>
                 </div>
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#e81f25] transition z-10"
+                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#1f2b6b] transition z-10"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -192,7 +192,7 @@ export const LoginPage: React.FC = () => {
                     <span className="mt-underline" />
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 mt-1.5 text-right">
-                    Default: <strong className="text-[#c3141a] font-bold">123456</strong>
+                    Default: <strong className="text-[#1f2b6b] font-bold">123456</strong>
                   </div>
                 </div>
 
@@ -206,7 +206,7 @@ export const LoginPage: React.FC = () => {
                     />
                     <span className="text-xs text-slate-600 font-medium">Remember on this device</span>
                   </label>
-                  <span className="text-xs text-slate-400 font-medium hover:text-[#e81f25] cursor-pointer transition">
+                  <span className="text-xs text-slate-400 font-medium hover:text-[#1f2b6b] cursor-pointer transition">
                     Help / Support
                   </span>
                 </div>
@@ -215,7 +215,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="mt-btn w-full py-3.5 px-4 bg-gradient-to-r from-[#e81f25] to-[#b3121a] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 hover:shadow-xl hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 cursor-pointer"
+                    className="w-full py-3.5 px-4 bg-[#d71920] hover:bg-[#b3121a] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-red-900/20 disabled:opacity-60 cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>{loading ? 'Authenticating...' : 'Sign In to Campus ERP'}</span>

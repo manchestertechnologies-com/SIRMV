@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   ];
 
   return (
-    <header className="mt-navbar sticky top-0 z-40 shadow-lg shadow-[#0e1330]/15">
+    <header className="mt-navbar sticky top-0 z-40 shadow-md shadow-[#0e1330]/20">
       <div className="px-3 sm:px-4 md:px-6 flex items-center justify-between h-16 gap-2">
         
         {/* Left: Hamburger (mobile) + Brand & Campus Identification */}
@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           </button>
 
           {/* Official Institution Logo */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-black flex items-center justify-center p-0.5 shadow-md shrink-0 ring-1 ring-[#c28535]/60 transition-transform duration-500 hover:rotate-6 hover:scale-110">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-0.5 shadow-md shrink-0 ring-1 ring-[#c28535]/60 transition-transform duration-500 hover:rotate-6 hover:scale-110">
             <img
               src="/logo.png"
               alt="Manchester Technologies Logo"
@@ -161,13 +161,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-extrabold text-white text-sm sm:text-base tracking-tight font-heading truncate">
-                MANCHESTER <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f3c392] to-[#e0a45a]">TECHNOLOGIES</span>
+                MANCHESTER <span className="text-[#e6c28f]">TECHNOLOGIES</span>
               </span>
-              <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-white/10 text-[#f3c392] border border-white/20 shrink-0">
+              <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-white/10 text-[#e6c28f] border border-white/20 shrink-0">
                 CAMPUS ERP
               </span>
             </div>
-            <div className="hidden sm:flex text-[11px] text-[#f3c392] font-bold items-center gap-1">
+            <div className="hidden sm:flex text-[11px] text-[#e6c28f] font-bold items-center gap-1">
               <Building2 className="w-3 h-3 text-white/60" />
               <span>Davangere PU Campus</span>
             </div>
@@ -234,14 +234,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
               className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
             >
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e81f25] to-[#c28535] flex items-center justify-center font-bold text-white text-xs shrink-0 shadow">
+              <div className="w-7 h-7 rounded-lg bg-[#d71920] flex items-center justify-center font-bold text-white text-xs shrink-0">
                 {user?.role?.[0] || 'U'}
               </div>
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-bold text-white leading-tight">
                   {user?.name || 'Administrator'}
                 </div>
-                <div className="text-[10px] text-[#f3c392] font-bold uppercase tracking-wider">
+                <div className="text-[10px] text-[#e6c28f] font-bold uppercase tracking-wider">
                   {user?.role || 'ADMIN'}
                 </div>
               </div>
