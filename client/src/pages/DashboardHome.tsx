@@ -14,6 +14,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
   // Exclude dashboard itself from the tile grid
   const mainTiles = menuItems.filter((item) => item.id !== 'dashboard');
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const firstName = (user?.name || 'there').split(' ')[0];
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2 select-none">
       
@@ -33,10 +37,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 • {(currentBranch?.name || 'Davangere Campus').replace('Shivamogga', 'Davangere')}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-black text-white font-heading">
-              {roleTitle}
+            <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
+              {greeting}, <span className="mt-underline-draw text-[#f3dcae]">{firstName}</span>
             </h1>
-            <p className="text-xs text-white/70 max-w-2xl">
+            <p className="text-sm font-medium text-white/85">{roleTitle}</p>
+            <p className="text-xs text-white/65 max-w-2xl leading-relaxed">
               {roleSubtitle}
             </p>
           </div>
@@ -60,15 +65,16 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
       {/* Role-Assigned Workspace Tiles Grid */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-            Assigned Workspace Modules ({mainTiles.length})
+          <h2 className="text-base font-semibold text-slate-900 font-heading flex items-center gap-2">
+            Your workspace
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#fbf6ec] text-[#8a561f] border border-[#f5e8cc]">{mainTiles.length} modules</span>
           </h2>
-          <span className="text-[11px] text-slate-400 font-medium">
-            Role-Based Access
+          <span className="hidden sm:inline text-[11px] text-slate-400 font-medium">
+            Press <kbd className="font-semibold border border-slate-200 rounded px-1">Ctrl K</kbd> to jump anywhere
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
           {mainTiles.map((tile, idx) => {
             const Icon = tile.icon;
             return (
@@ -76,12 +82,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 key={tile.id}
                 style={{ ['--i' as any]: idx }}
                 onClick={() => onNavigateTab(tile.targetTab)}
-                className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
+                className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm shadow-[#4a0709]/5 min-h-[156px] cursor-pointer"
               >
-                <div className="mt-tile-icon shrink-0 mb-3">
-                  <Icon className="w-12 h-12 sm:w-13 sm:h-13" />
+                <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
+                  <Icon className="w-10 h-10" />
                 </div>
-                <span className="text-[13px] font-bold text-[#4a0709] group-hover:text-[#b3191f] transition-colors tracking-tight">
+                <span className="text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b] transition-colors duration-300">
                   {tile.label}
                 </span>
                 {tile.description && (
@@ -98,11 +104,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
       {/* Other Tools Section (if applicable for this role) */}
       {otherTools.length > 0 && (
         <div className="space-y-3 pt-2">
-          <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider px-1">
-            Specialized Tools
+          <h2 className="text-base font-semibold text-slate-900 font-heading px-1">
+            More tools
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
             {otherTools.map((tile, idx) => {
               const Icon = tile.icon;
               return (
@@ -110,12 +116,12 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                   key={tile.id}
                   style={{ ['--i' as any]: idx }}
                   onClick={() => onNavigateTab(tile.targetTab)}
-                  className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-2xs min-h-[140px] cursor-pointer"
+                  className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm shadow-[#4a0709]/5 min-h-[156px] cursor-pointer"
                 >
-                  <div className="mt-tile-icon shrink-0 mb-3">
-                    <Icon className="w-12 h-12 sm:w-13 sm:h-13" />
+                  <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
+                    <Icon className="w-10 h-10" />
                   </div>
-                  <span className="text-[13px] font-bold text-[#4a0709] group-hover:text-[#b3191f] transition-colors tracking-tight">
+                  <span className="text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b] transition-colors duration-300">
                     {tile.label}
                   </span>
                   {tile.description && (

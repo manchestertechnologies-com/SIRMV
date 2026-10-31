@@ -177,6 +177,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
         {/* Right: Active Role Badge + 1-Click Role Switcher + Logout */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 
+          {/* Quick search (Ctrl K) */}
+          <button
+            onClick={() => window.dispatchEvent(new Event('mt:open-palette'))}
+            className="hidden md:flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition"
+            aria-label="Quick search"
+          >
+            <span>Search…</span>
+            <kbd className="text-[10px] font-semibold border border-white/25 rounded px-1.5 py-0.5 text-white/70">Ctrl K</kbd>
+          </button>
+
           {/* Notification Bell */}
           <div className="relative" ref={notificationsRef}>
             <button

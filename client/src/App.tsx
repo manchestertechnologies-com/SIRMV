@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ToastContainer } from './components/ToastContainer';
+import { CommandPalette } from './components/CommandPalette';
+import { fireConfetti } from './utils/uiEffects';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardHome } from './pages/DashboardHome';
 import { TeachersModule } from './pages/TeachersModule';
@@ -127,6 +129,17 @@ export function App() {
     'report-card': 'Report Card'
   };
 
+  // One small celebration per browser session, right after signing in
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (sessionStorage.getItem('mt-welcomed')) return;
+      sessionStorage.setItem('mt-welcomed', '1');
+    } catch { /* storage blocked */ }
+    const t = window.setTimeout(fireConfetti, 450);
+    return () => window.clearTimeout(t);
+  }, [user]);
+
   // Show Login Page if unauthenticated
   if (!user && !isLoading) {
     return <LoginPage />;
@@ -135,6 +148,7 @@ export function App() {
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-transparent text-slate-800 font-sans">
       <ToastContainer />
+      <CommandPalette onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />
       {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
       <Sidebar
         activeTab={activeTab}
