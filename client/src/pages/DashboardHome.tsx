@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
-import { Sparkles, Building2, UserCheck, ShieldCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface DashboardHomeProps {
   onNavigateTab: (tab: string) => void;
@@ -26,7 +26,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-b from-[#e6c28f] to-[#c28535] text-[#4a0709] uppercase tracking-wider">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#d9a85a] text-[#4a0709] uppercase tracking-wider">
                 {user?.role?.replace('_', ' ') || 'INSTITUTIONAL ACCESS'}
               </span>
               <span className="text-xs text-white/70 font-medium">
@@ -47,7 +47,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
           </div>
 
           <div className="flex items-center gap-3 shrink-0 bg-white/10 backdrop-blur px-4 py-2.5 rounded-xl border border-white/20">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-[#e6c28f] to-[#c28535] flex items-center justify-center font-bold text-[#4a0709] text-sm">
+            <div className="w-9 h-9 rounded-xl bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-sm">
               {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div className="text-left">
@@ -87,7 +87,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
                   <Icon className="w-10 h-10" />
                 </div>
-                <span className="text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b] transition-colors duration-300">
+                <span className="mt-tile-label text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b]">
                   {tile.label}
                 </span>
                 {tile.description && (
@@ -95,6 +95,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                     {tile.description}
                   </span>
                 )}
+                <span className="mt-tile-go">Open <ArrowRight className="w-3.5 h-3.5" /></span>
               </button>
             );
           })}
@@ -121,7 +122,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                   <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
                     <Icon className="w-10 h-10" />
                   </div>
-                  <span className="text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b] transition-colors duration-300">
+                  <span className="mt-tile-label text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b]">
                     {tile.label}
                   </span>
                   {tile.description && (
@@ -129,6 +130,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                       {tile.description}
                     </span>
                   )}
+                  <span className="mt-tile-go">Open <ArrowRight className="w-3.5 h-3.5" /></span>
                 </button>
               );
             })}

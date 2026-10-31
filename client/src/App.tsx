@@ -3,7 +3,6 @@ import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ToastContainer } from './components/ToastContainer';
 import { CommandPalette } from './components/CommandPalette';
-import { fireConfetti } from './utils/uiEffects';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardHome } from './pages/DashboardHome';
 import { TeachersModule } from './pages/TeachersModule';
@@ -128,17 +127,6 @@ export function App() {
     settings: 'Settings',
     'report-card': 'Report Card'
   };
-
-  // One small celebration per browser session, right after signing in
-  useEffect(() => {
-    if (!user) return;
-    try {
-      if (sessionStorage.getItem('mt-welcomed')) return;
-      sessionStorage.setItem('mt-welcomed', '1');
-    } catch { /* storage blocked */ }
-    const t = window.setTimeout(fireConfetti, 450);
-    return () => window.clearTimeout(t);
-  }, [user]);
 
   // Show Login Page if unauthenticated
   if (!user && !isLoading) {

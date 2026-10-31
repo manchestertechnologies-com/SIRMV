@@ -10,7 +10,8 @@ import {
   UserCheck,
   GraduationCap,
   Menu,
-  Bell
+  Bell,
+  Search
 } from 'lucide-react';
 
 interface Notification {
@@ -180,11 +181,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           {/* Quick search (Ctrl K) */}
           <button
             onClick={() => window.dispatchEvent(new Event('mt:open-palette'))}
-            className="hidden md:flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition"
+            className="mt-expand hidden md:flex items-center rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 text-white/85 hover:text-white text-xs font-medium"
             aria-label="Quick search"
           >
-            <span>Search…</span>
-            <kbd className="text-[10px] font-semibold border border-white/25 rounded px-1.5 py-0.5 text-white/70">Ctrl K</kbd>
+            <Search className="w-4 h-4 shrink-0 mx-2.5 my-2" />
+            <span className="mt-expand-label flex items-center gap-2 whitespace-nowrap">
+              Search pages
+              <kbd className="text-[10px] font-semibold border border-white/25 rounded px-1.5 py-0.5 text-white/70">Ctrl K</kbd>
+            </span>
           </button>
 
           {/* Notification Bell */}
@@ -244,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
               className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
             >
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-[#e6c28f] to-[#c28535] flex items-center justify-center font-bold text-[#4a0709] text-xs shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-xs shrink-0">
                 {user?.role?.[0] || 'U'}
               </div>
               <div className="text-left hidden sm:block">

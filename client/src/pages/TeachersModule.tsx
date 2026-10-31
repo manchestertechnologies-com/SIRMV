@@ -489,24 +489,21 @@ export const TeachersModule: React.FC = () => {
         <div className="space-y-6">
           {/* Department Picker — full-width tile grid, shown before any faculty cards */}
           {user?.role !== 'HOD' && (
-            <div className="bg-[#fdfcfb] p-5 rounded-3xl border border-[#ded9cf]">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">
-                <Filter className="w-4 h-4 text-slate-400" />
-                Choose a Department to View Faculty
+            <div className="bg-white p-5 rounded-3xl border border-[#ecdcc6]">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 tracking-wide mb-4">
+                <Filter className="w-4 h-4 text-[#c28535]" />
+                Choose a department to view faculty
               </div>
               <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedDept('ALL')}
-                  className={`flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border-2 transition ${
-                    selectedDept === 'ALL'
-                      ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                      : 'bg-white border-[#ded9cf] text-slate-700 hover:border-slate-400 hover:bg-slate-50'
-                  }`}
+                  data-active={selectedDept === 'ALL'}
+                  className="mt-chip flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border"
                 >
                   <LayoutGrid className="w-7 h-7" />
                   <span className="text-xs font-bold">All</span>
-                  <span className={`text-[10px] font-semibold ${selectedDept === 'ALL' ? 'text-slate-300' : 'text-slate-400'}`}>
+                  <span className="text-[10px] font-semibold mt-chip-sub">
                     {teachers.length} Faculty
                   </span>
                 </button>
@@ -520,15 +517,12 @@ export const TeachersModule: React.FC = () => {
                       key={d.id}
                       onClick={() => setSelectedDept(d.id)}
                       title={d.name}
-                      className={`flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border-2 transition ${
-                        active
-                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
-                          : 'bg-white border-[#ded9cf] text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40'
-                      }`}
+                      data-active={active}
+                      className="mt-chip flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border"
                     >
                       <DeptIcon className="w-7 h-7" />
                       <span className="text-xs font-bold">{d.code}</span>
-                      <span className={`text-[10px] font-semibold ${active ? 'text-emerald-100' : 'text-slate-400'}`}>
+                      <span className="text-[10px] font-semibold mt-chip-sub">
                         {count} Faculty
                       </span>
                     </button>

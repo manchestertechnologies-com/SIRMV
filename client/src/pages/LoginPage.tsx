@@ -94,7 +94,7 @@ export const LoginPage: React.FC = () => {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="mt-glass mt-pop rounded-2xl p-4" style={{ ['--i' as any]: i + 4 }}>
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-[#e6c28f] to-[#c28535] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-[#d9a85a] flex items-center justify-center">
                     <Icon className="w-4.5 h-4.5 text-[#4a0709]" />
                   </div>
                   <div className="font-heading font-bold text-sm mt-3">{f.title}</div>
@@ -129,7 +129,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="mt-pop bg-white rounded-3xl border border-slate-200 shadow-xl shadow-[#4a0709]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
-            <div className="h-1 bg-gradient-to-r from-[#d71920] via-[#c28535] to-[#d71920]" />
+            <div className="h-1 bg-[#c28535]" />
 
             <div className="p-7 sm:p-9 space-y-6">
               <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
@@ -215,7 +215,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 px-4 bg-gradient-to-b from-[#e6c28f] to-[#c28535] hover:from-[#ecc98f] hover:to-[#b3772a] text-[#4a0709] rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-md shadow-[#c28535]/30 disabled:opacity-60 cursor-pointer"
+                    className="w-full py-3.5 px-4 mt-fill-btn bg-[#d9a85a] text-[#4a0709] rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>{loading ? 'Authenticating...' : 'Sign In to Campus ERP'}</span>
