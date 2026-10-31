@@ -1,7 +1,7 @@
 /* ==========================================================================
    Manchester Technologies / SIRMV — professional theme
    Palette from the SIRMV logo, used the way a corporate product would:
-     navy    = primary UI colour (buttons, links, tabs, focus)
+     maroon  = primary UI colour (header, sidebar, buttons, links, focus)
      crimson = brand accent (active marker, key CTAs, highlights)
      gold    = fine detail (header rule, small labels)
    Semantic colours (emerald / amber / rose / violet ...) are untouched so
@@ -10,37 +10,69 @@
 
 @theme {
   /* Primary UI colour: logo navy. Remaps every blue-* / indigo-* utility. */
-  --color-blue-50: #f3f5fb;
-  --color-blue-100: #e5e9f6;
-  --color-blue-200: #ccd3ec;
-  --color-blue-300: #a7b2dc;
-  --color-blue-400: #7a89c6;
-  --color-blue-500: #4a5cab;
-  --color-blue-600: #2b3a86;
-  --color-blue-700: #1f2b6b;
-  --color-blue-800: #182155;
-  --color-blue-900: #111838;
-  --color-blue-950: #0a0e24;
+  --color-blue-50: #fef6f6;
+  --color-blue-100: #fbe6e7;
+  --color-blue-200: #f1cfd1;
+  --color-blue-300: #efb0b3;
+  --color-blue-400: #e0777b;
+  --color-blue-500: #dd5359;
+  --color-blue-600: #c7222a;
+  --color-blue-700: #b3191f;
+  --color-blue-800: #99141b;
+  --color-blue-900: #8c1118;
+  --color-blue-950: #5c0a0e;
 
-  --color-indigo-50: #f3f5fb;
-  --color-indigo-100: #e5e9f6;
-  --color-indigo-200: #ccd3ec;
-  --color-indigo-300: #a7b2dc;
-  --color-indigo-400: #7a89c6;
-  --color-indigo-500: #4a5cab;
-  --color-indigo-600: #2b3a86;
-  --color-indigo-700: #1f2b6b;
-  --color-indigo-800: #182155;
-  --color-indigo-900: #111838;
-  --color-indigo-950: #0a0e24;
+  --color-indigo-50: #fef6f6;
+  --color-indigo-100: #fbe6e7;
+  --color-indigo-200: #f1cfd1;
+  --color-indigo-300: #efb0b3;
+  --color-indigo-400: #e0777b;
+  --color-indigo-500: #dd5359;
+  --color-indigo-600: #c7222a;
+  --color-indigo-700: #b3191f;
+  --color-indigo-800: #99141b;
+  --color-indigo-900: #8c1118;
+  --color-indigo-950: #5c0a0e;
 
+
+  /* sky / cyan / orange / amber-ish accents -> gold shades so only red, gold and white appear */
+  --color-sky-50: #fbf6ec;
+  --color-sky-100: #f5e8cc;
+  --color-sky-200: #ecd49f;
+  --color-sky-300: #e0b768;
+  --color-sky-400: #d09f4b;
+  --color-sky-500: #c28535;
+  --color-sky-600: #a66b27;
+  --color-sky-700: #8a561f;
+  --color-sky-800: #6d431a;
+  --color-sky-900: #4d2f14;
+  --color-cyan-50: #fbf6ec;
+  --color-cyan-100: #f5e8cc;
+  --color-cyan-200: #ecd49f;
+  --color-cyan-300: #e0b768;
+  --color-cyan-400: #d09f4b;
+  --color-cyan-500: #c28535;
+  --color-cyan-600: #a66b27;
+  --color-cyan-700: #8a561f;
+  --color-cyan-800: #6d431a;
+  --color-cyan-900: #4d2f14;
+  --color-orange-50: #fbf6ec;
+  --color-orange-100: #f5e8cc;
+  --color-orange-200: #ecd49f;
+  --color-orange-300: #e0b768;
+  --color-orange-400: #d09f4b;
+  --color-orange-500: #c28535;
+  --color-orange-600: #a66b27;
+  --color-orange-700: #8a561f;
+  --color-orange-800: #6d431a;
+  --color-orange-900: #4d2f14;
   --color-gold-50: #fbf6ec;
   --color-gold-100: #f5e8cc;
   --color-gold-300: #e0b768;
   --color-gold-500: #c28535;
   --color-gold-600: #a66b27;
-  --color-navy-800: #141b3f;
-  --color-navy-900: #0e1330;
+  --color-navy-800: #7a0f15;
+  --color-navy-900: #4a0709;
 }
 
 :root {
@@ -48,8 +80,8 @@
   --mt-red-dark: #b3121a;
   --mt-gold: #c28535;
   --mt-gold-light: #e6c28f;
-  --mt-navy: #0e1330;
-  --mt-navy-2: #1c2552;
+  --mt-navy: #4a0709;
+  --mt-navy-2: #971319;
   --mt-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --mt-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -58,12 +90,12 @@
 body {
   background-color: #ffffff;
   background-image: none;
-  color: #1b2238;
+  color: #2b1a1a;
 }
-::selection { background: #2b3a86; color: #fff; }
-::-webkit-scrollbar-thumb { background: #cfd4e3; }
-::-webkit-scrollbar-thumb:hover { background: #a9b1cc; }
-::-webkit-scrollbar-track { background: #f4f5f9; }
+::selection { background: #c7222a; color: #fff; }
+::-webkit-scrollbar-thumb { background: #e6d2ab; }
+::-webkit-scrollbar-thumb:hover { background: #c9a45f; }
+::-webkit-scrollbar-track { background: #faf6ee; }
 
 /* ---------- Keyframes ---------- */
 @keyframes mt-fade-up {
@@ -105,14 +137,14 @@ main [class*="bg-[#fdfcfb]"][class*="rounded-2xl"] {
   box-shadow: 0 1px 2px rgba(14, 19, 48, 0.05);
 }
 main [class*="rounded-2xl"][class*="border"]:hover {
-  border-color: #c9cfe3;
+  border-color: #e6c8c9;
   box-shadow: 0 8px 24px -12px rgba(14, 19, 48, 0.18);
 }
 /* Clickable tiles / buttons lift slightly */
 main button[class*="rounded-2xl"]:hover,
 main .group[class*="rounded-2xl"]:hover {
   transform: translateY(-2px);
-  border-color: #b9c1dc;
+  border-color: #dcb0b2;
   box-shadow: 0 12px 28px -14px rgba(14, 19, 48, 0.28);
 }
 main button[class*="rounded-2xl"]:active { transform: translateY(0) scale(0.99); }
@@ -127,11 +159,11 @@ button[class*="bg-indigo-6"]:not(:disabled):hover {
 /* ---------- Inputs ---------- */
 input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus, textarea:focus {
-  border-color: #2b3a86 !important;
+  border-color: #c7222a !important;
   box-shadow: 0 0 0 3px rgba(43, 58, 134, 0.14) !important;
   outline: none;
 }
-input[type="checkbox"], input[type="radio"] { accent-color: #2b3a86; }
+input[type="checkbox"], input[type="radio"] { accent-color: #c7222a; }
 
 /* ---------- Tables ---------- */
 tbody tr { transition: background-color 0.18s ease; }
@@ -148,27 +180,27 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
 }
 
 /* ==========================================================================
-   Header — solid navy with a fine brand rule
+   Header — solid maroon with a fine gold rule
    ========================================================================== */
-.mt-navbar { background: #0e1330 !important; }
+.mt-navbar { background: #a3161b !important; }
 .mt-navbar::after {
   content: "";
   position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-  background: linear-gradient(90deg, var(--mt-red) 0%, var(--mt-gold) 50%, var(--mt-red) 100%);
+  background: linear-gradient(90deg, var(--mt-gold) 0%, var(--mt-gold-light) 50%, var(--mt-gold) 100%);
 }
 
 /* ==========================================================================
-   Sidebar — solid navy
+   Sidebar — solid maroon
    ========================================================================== */
 .mt-sidebar {
-  background: #111838 !important;
+  background: #8c1118 !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 .mt-nav-item { position: relative; }
 .mt-nav-item::before {
   content: "";
   position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0;
-  background: var(--mt-red);
+  background: var(--mt-gold-light);
   transform: scaleY(0); transition: transform 0.3s var(--mt-ease);
 }
 .mt-nav-item[data-active="true"]::before { transform: scaleY(1); }
@@ -179,12 +211,12 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
    ========================================================================== */
 .mt-hero {
   position: relative; overflow: hidden; color: #fff;
-  background: #111838;
+  background: #8c1118;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .mt-hero::after {
   content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  background: linear-gradient(180deg, var(--mt-red), var(--mt-gold));
+  background: linear-gradient(180deg, var(--mt-gold-light), var(--mt-gold));
 }
 
 .mt-tile { position: relative; overflow: hidden; }
@@ -202,7 +234,7 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
    ========================================================================== */
 .mt-login-bg {
   position: relative; overflow: hidden;
-  background: linear-gradient(145deg, #0a0e24 0%, #111838 55%, #231430 100%);
+  background: linear-gradient(145deg, #4a0709 0%, #971319 60%, #a3161b 100%);
 }
 .mt-blob { position: absolute; border-radius: 9999px; filter: blur(80px); pointer-events: none; opacity: 0.55; }
 .mt-blob-a { width: 340px; height: 340px; background: rgba(215, 25, 32, 0.45); top: -140px; left: -100px; }
@@ -229,12 +261,12 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
   pointer-events: none; transform-origin: left top; transition: transform 0.25s var(--mt-ease), color 0.25s ease;
 }
 .mt-field input:focus + label,
-.mt-field input:not(:placeholder-shown) + label { transform: translateY(-0.6rem) scale(0.82); color: #2b3a86; }
+.mt-field input:not(:placeholder-shown) + label { transform: translateY(-0.6rem) scale(0.82); color: #c7222a; }
 .mt-field .mt-underline { display: none; }
 
 .mt-preset { transition: transform 0.25s var(--mt-ease), border-color 0.2s ease, background-color 0.2s ease; }
-.mt-preset:hover { transform: translateY(-2px); border-color: #aab3d4; background: #fff; }
-.mt-preset[data-active="true"] { border-color: #2b3a86; background: #eef0f9; color: #1f2b6b; }
+.mt-preset:hover { transform: translateY(-2px); border-color: #dcb0b2; background: #fff; }
+.mt-preset[data-active="true"] { border-color: #c7222a; background: #fdf0f0; color: #b3191f; }
 
 /* ==========================================================================
    Scroll effects (see utils/scrollEffects.ts)
@@ -257,7 +289,7 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
 #mt-top {
   position: fixed; right: 20px; bottom: 22px; width: 40px; height: 40px; border-radius: 9999px;
   display: grid; place-items: center; cursor: pointer; z-index: 60; border: 0; color: #fff;
-  background: #1f2b6b;
+  background: #b3191f;
   box-shadow: 0 8px 20px -8px rgba(14, 19, 48, 0.6);
   opacity: 0; transform: translateY(12px); pointer-events: none;
   transition: opacity 0.35s var(--mt-ease), transform 0.4s var(--mt-ease), background-color 0.2s ease;

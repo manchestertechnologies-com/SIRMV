@@ -94,8 +94,8 @@ export const LoginPage: React.FC = () => {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="mt-glass mt-pop rounded-2xl p-4" style={{ ['--i' as any]: i + 4 }}>
-                  <div className="w-9 h-9 rounded-xl bg-[#d71920] flex items-center justify-center">
-                    <Icon className="w-4.5 h-4.5 text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-[#e6c28f] to-[#c28535] flex items-center justify-center">
+                    <Icon className="w-4.5 h-4.5 text-[#4a0709]" />
                   </div>
                   <div className="font-heading font-bold text-sm mt-3">{f.title}</div>
                   <div className="text-[11px] text-white/60 mt-0.5 leading-snug">{f.text}</div>
@@ -128,16 +128,16 @@ export const LoginPage: React.FC = () => {
             <div className="font-heading font-black tracking-tight mt-3 text-lg">MANCHESTER TECHNOLOGIES</div>
           </div>
 
-          <div className="mt-pop bg-white rounded-3xl border border-slate-200 shadow-xl shadow-[#0e1330]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
+          <div className="mt-pop bg-white rounded-3xl border border-slate-200 shadow-xl shadow-[#4a0709]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
             <div className="h-1 bg-gradient-to-r from-[#d71920] via-[#c28535] to-[#d71920]" />
 
             <div className="p-7 sm:p-9 space-y-6">
               <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eef0f9] text-[11px] font-bold text-[#1f2b6b] tracking-wider uppercase border border-[#ccd3ec]">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fdf0f0] text-[11px] font-bold text-[#b3191f] tracking-wider uppercase border border-[#f1cfd1]">
                   <Shield className="w-3 h-3" />
                   <span>Davangere Campus</span>
                 </div>
-                <h2 className="font-heading font-black text-2xl text-[#0e1330] tracking-tight mt-3">Welcome Back!</h2>
+                <h2 className="font-heading font-black text-2xl text-[#4a0709] tracking-tight mt-3">Welcome Back!</h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">
                   Sign in to your Campus ERP workspace
                 </p>
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#1f2b6b] transition z-10"
+                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#b3191f] transition z-10"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -192,7 +192,7 @@ export const LoginPage: React.FC = () => {
                     <span className="mt-underline" />
                   </div>
                   <div className="text-[11px] font-mono text-slate-500 mt-1.5 text-right">
-                    Default: <strong className="text-[#1f2b6b] font-bold">123456</strong>
+                    Default: <strong className="text-[#b3191f] font-bold">123456</strong>
                   </div>
                 </div>
 
@@ -206,7 +206,7 @@ export const LoginPage: React.FC = () => {
                     />
                     <span className="text-xs text-slate-600 font-medium">Remember on this device</span>
                   </label>
-                  <span className="text-xs text-slate-400 font-medium hover:text-[#1f2b6b] cursor-pointer transition">
+                  <span className="text-xs text-slate-400 font-medium hover:text-[#b3191f] cursor-pointer transition">
                     Help / Support
                   </span>
                 </div>
@@ -215,7 +215,7 @@ export const LoginPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 px-4 bg-[#d71920] hover:bg-[#b3121a] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-red-900/20 disabled:opacity-60 cursor-pointer"
+                    className="w-full py-3.5 px-4 bg-gradient-to-b from-[#e6c28f] to-[#c28535] hover:from-[#ecc98f] hover:to-[#b3772a] text-[#4a0709] rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-md shadow-[#c28535]/30 disabled:opacity-60 cursor-pointer"
                   >
                     <LogIn className="w-4 h-4" />
                     <span>{loading ? 'Authenticating...' : 'Sign In to Campus ERP'}</span>

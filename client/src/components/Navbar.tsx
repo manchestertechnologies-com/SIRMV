@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
   ];
 
   return (
-    <header className="mt-navbar sticky top-0 z-40 shadow-md shadow-[#0e1330]/20">
+    <header className="mt-navbar sticky top-0 z-40 shadow-md shadow-[#4a0709]/20">
       <div className="px-3 sm:px-4 md:px-6 flex items-center justify-between h-16 gap-2">
         
         {/* Left: Hamburger (mobile) + Brand & Campus Identification */}
@@ -193,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
             </button>
 
             {showNotifications && (
-              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 max-w-full sm:max-w-80 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
+              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 max-w-full sm:max-w-80 bg-white rounded-2xl shadow-2xl border border-[#ecdcc6] py-2 z-50 overflow-hidden">
                 <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Notifications</span>
                   {unreadCount > 0 && (
@@ -234,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
               className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#d71920] flex items-center justify-center font-bold text-white text-xs shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-[#e6c28f] to-[#c28535] flex items-center justify-center font-bold text-[#4a0709] text-xs shrink-0">
                 {user?.role?.[0] || 'U'}
               </div>
               <div className="text-left hidden sm:block">
@@ -250,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
 
             {/* Dropdown Menu */}
             {showRoleSwitcher && (
-              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 max-w-full sm:max-w-72 bg-white rounded-2xl shadow-2xl border border-[#ded8cb] py-2 z-50 overflow-hidden">
+              <div className="fixed left-3 right-3 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 max-w-full sm:max-w-72 bg-white rounded-2xl shadow-2xl border border-[#ecdcc6] py-2 z-50 overflow-hidden">
                 <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-blue-600" />
