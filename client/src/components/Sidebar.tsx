@@ -15,8 +15,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
   const { user } = useAuth();
   const { menuItems, otherTools } = getRoleNavigation(user?.role);
   // icon-only rail by default; the toggle reveals names next to the icons
-  const [wide, setWide] = useState(() => { try { return localStorage.getItem('mt-sidebar-wide') === '1'; } catch { return false; } });
-  const toggle = () => setWide((w) => { const n = !w; try { localStorage.setItem('mt-sidebar-wide', n ? '1' : '0'); } catch { /* ignore */ } return n; });
+  // hovering the rail opens it (names under the icons); the button pins it open
+  const [pinned, setPinned] = useState(() => { try { return localStorage.getItem('mt-sidebar-wide') === '1'; } catch { return false; } });
+  const [hover, setHover] = useState(false);
+  const wide = pinned || hover;
+  const toggle = () => setPinned((w) => { const n = !w; try { localStorage.setItem('mt-sidebar-wide', n ? '1' : '0'); } catch { /* ignore */ } return n; });
 
   // Selecting a tab always navigates; on mobile it also closes the drawer
   // so the newly chosen page is immediately visible.
@@ -41,19 +44,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       title={item.label}
       style={{ ['--i' as any]: index }}
       onClick={() => handleSelect(item.targetTab)}
-      className={`press mt-nav-tile mt-rise w-full flex items-center gap-3 px-2 py-1.5 rounded-[12px] ${wide ? '' : 'md:justify-center md:px-0'}`}
+      className="press mt-nav-tile mt-rise w-full flex flex-col items-center gap-1 px-1 py-1.5 rounded-[12px]"
     >
       <span className="mt-nav-icon w-10 h-10 rounded-[10px] bg-white flex items-center justify-center shrink-0">
         <ModuleIcon item={item} className="w-7 h-7" />
       </span>
-      <span className={`mt-nav-label text-[13px] font-semibold leading-tight text-left line-clamp-2 ${wide ? '' : 'md:hidden'}`}>
+      <span className={`mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5 ${wide ? '' : 'md:hidden'}`}>
         {item.label}
       </span>
     </button>
   );
 
   return (
-    <div className={`md:relative md:shrink-0 md:h-full transition-[width] duration-300 ${wide ? 'md:w-56' : 'md:w-[68px]'}`}>
+    <div className={`md:relative md:shrink-0 md:h-full transition-[width] duration-300 ${pinned ? 'md:w-28' : 'md:w-[68px]'}`}>
       {/* Backdrop — mobile only, shown while the drawer is open */}
       {isOpen && (
         <div
@@ -64,9 +67,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       )}
 
       <aside
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
         className={`
           fixed md:absolute top-0 left-0 h-screen md:h-full z-50
-          mt-sidebar w-60 ${wide ? 'md:w-56' : 'md:w-[68px]'} overflow-hidden
+          mt-sidebar w-28 ${wide ? 'md:w-28' : 'md:w-[68px]'} overflow-hidden
           flex flex-col select-none safe-top safe-bottom
           transform transition-transform duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
@@ -79,8 +84,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
             alt="SIR MV PU College Logo"
             className={`object-contain rounded-[12px] bg-white p-1 ring-2 ring-[#d9a85a]/70 ${wide ? 'w-12 h-12' : 'w-12 h-12 md:w-10 md:h-10'}`}
           />
-          <button onClick={toggle} title={wide ? 'Hide names' : 'Show names'} aria-label="Toggle sidebar names" className="hidden md:inline-flex p-2 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition">
-            {wide ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+          <button onClick={toggle} title={pinned ? 'Unpin names' : 'Keep names visible'} aria-label="Toggle sidebar names" className="hidden md:inline-flex p-2 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition">
+            {pinned ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
           </button>
         </div>
 

@@ -66,7 +66,7 @@ export const ClassesAcademic: React.FC<{ onExit: () => void; onManage?: () => vo
                       <GroupIcon kind="section" className="w-12 h-12" />
                       <p className="mt-2 text-sm font-bold text-slate-900">Section {s.code}</p>
                       <p className="text-[11px] text-slate-500">{s.count} students</p>
-                      <p className="text-[11px] text-slate-500 truncate mt-1">CT: {ct.name}</p>
+                      <div className="flex items-center gap-2 mt-2.5 pt-2.5 border-t border-[#f3ede6]"><Avatar name={ct.name} pid={ct.id} size={30} /><span className="min-w-0"><b className="block text-[11px] text-slate-800 truncate">{ct.name}</b><span className="block text-[10px] text-slate-500">Class teacher</span></span></div>
                     </button>
                   );
                 })}
@@ -131,7 +131,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-5">
       <Card title="Class hours" right={<div className="flex gap-1.5 flex-wrap justify-end">{WEEKDAYS.map((d, i) => <Chip key={d} active={day === i} onClick={() => setDay(i)}>{d}</Chip>)}</div>}>
-        <ul className="divide-y divide-[#f3ede6] mt-box-scroll">
+        <ul className="divide-y divide-[#f3ede6]">
           {SLOTS.map((s) => {
             if (s.kind === 'break') return <li key={s.key} className="py-2.5 flex items-center gap-3 text-xs text-slate-500"><span className="w-[148px] shrink-0 font-medium">{s.start} – {s.end}</span><span className="flex-1 text-center rounded-lg bg-[#fbf3e4] py-1.5 font-semibold text-[#8a5a14]">{s.label}</span></li>;
             p++; const c = row[p]; const t = staffById(c.staffId)!;
@@ -147,7 +147,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
         </ul>
       </Card>
       <Card title="Faculty hours per week">
-        <ul className="space-y-3 mt-box-scroll">
+        <ul className="space-y-3">
           {load.map(([id, v]) => { const t = staffById(id)!; return (
             <li key={id} className="flex items-center gap-3"><Avatar name={t.name} size={34} /><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-slate-900 truncate">{t.name}</p><p className="text-[11px] text-slate-500">{v.subject}</p></div><Pill tone="gold">{v.n} hrs</Pill></li>
           ); })}

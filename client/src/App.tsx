@@ -58,6 +58,9 @@ const StaffsAcademic = lazyWithRetry(() => import('./academic/StaffsAcademic').t
 const HostelAcademic = lazyWithRetry(() => import('./academic/HostelAcademic').then((m) => ({ default: m.HostelAcademic })));
 const AttendanceAcademic = lazyWithRetry(() => import('./academic/AttendanceAcademic').then((m) => ({ default: m.AttendanceAcademic })));
 const ExamAcademic = lazyWithRetry(() => import('./academic/ExamAcademic').then((m) => ({ default: m.ExamAcademic })));
+const ReportsAcademic = lazyWithRetry(() => import('./academic/ReportsAcademic').then((m) => ({ default: m.ReportsAcademic })));
+const TimetableAcademic = lazyWithRetry(() => import('./academic/TimetableAcademic').then((m) => ({ default: m.TimetableAcademic })));
+const BlueprintModule = lazyWithRetry(() => import('./academic/BlueprintModule').then((m) => ({ default: m.BlueprintModule })));
 
 const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
 
@@ -136,6 +139,7 @@ export function App() {
     'my-profile': 'My Profile',
     hostel: 'Hostel',
     'gate-pass': 'Gate Pass',
+    blueprint: 'Blueprint',
     admission: 'Admission',
     leaderboard: 'Leaderboard',
     settings: 'Settings',
@@ -188,6 +192,12 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><HostelAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'gate-pass' && hostelRole ? (
             <Suspense fallback={<AcademicLoading />}><HostelAcademic onExit={() => setActiveTab('dashboard-home')} initialTab="Outpass" /></Suspense>
+          ) : activeTab === 'reports' && academicRole ? (
+            <Suspense fallback={<AcademicLoading />}><ReportsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'timetable' && !!user && ['ADMIN', 'PRINCIPAL', 'HOD', 'EXAM_DEPARTMENT'].includes(user.role) ? (
+            <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
+            <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'exam-management' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'staffs' ? (

@@ -58,7 +58,7 @@ const FloorPlan: React.FC<{ block: BlockDef; fi: number; rooms: RoomDef[]; occ: 
   );
 };
 
-const Blueprint: React.FC = () => {
+export const Blueprint: React.FC = () => {
   const [bid, setBid] = useState(BLOCKS[0].id);
   const [sel, setSel] = useState<string | null>(null);
   const block = BLOCKS.find((b) => b.id === bid)!;
@@ -121,6 +121,8 @@ const ShuffleView: React.FC<{ onApplied: () => void }> = ({ onApplied }) => {
     return order.map((r, i) => ({ room: r, people: slots[i] })).filter((x) => x.people.length).sort((a, b) => a.room.no - b.room.no);
   }, [students, mode, seed, block]);
   const moves = plan.flatMap((p) => p.people.map((s, i) => ({ s, to: p.room, bed: bedName(p.room.share, i) }))).filter((m) => m.s.hostel!.room !== m.to.label);
+  const slowN = students.filter((s) => studentAvg(s.id) < 45).length; const strongN = students.filter((s) => studentAvg(s.id) >= 65).length;
+  const mixedRooms = plan.filter((p) => p.people.some((s) => studentAvg(s.id) < 45) && p.people.some((s) => studentAvg(s.id) >= 65)).length;
   const roomAvg = (p: Student[]) => Math.round(p.reduce((a, s) => a + studentAvg(s.id), 0) / Math.max(1, p.length));
   const apply = () => { plan.forEach((p) => p.people.forEach((s, i) => { s.hostel = { block: block.name, floor: p.room.floor, room: p.room.label, bed: bedName(p.room.share, i) }; })); setDone(true); onApplied(); };
   return (
@@ -129,13 +131,19 @@ const ShuffleView: React.FC<{ onApplied: () => void }> = ({ onApplied }) => {
         <div className="flex flex-wrap items-center gap-3 justify-between">
           <div className="flex flex-wrap gap-2">{BLOCKS.map((b) => <Chip key={b.id} active={bid === b.id} onClick={() => { setBid(b.id); setDone(false); }}>{b.name.split(' - ').slice(0, 2).join(' · ')}</Chip>)}</div>
           <div className="flex flex-wrap gap-2 items-center">
-            <Chip active={mode === 'mix'} onClick={() => { setMode('mix'); setDone(false); }}>Balanced mix</Chip><Chip active={mode === 'level'} onClick={() => { setMode('level'); setDone(false); }}>Same level together</Chip>
-            <button onClick={() => { setSeed((x) => x + 1); setDone(false); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]"><Shuffle className="w-3.5 h-3.5" />Shuffle</button>
+            <Chip active={mode === 'mix'} onClick={() => { setMode('mix'); setDone(false); }}>Mix slow and strong learners</Chip><Chip active={mode === 'level'} onClick={() => { setMode('level'); setDone(false); }}>Same level together</Chip>
+            <button onClick={() => { setMode('mix'); setSeed((x) => x + 1); setDone(false); }} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#c28535] text-white text-xs font-semibold hover:bg-[#a9702a]"><Shuffle className="w-3.5 h-3.5" />Shuffle based on performance</button>
             <button onClick={apply} disabled={done || moves.length === 0} className="px-4 py-2 rounded-xl bg-[#a3161b] text-white text-xs font-semibold disabled:opacity-40">{done ? 'Applied' : `Apply (${moves.length} moves)`}</button>
           </div>
         </div>
-        <p className="text-xs text-slate-500 mt-3">{mode === 'mix' ? 'Each room gets a spread of strong and weaker students so they can study together.' : 'Students with similar average test scores share a room.'} Based on every test result in the last term.</p>
+        <p className="text-xs text-slate-500 mt-3">{mode === 'mix' ? 'Uses each student\'s average test score so slow learners share a room with higher performers and can learn from them.' : 'Students with similar average test scores share a room.'} Based on every test result this term.</p>
       </Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard label="Students in block" value={students.length} tone="slate" />
+        <StatCard label="Slow learners (below 45%)" value={slowN} />
+        <StatCard label="Strong performers (65%+)" value={strongN} tone="green" />
+        <StatCard label="Rooms mixing both" value={mixedRooms} suffix={`of ${plan.length} rooms`} tone="gold" />
+      </div>
       <div className="grid xl:grid-cols-[1fr_380px] gap-5 items-start">
         <Card title="Proposed rooms" right={<span className="text-[11px] text-slate-400">average test % per room</span>}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
@@ -143,13 +151,13 @@ const ShuffleView: React.FC<{ onApplied: () => void }> = ({ onApplied }) => {
               <div key={p.room.label} className="rounded-xl border border-[#ece4da] p-2.5">
                 <div className="flex justify-between text-xs"><b className="text-slate-900">{p.room.label}</b><span className="text-slate-400">{p.room.floor.replace(' Floor', '')}</span></div>
                 <div className="mt-1.5 mb-2"><Bar value={a} color={a >= 60 ? GREEN : a >= 45 ? AMBER : RED} h="h-1.5" /></div>
-                {p.people.map((s) => <p key={s.id} className="flex justify-between text-[11px] text-slate-600 leading-5"><span className="truncate">{s.name}</span><b className="text-slate-800 ml-2">{studentAvg(s.id)}%</b></p>)}
+                {p.people.map((s) => <p key={s.id} className="flex justify-between items-center text-[11px] text-slate-600 leading-5"><span className="truncate inline-flex items-center gap-1.5"><i className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: studentAvg(s.id) >= 65 ? GREEN : studentAvg(s.id) < 45 ? RED : AMBER }} />{s.name}</span><b className="text-slate-800 ml-2">{studentAvg(s.id)}%</b></p>)}
               </div>); })}
           </div>
         </Card>
         <Card title={`Changes (${moves.length})`}>
           {moves.length === 0 ? <p className="text-sm text-slate-500">Rooms already match this plan.</p> : (
-            <ul className="divide-y divide-[#f3ede6] max-h-[560px] overflow-y-auto">
+            <ul className="divide-y divide-[#f3ede6]">
               {moves.map((m) => <li key={m.s.id} className="py-2 flex items-center gap-2.5 text-xs"><Avatar name={m.s.name} pid={m.s.id} size={30} /><span className="min-w-0 flex-1"><b className="block text-slate-900 truncate">{m.s.name} <span className="text-slate-400 font-normal">· {studentAvg(m.s.id)}%</span></b><span className="text-slate-500">{m.s.hostel!.room} → <b className="text-[#a3161b]">{m.to.label}</b> · {m.bed}</span></span></li>)}
             </ul>
           )}

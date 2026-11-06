@@ -16,11 +16,12 @@ export const OutpassFlow: React.FC = () => {
   const [mode, setMode] = useState<'list' | 'new'>('list');
   const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [created, setCreated] = useState<Outpass | null>(null);
   const persist = (l: Outpass[]) => { saveOutpasses(l); setList(l); };
   const pending = list.filter((o) => o.status === 'Pending');
   const unseen = list.filter((o) => !o.seen).length;
 
-  if (mode === 'new') return <NewOutpass onCancel={() => setMode('list')} onDone={(o) => { persist([o, ...list]); setOpenId(o.id); setMode('list'); }} existing={list} createdBy={user?.name || 'Warden'} />;
+  if (mode === 'new') return <NewOutpass onCancel={() => setMode('list')} onDone={(o) => { persist([o, ...list]); setOpenId(o.id); setCreated(o); setMode('list'); downloadOutpassPdf(o); }} existing={list} createdBy={user?.name || 'Warden'} />;
 
   const shown = list.filter((o) => filter === 'All' || o.status === filter);
   const open = list.find((o) => o.id === openId) || null;
@@ -30,6 +31,13 @@ export const OutpassFlow: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {created && (
+        <div className="rounded-3xl bg-emerald-50 border border-emerald-200 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <CheckCircle2 className="w-9 h-9 text-emerald-600 shrink-0" />
+          <div className="flex-1"><p className="text-sm font-bold text-emerald-900">Outpass {created.id} generated for {created.name}</p><p className="text-xs text-emerald-800 mt-0.5">Photo and OTP confirmed. Sent to the head warden for checking. The PDF was saved to your downloads.</p></div>
+          <div className="flex gap-2"><button onClick={() => downloadOutpassPdf(created)} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#a3161b] text-white text-xs font-semibold"><Download className="w-4 h-4" />Download PDF again</button><button onClick={() => setCreated(null)} className="px-3 py-2.5 rounded-xl border border-emerald-300 text-xs font-semibold text-emerald-800">Close</button></div>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2 flex-wrap">{(['All', 'Pending', 'Approved', 'Rejected'] as const).map((f) => <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>{f}{f === 'Pending' ? ` (${pending.length})` : ''}</Chip>)}</div>
         <div className="flex items-center gap-3">
@@ -48,7 +56,7 @@ export const OutpassFlow: React.FC = () => {
       <div className="grid lg:grid-cols-[360px_1fr] gap-5 items-start">
         <Card title="Requests" className="!p-3">
           {shown.length === 0 ? <p className="text-sm text-slate-500 py-8 text-center">No outpasses yet. Press New outpass to create one with a photo and OTP.</p> : (
-            <ul className="space-y-2 max-h-[560px] overflow-y-auto">
+            <ul className="space-y-2">
               {shown.map((o) => (
                 <li key={o.id}>
                   <button onClick={() => { setOpenId(o.id); if (canDecide) markSeen(o.id); }} className={`w-full text-left flex items-center gap-3 p-2.5 rounded-xl border transition ${openId === o.id ? 'border-[#a3161b] bg-[#fff6f4]' : 'border-[#ece4da] hover:border-[#d9a85a]'}`}>
@@ -56,6 +64,7 @@ export const OutpassFlow: React.FC = () => {
                     <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{o.name}</b><span className="block text-[11px] text-slate-500 truncate">{o.id} · {o.reason}</span></span>
                     <span className="flex flex-col items-end gap-1"><Pill tone={o.status === 'Approved' ? 'green' : o.status === 'Rejected' ? 'red' : 'amber'}>{o.status}</Pill>{!o.seen && <i className="w-2 h-2 rounded-full bg-[#a3161b]" />}</span>
                   </button>
+                  <button onClick={() => downloadOutpassPdf(o)} title="Download PDF" className="mt-1 ml-auto flex items-center gap-1 text-[11px] font-semibold text-[#a3161b] hover:underline"><Download className="w-3 h-3" />PDF</button>
                 </li>
               ))}
             </ul>

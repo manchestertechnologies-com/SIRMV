@@ -468,3 +468,15 @@ export const IconSettings: React.FC<IconProps> = ({ className = 'w-12 h-12', siz
     <path d="M26.300 28.500C26.800 23 37.200 23 37.700 28.500C35.500 26.800 28.500 26.800 26.300 28.500Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.4" />
   </svg>
 );
+
+// Blueprint Icon
+export const IconBlueprint: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <rect x="8" y="10" width="48" height="44" rx="4" fill="#DBEAFE" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="14" y="16" width="16" height="14" fill="#fff" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="34" y="16" width="16" height="14" fill="#FEF08A" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="14" y="34" width="10" height="14" fill="#fff" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="28" y="34" width="22" height="14" fill="#FCA5A5" stroke="#2B2D42" strokeWidth="2" />
+    <path d="M38 41h6M41 38v6" stroke="#2B2D42" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);

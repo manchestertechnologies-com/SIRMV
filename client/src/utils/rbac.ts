@@ -16,6 +16,7 @@ import {
   IconNoticeboard,
   IconCounsellings,
   IconHostel,
+  IconBlueprint,
   IconGatePass,
   IconAdmission,
   IconLeaderboard,
@@ -168,6 +169,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         menuItems: [
           { id: 'dashboard', label: 'Hostel Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Hostel occupancy & outpass count' },
           { id: 'hostel', label: 'Hostel Management', icon: IconHostel, targetTab: 'hostel', description: 'Blocks, floors, rooms & beds' },
+          { id: 'blueprint', label: 'Blueprint', icon: IconBlueprint, targetTab: 'blueprint', description: 'Hostel & classroom blueprint' },
           { id: 'attendance', label: 'Night Roll-Call & Study', icon: IconAttendance, targetTab: 'attendance', description: 'Night attendance & study tracking' },
           { id: 'gate-pass', label: 'Hostel Outpasses', icon: IconGatePass, targetTab: 'gate-pass', description: 'Review hosteller check-in/out' },
           { id: 'students', label: 'Hosteller Registry & Admission', icon: IconStudents, targetTab: 'students', description: 'Resident student profile & emergency contacts' },
@@ -241,6 +243,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'floor-issues', label: 'Reported Issues', icon: IconIssues, targetTab: 'floor-issues' },
           { id: 'hostel', label: 'Hostel', icon: IconHostel, targetTab: 'hostel' },
           { id: 'gate-pass', label: 'Gate Pass', icon: IconGatePass, targetTab: 'gate-pass' },
+          { id: 'blueprint', label: 'Blueprint', icon: IconBlueprint, targetTab: 'blueprint' },
           { id: 'admission', label: 'Admission', icon: IconAdmission, targetTab: 'admission' },
           { id: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard, targetTab: 'leaderboard' },
           { id: 'settings', label: 'Settings', icon: IconSettings, targetTab: 'settings' },

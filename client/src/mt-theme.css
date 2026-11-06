@@ -618,5 +618,4 @@ main:not([data-static]) > :nth-child(n+4)   { animation-delay: 500ms; }
 
 /* box-shaped sidebar icons + scrollable boxes */
 .mt-nav-icon { border-radius: 10px !important; }
-.mt-box-scroll { max-height: 560px; overflow: auto; }
-.mt-box-scroll thead th { position: sticky; top: 0; background: #fff; z-index: 2; }
+.mt-box-scroll { overflow-x: auto; }

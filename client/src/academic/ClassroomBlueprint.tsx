@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
-import { Classroom, FLOOR_NAMES, loadClassrooms, roomCapacity, saveClassrooms, totalCapacity } from './classrooms';
+import { Classroom, floorName, loadClassrooms, roomCapacity, saveClassrooms, totalCapacity } from './classrooms';
 import { Card, StatCard } from './ui';
 
-export const ClassroomBlueprint: React.FC = () => {
-  const [rooms, setRooms] = useState<Classroom[]>(loadClassrooms());
+export const ClassroomBlueprint: React.FC<{ initial?: Classroom[]; onChange?: (l: Classroom[]) => void }> = ({ initial, onChange }) => {
+  const [rooms, setRooms] = useState<Classroom[]>(initial ?? loadClassrooms());
   const [names, setNames] = useState<Record<number, string>>({});
-  const update = (l: Classroom[]) => { setRooms(l); saveClassrooms(l); };
+  const update = (l: Classroom[]) => { setRooms(l); saveClassrooms(l); onChange?.(l); };
   const patch = (id: string, p: Partial<Classroom>) => update(rooms.map((r) => (r.id === id ? { ...r, ...p } : r)));
   const add = (floor: number) => { const nm = (names[floor] || '').trim() || `Room ${(floor + 1) * 100 + rooms.filter((r) => r.floor === floor).length + 1}`; update([...rooms, { id: `r${Date.now()}`, floor, name: nm, benches: 12, perBench: 2 }]); setNames({ ...names, [floor]: '' }); };
   const total = totalCapacity(rooms);
+  const floors = Math.max(1, ...rooms.map((r) => r.floor + 1));
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Whole college capacity" value={total} suffix="students seated" />
         <StatCard label="Classrooms" value={rooms.length} tone="slate" />
         <StatCard label="Benches" value={rooms.reduce((a, r) => a + r.benches, 0)} tone="gold" />
-        <StatCard label="Floors" value={FLOOR_NAMES.length} tone="slate" />
+        <StatCard label="Floors" value={floors} tone="slate" />
       </div>
       <p className="text-xs text-slate-500">Name each classroom, then add or remove benches. Capacity = benches × seats per bench. Changes are saved on this device and used by Exam Management.</p>
-      {[...FLOOR_NAMES.keys()].reverse().map((f) => {
+      {[...Array(floors).keys()].reverse().map((f) => {
         const list = rooms.filter((r) => r.floor === f);
         return (
-          <Card key={f} title={`${FLOOR_NAMES[f]} · ${list.length} rooms · capacity ${totalCapacity(list)}`}
+          <Card key={f} title={`${floorName(f)} · ${list.length} rooms · capacity ${totalCapacity(list)}`}
             right={<div className="flex gap-2"><input value={names[f] || ''} onChange={(e) => setNames({ ...names, [f]: e.target.value })} placeholder="New room name" className="w-36 px-3 py-1.5 rounded-xl border border-[#ded9cf] text-xs outline-none focus:border-[#c7222a]" /><button onClick={() => add(f)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#a3161b] text-white text-xs font-semibold"><Plus className="w-3.5 h-3.5" />Add room</button></div>}>
             <div className="rounded-xl border-2 border-[#8c1118]/60 bg-[#fffdf9] p-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

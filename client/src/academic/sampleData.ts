@@ -166,7 +166,7 @@ export interface Student {
   id: string; sectionId: string; no: number; name: string; roll: string; gender: 'Male' | 'Female';
   sslc: string; hostel: null | { block: string; floor: string; room: string; bed: string };
   warden: null | { name: string; phone: string };
-  fatherName: string; fatherOccupation: string; phone: string; dob: string; blood: string; active: boolean;
+  fatherName: string; fatherOccupation: string; phone: string; dob: string; blood: string; active: boolean; boarder: boolean;
   deact: null | { reason: string; staff: string; date: string };
   ability: number; docs: DocItem[];
 }
@@ -201,8 +201,8 @@ const genSection = (sectionId: string): Student[] => {
     list.push({
       id: `${sectionId}-${i + 1}`, sectionId, no: i + 1, name, roll: String(base + Math.floor(r() * 900) + i * 7), gender: female ? 'Female' : 'Male',
       sslc: pick(r, SSLC),
-      hostel: hosteler ? { block: '', floor: '', room: '', bed: '' } : null,
-      warden: hosteler ? wd : null,
+      hostel: null, boarder: hosteler,
+      warden: null,
       fatherName: `${pick(r, FIRST_M)} ${pick(r, LAST)}`, fatherOccupation: pick(r, OCC), phone: `9${Math.floor(r() * 900000000 + 100000000)}`,
       dob: `200${7 + Math.floor(r() * 2)}-${String(1 + Math.floor(r() * 12)).padStart(2, '0')}-${String(1 + Math.floor(r() * 28)).padStart(2, '0')}`,
       blood: pick(r, ['A+', 'B+', 'O+', 'AB+', 'O-', 'B-']), active: true, deact: null,
@@ -459,11 +459,21 @@ export const staffWeekLoad = (staffId: string) => {
 // ---------- hostel blocks (blueprint) ----------
 export interface FloorDef { name: string; rooms: number; share: number }
 export interface BlockDef { id: string; name: string; gender: 'Male' | 'Female'; warden: { name: string; phone: string }; floors: FloorDef[]; shape: 'bar' | 'L' | 'U' }
-export const BLOCKS: BlockDef[] = [
+const DEFAULT_BLOCKS: BlockDef[] = [
   { id: 'D', name: 'NEW CAMPUS - D-BLOCK - 2026-27', gender: 'Male', warden: WARDENS[0], shape: 'bar', floors: [{ name: 'Ground Floor', rooms: 10, share: 2 }, { name: '1st Floor', rooms: 10, share: 3 }, { name: '2nd Floor', rooms: 10, share: 4 }, { name: '3rd Floor', rooms: 10, share: 4 }] },
   { id: 'A', name: 'MAIN CAMPUS - A-BLOCK - 2026-27', gender: 'Male', warden: WARDENS[2], shape: 'L', floors: [{ name: 'Ground Floor', rooms: 8, share: 3 }, { name: '1st Floor', rooms: 8, share: 3 }, { name: '2nd Floor', rooms: 8, share: 3 }] },
   { id: 'C', name: 'NEW CAMPUS - C-BLOCK - 2026-27', gender: 'Female', warden: WARDENS[1], shape: 'U', floors: [{ name: 'Ground Floor', rooms: 10, share: 3 }, { name: '1st Floor', rooms: 10, share: 3 }, { name: '2nd Floor', rooms: 10, share: 4 }, { name: '3rd Floor', rooms: 10, share: 4 }] },
 ];
+const BLOCKS_KEY = 'mt-hostel-blocks';
+const savedBlocks = (): BlockDef[] | null => { try { const v = localStorage.getItem(BLOCKS_KEY); return v ? (JSON.parse(v) as BlockDef[]) : null; } catch { return null; } };
+export const hasSavedBlocks = () => savedBlocks() !== null;
+export const BLOCKS: BlockDef[] = savedBlocks() ?? DEFAULT_BLOCKS;
+export const setBlocks = (list: BlockDef[]) => {
+  BLOCKS.splice(0, BLOCKS.length, ...list);
+  try { localStorage.setItem(BLOCKS_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+  allocateHostel();
+};
+export const floorLabel = (i: number) => (i === 0 ? 'Ground Floor' : ordinal(i) + ' Floor');
 export interface RoomDef { block: string; floorIdx: number; floor: string; no: number; label: string; share: number }
 export const blockRooms = (b: BlockDef): RoomDef[] => {
   const out: RoomDef[] = []; let n = 0;
@@ -474,30 +484,19 @@ export const bedName = (share: number, i: number) => (share === 1 ? 'Single Cot'
 export const blockCapacity = (b: BlockDef) => b.floors.reduce((a, f) => a + f.rooms * f.share, 0);
 
 const allocateHostel = () => {
-  const all = allSections().flatMap((s) => studentCache.get(s.id) || []);
-  BLOCKS.forEach((b) => {
-    const rooms = blockRooms(b);
-    const mine = all.filter((st) => st.hostel && st.active && st.gender === b.gender && !st.hostel.block);
-    const males = b.gender === 'Male';
-    // male students fill D first, then A; female students fill C
-    const targets = males ? (b.id === 'D' ? mine : []) : mine;
+  const all = allSections().flatMap((x) => studentCache.get(x.id) || []);
+  all.forEach((st) => { st.hostel = null; st.warden = null; });
+  (['Male', 'Female'] as const).forEach((g) => {
+    const queue = all.filter((st) => st.boarder && st.active && st.gender === g);
+    const rooms = BLOCKS.filter((b) => b.gender === g).flatMap((b) => blockRooms(b).map((r) => ({ b, r })));
     let ri = 0, bi = 0;
-    targets.forEach((st) => {
-      while (ri < rooms.length && bi >= rooms[ri].share) { ri++; bi = 0; }
+    queue.forEach((st) => {
+      while (ri < rooms.length && bi >= rooms[ri].r.share) { ri++; bi = 0; }
       if (ri >= rooms.length) return;
-      const rm = rooms[ri];
-      st.hostel = { block: b.name, floor: rm.floor, room: rm.label, bed: bedName(rm.share, bi) }; st.warden = b.warden; bi++;
+      const { b, r } = rooms[ri];
+      st.hostel = { block: b.name, floor: r.floor, room: r.label, bed: bedName(r.share, bi) }; st.warden = b.warden; bi++;
     });
   });
-  // overflow of boys goes to A-block
-  const A = BLOCKS[1]; const aRooms = blockRooms(A);
-  let ri = 0, bi = 0;
-  all.filter((st) => st.hostel && !st.hostel.block && st.gender === 'Male').forEach((st) => {
-    while (ri < aRooms.length && bi >= aRooms[ri].share) { ri++; bi = 0; }
-    if (ri >= aRooms.length) { st.hostel = null; st.warden = null; return; }
-    const rm = aRooms[ri]; st.hostel = { block: A.name, floor: rm.floor, room: rm.label, bed: bedName(rm.share, bi) }; st.warden = A.warden; bi++;
-  });
-  all.forEach((st) => { if (st.hostel && !st.hostel.block) { st.hostel = null; st.warden = null; } });
 };
 export const hostelOccupants = (blockName: string) => allSections().flatMap((s) => getStudents(s.id)).filter((st) => st.hostel?.block === blockName);
 export const allStudents = () => allSections().flatMap((s) => getStudents(s.id));
