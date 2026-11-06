@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Download, FileText, Phone } from 'lucide-react';
+import { Award, ClipboardCheck, Crosshair, Download, FileText, Pencil, Phone, XCircle } from 'lucide-react';
 import {
-  Student, SubjectName, TestResult, chapterReport, leaderboard, ordinal, pct, sectionById, sectionResults, studentTests, getStudents, staffById,
+  Student, SubjectName, TestResult, chapterReport, chapterRanks, chapterTests, leaderboard, ordinal, pct, sectionById, sectionResults, studentTests, getStudents, staffById,
 } from './sampleData';
-import { Avatar, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, GREY, AMBER, RED, Legend, LineChart, Pill, StatCard, Stacked, TabBar } from './ui';
+import { Avatar, ChapterIcon, SubjectIcon, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, GREY, AMBER, RED, Legend, LineChart, Pill, StatCard, Stacked, TabBar } from './ui';
 
 // ---------- student grid (photo + roll number) ----------
 export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => void }> = ({ sectionId, onOpen }) => {
@@ -15,13 +15,30 @@ export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => 
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
-          <Chip active={tab === 'All'} onClick={() => setTab('All')}>All ({all.filter((s) => s.active).length})</Chip>
+          <Chip active={tab === 'All'} onClick={() => setTab('All')}>All ({all.length - all.filter((s) => !s.active).length})</Chip>
           <Chip active={tab !== 'All'} onClick={() => setTab('Deactivated Students')}>Deactivated Students ({all.filter((s) => !s.active).length})</Chip>
         </div>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or roll number" className="w-full sm:w-64 px-3.5 py-2 text-sm rounded-xl border border-[#ded9cf] bg-white outline-none focus:border-[#c7222a]" />
       </div>
       {list.length === 0 ? (
         <Card><p className="text-center text-sm text-slate-500 py-8">No students match.</p></Card>
+      ) : tab !== 'All' ? (
+        <div className="space-y-3">
+          {list.map((s) => (
+            <button key={s.id} onClick={() => onOpen(s.id)} className="mt-tile-card w-full text-left rounded-2xl border border-[#ece4da] bg-white p-3.5 flex items-start gap-3 hover:border-[#d9a85a] transition">
+              <Avatar name={s.name} pid={s.id} size={46} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-900">{s.no}. {s.name}</span>
+                <span className="block text-xs text-slate-500">Roll Number: {s.roll}</span>
+                <span className="block text-xs text-slate-600 mt-1"><span className="inline-flex items-center gap-1 text-[#a3161b]"><Pencil className="w-3 h-3" /></span> Reason: {s.deact?.reason}</span>
+                <span className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-[11px] text-slate-500">
+                  <span><b className="text-slate-600">Deactivated Staff:</b> {s.deact?.staff}</span>
+                  <span><b className="text-slate-600">Date:</b> {s.deact?.date}</span>
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {list.map((s) => (
@@ -41,12 +58,15 @@ export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => 
 };
 
 // ---------- profile ----------
-type AView = { kind: 'overview' } | { kind: 'subject'; subject: SubjectName } | { kind: 'test'; testId: string };
+type AView = { kind: 'overview' } | { kind: 'subject'; subject: SubjectName } | { kind: 'test'; testId: string } | { kind: 'chapter'; subject: SubjectName; chapter: string };
 
 export const StudentProfile: React.FC<{ student: Student }> = ({ student }) => {
   const sec = sectionById(student.sectionId)!;
   const [tab, setTab] = useState('Test Analysis');
   const [view, setView] = useState<AView>({ kind: 'overview' });
+  const [hist, setHist] = useState<AView[]>([]);
+  const go = (n: AView) => { setHist((h) => [...h, view]); setView(n); };
+  const back = () => { const h = [...hist]; const p = h.pop() || { kind: 'overview' as const }; setHist(h); setView(p); };
   const warden = student.warden;
   return (
     <div className="space-y-5">
@@ -74,12 +94,13 @@ export const StudentProfile: React.FC<{ student: Student }> = ({ student }) => {
         </div>
       </div>
 
-      <TabBar items={['Test Analysis', 'Documents', 'Personal Details']} value={tab} onChange={(t) => { setTab(t); setView({ kind: 'overview' }); }} />
+      <TabBar items={['Test Analysis', 'Documents', 'Personal Details']} value={tab} onChange={(t) => { setTab(t); setView({ kind: 'overview' }); setHist([]); }} />
 
       {tab === 'Test Analysis' && (
-        view.kind === 'overview' ? <Overview student={student} onSubject={(s) => setView({ kind: 'subject', subject: s })} onTest={(t) => setView({ kind: 'test', testId: t })} />
-        : view.kind === 'subject' ? <SubjectAnalysis student={student} subject={view.subject} onBack={() => setView({ kind: 'overview' })} onTest={(t) => setView({ kind: 'test', testId: t })} />
-        : <TestAnalysis student={student} testId={view.testId} onBack={() => setView({ kind: 'overview' })} />
+        view.kind === 'overview' ? <Overview student={student} onSubject={(s) => go({ kind: 'subject', subject: s })} onTest={(t) => go({ kind: 'test', testId: t })} onChapter={(s, c) => go({ kind: 'chapter', subject: s, chapter: c })} />
+        : view.kind === 'subject' ? <SubjectAnalysis student={student} subject={view.subject} onBack={back} onTest={(t) => go({ kind: 'test', testId: t })} onChapter={(c) => go({ kind: 'chapter', subject: view.subject, chapter: c })} />
+        : view.kind === 'chapter' ? <ChapterAnalysis student={student} subject={view.subject} chapter={view.chapter} onBack={back} onTest={(t) => go({ kind: 'test', testId: t })} />
+        : <TestAnalysis student={student} testId={view.testId} onBack={back} />
       )}
       {tab === 'Documents' && <Documents student={student} />}
       {tab === 'Personal Details' && (
@@ -110,7 +131,7 @@ const Documents: React.FC<{ student: Student }> = ({ student }) => (
 );
 
 // ---------- overview analysis ----------
-const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void; onTest: (id: string) => void }> = ({ student, onSubject, onTest }) => {
+const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void; onTest: (id: string) => void; onChapter: (s: SubjectName, c: string) => void }> = ({ student, onSubject, onTest, onChapter }) => {
   const sec = sectionById(student.sectionId)!;
   const tests = studentTests(student);
   const board = leaderboard(student.sectionId);
@@ -129,7 +150,7 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2">
         <Chip active={filter === 'All'} onClick={() => setFilter('All')}>All</Chip>
-        {sec.subjects.map((s) => <Chip key={s} active={filter === s} onClick={() => setFilter(s)}>{s}</Chip>)}
+        {sec.subjects.map((s) => <Chip key={s} active={filter === s} onClick={() => setFilter(s)}><span className="inline-flex items-center gap-1.5"><SubjectIcon subject={s} className="w-5 h-5" />{s}</span></Chip>)}
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         <StatCard label="Class rank" value={me.rank} suffix={`of ${board.length}`} />
@@ -147,7 +168,7 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
             tests.forEach((t) => t.subjects.filter((x) => x.subject === sub).forEach((x) => { c += x.correct; w += x.wrong; s += x.skipped; }));
             return (
               <button key={sub} onClick={() => onSubject(sub)} className="w-full text-left group">
-                <div className="flex justify-between text-xs mb-1"><span className="font-semibold text-slate-800 group-hover:text-[#a3161b]">{sub}</span><span className="text-slate-500">{pct(c, c + w + s)}% correct · view analysis</span></div>
+                <div className="flex justify-between text-xs mb-1"><span className="inline-flex items-center gap-2 font-semibold text-slate-800 group-hover:text-[#a3161b]"><SubjectIcon subject={sub} className="w-7 h-7" />{sub}</span><span className="text-slate-500">{pct(c, c + w + s)}% correct · view analysis</span></div>
                 <Stacked parts={[{ v: c, color: GREEN }, { v: w, color: RED }, { v: s, color: AMBER }]} />
               </button>
             );
@@ -174,10 +195,10 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
       <Card title="Chapters report">
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
           {subs.flatMap((sub) => chapterReport(student, sub).map((c) => ({ ...c, sub }))).sort((a, b) => a.accuracy - b.accuracy).slice(0, 12).map((c) => (
-            <div key={c.sub + c.chapter}>
-              <div className="flex justify-between text-xs mb-1"><span className="text-slate-700">{c.chapter} <span className="text-slate-400">· {c.sub}</span></span><b className="text-slate-900">{c.accuracy}%</b></div>
+            <button key={c.sub + c.chapter} onClick={() => onChapter(c.sub, c.chapter)} className="text-left group">
+              <div className="flex justify-between items-center text-xs mb-1"><span className="inline-flex items-center gap-2 text-slate-700 group-hover:text-[#a3161b]"><ChapterIcon chapter={c.chapter} className="w-5 h-5" />{c.chapter} <span className="text-slate-400">· {c.sub}</span></span><b className="text-slate-900">{c.accuracy}%</b></div>
               <Bar value={c.accuracy} color={c.accuracy >= 70 ? GREEN : c.accuracy >= 45 ? AMBER : RED} />
-            </div>
+            </button>
           ))}
         </div>
         <p className="text-[11px] text-slate-400 mt-3">Showing the weakest chapters first.</p>
@@ -187,10 +208,11 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
 };
 
 // ---------- subject level ----------
-const SubjectAnalysis: React.FC<{ student: Student; subject: SubjectName; onBack: () => void; onTest: (id: string) => void }> = ({ student, subject, onBack, onTest }) => {
+const SubjectAnalysis: React.FC<{ student: Student; subject: SubjectName; onBack: () => void; onTest: (id: string) => void; onChapter: (c: string) => void }> = ({ student, subject, onBack, onTest, onChapter }) => {
   const tests = studentTests(student);
   const rows = tests.map((t) => ({ t, s: t.subjects.find((x) => x.subject === subject)! }));
   const chapters = chapterReport(student, subject);
+  const ranks = useMemo(() => chapterRanks(student, subject), [student, subject]);
   const sum = rows.reduce((a, r) => ({ c: a.c + r.s.correct, w: a.w + r.s.wrong, k: a.k + r.s.skipped, m: a.m + r.s.marks, x: a.x + r.s.max, mins: a.mins + r.s.mins }), { c: 0, w: 0, k: 0, m: 0, x: 0, mins: 0 });
   const strong = [...chapters].sort((a, b) => b.accuracy - a.accuracy).slice(0, 3);
   const weak = [...chapters].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3);
@@ -202,8 +224,8 @@ const SubjectAnalysis: React.FC<{ student: Student; subject: SubjectName; onBack
   }, [student, subject]);
   return (
     <div className="space-y-5">
-      <button onClick={onBack} className="text-xs font-semibold text-[#a3161b] hover:underline">← Back to overall analysis</button>
-      <h3 className="text-base font-bold font-heading text-slate-900">{subject} analysis</h3>
+      <button onClick={onBack} className="block text-xs font-semibold text-[#a3161b] hover:underline">← Back</button>
+      <h3 className="text-base font-bold font-heading text-slate-900 inline-flex items-center gap-3"><SubjectIcon subject={subject} className="w-10 h-10" />{subject} analysis</h3>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Subject rank" value={rank} suffix="in section" />
         <StatCard label="Average score" value={Math.max(0, pct(sum.m, sum.x))} suffix="% across tests" tone="green" />
@@ -215,15 +237,27 @@ const SubjectAnalysis: React.FC<{ student: Student; subject: SubjectName; onBack
         <LineChart points={rows.map((r) => ({ label: r.t.name[0] + r.t.name.split(' ').pop(), v: Math.max(0, pct(r.s.marks, r.s.max)) }))} />
       </Card>
       <div className="grid lg:grid-cols-2 gap-5">
-        <Card title="Chapter accuracy">
-          <div className="space-y-3">
-            {chapters.map((c) => (
-              <div key={c.chapter}>
-                <div className="flex justify-between text-xs mb-1"><span className="text-slate-700">{c.chapter}</span><span className="text-slate-500">{c.correct}/{c.total} · <b className="text-slate-900">{c.accuracy}%</b></span></div>
-                <Bar value={c.accuracy} color={c.accuracy >= 70 ? GREEN : c.accuracy >= 45 ? AMBER : RED} />
-              </div>
+        <Card className="lg:col-span-2 !p-0 overflow-hidden">
+          <h3 className="text-sm font-bold text-slate-900 font-heading px-4 sm:px-5 pt-4 pb-2">Chapters Report</h3>
+          <ul className="divide-y divide-[#f3ede6]">
+            {chapters.map((c, i) => (
+              <li key={c.chapter}>
+                <button onClick={() => onChapter(c.chapter)} className="w-full text-left flex items-start gap-3 px-4 sm:px-5 py-3.5 hover:bg-[#fff8f4] transition">
+                  <ChapterIcon chapter={c.chapter} className="w-9 h-9 mt-0.5" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex justify-between gap-3 text-sm"><span className="font-semibold text-slate-800 truncate">{i + 1}. {c.chapter}</span><b className="text-emerald-600 shrink-0">{c.percent}%</b></span>
+                    <span className="block mt-1.5"><Bar value={c.percent} color={c.percent >= 70 ? GREEN : c.percent >= 45 ? AMBER : RED} h="h-2" /></span>
+                    <span className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-slate-500">
+                      <span className="inline-flex items-center gap-1"><Award className="w-3.5 h-3.5 text-amber-500" /><b className="text-slate-700">{ranks[c.chapter]}</b> Chapter rank</span>
+                      <span className="inline-flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5 text-blue-600" />{c.tests} tests</span>
+                      <span className="inline-flex items-center gap-1"><XCircle className="w-3.5 h-3.5 text-red-500" />{(c.chapter.length + student.no) % 7 === 0 ? 1 : 0} absents</span>
+                      <span className="inline-flex items-center gap-1"><Crosshair className="w-3.5 h-3.5 text-rose-500" />{c.accuracy}% accuracy</span>
+                    </span>
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </Card>
         <div className="space-y-5">
           <Card title="Strong chapters">{strong.map((c) => <p key={c.chapter} className="flex justify-between text-sm py-1"><span>{c.chapter}</span><Pill tone="green">{c.accuracy}%</Pill></p>)}</Card>
@@ -249,6 +283,52 @@ const SubjectAnalysis: React.FC<{ student: Student; subject: SubjectName; onBack
   );
 };
 
+// ---------- chapter level: every test this chapter appeared in, question by question ----------
+const ChapterAnalysis: React.FC<{ student: Student; subject: SubjectName; chapter: string; onBack: () => void; onTest: (id: string) => void }> = ({ student, subject, chapter, onBack, onTest }) => {
+  const rows = useMemo(() => chapterTests(student, subject, chapter), [student, subject, chapter]);
+  const row = chapterReport(student, subject).find((c) => c.chapter === chapter)!;
+  const rank = chapterRanks(student, subject)[chapter];
+  const mins = Math.round(rows.reduce((a, r) => a + r.secs, 0) / 60);
+  return (
+    <div className="space-y-5">
+      <button onClick={onBack} className="block text-xs font-semibold text-[#a3161b] hover:underline">← Back</button>
+      <h3 className="text-base font-bold font-heading text-slate-900 inline-flex items-center gap-3"><ChapterIcon chapter={chapter} className="w-9 h-9" />{chapter}<span className="text-xs font-medium text-slate-400">· {subject}</span></h3>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <StatCard label="Chapter score" value={row.percent} suffix="%" tone="green" />
+        <StatCard label="Chapter rank" value={rank} suffix="in section" />
+        <StatCard label="Tests attended" value={rows.length} tone="slate" />
+        <StatCard label="Accuracy" value={row.accuracy} suffix="% of attempted" tone="gold" />
+        <StatCard label="Time on chapter" value={mins} suffix="minutes" tone="slate" />
+      </div>
+      {rows.map(({ test, questions, correct, wrong, skipped, marks, max, secs }) => (
+        <Card key={test.id} title={`${test.name} · ${test.date}`} right={<button onClick={() => onTest(test.id)} className="px-3 py-1.5 rounded-xl bg-[#a3161b] text-white text-xs font-semibold">View full test report</button>}>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600 mb-3">
+            <span>Chapter marks <b className="text-slate-900">{marks}/{max}</b></span>
+            <span className="text-emerald-700">{correct} correct</span><span className="text-red-600">{wrong} wrong</span><span className="text-amber-600">{skipped} blank</span>
+            <span>Time on chapter <b className="text-slate-900">{Math.round(secs / 60)} min {secs % 60} sec</b></span>
+            <span>Whole test: <b className="text-slate-900">{test.marks}/{test.max}</b> · {test.mins} min · rank {test.rank}</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="text-left text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-3">Q.No</th><th className="pr-3">Result</th><th className="pr-3">Your answer</th><th className="pr-3">Correct answer</th><th className="pr-3 w-44">Time taken</th></tr></thead>
+              <tbody>
+                {questions.map((q) => (
+                  <tr key={q.n} className="border-b border-[#f7f2ec]">
+                    <td className="py-2 pr-3 font-semibold text-slate-800">{q.n}</td>
+                    <td className="pr-3"><Pill tone={q.status === 'correct' ? 'green' : q.status === 'wrong' ? 'red' : 'amber'}>{q.status === 'correct' ? 'Correct' : q.status === 'wrong' ? 'Wrong' : 'Not attempted'}</Pill></td>
+                    <td className="pr-3">{q.marked}</td><td className="pr-3 font-semibold text-emerald-700">{q.key}</td>
+                    <td className="pr-3"><div className="flex items-center gap-2"><div className="flex-1"><Bar value={Math.min(100, (q.secs / 150) * 100)} color={q.secs > 100 ? RED : q.secs > 60 ? AMBER : GREEN} h="h-1.5" /></div><span className="w-12 text-right text-slate-600">{q.secs}s</span></div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
 // ---------- test level (NEET-prep style) ----------
 const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => void }> = ({ student, testId, onBack }) => {
   const test = studentTests(student).find((t) => t.id === testId) as TestResult;
@@ -267,7 +347,7 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
   }, [test]);
   return (
     <div className="space-y-5">
-      <button onClick={onBack} className="text-xs font-semibold text-[#a3161b] hover:underline">← Back to overall analysis</button>
+      <button onClick={onBack} className="block text-xs font-semibold text-[#a3161b] hover:underline">← Back</button>
       <div className="flex flex-wrap items-baseline gap-3"><h3 className="text-base font-bold font-heading text-slate-900">{test.name}</h3><span className="text-xs text-slate-500">{test.date} · {test.kind} test</span></div>
 
       <div className="rounded-3xl bg-white border border-[#ece4da] p-5 grid sm:grid-cols-[auto_1fr] gap-6 items-center">
@@ -302,7 +382,7 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
             <tbody>
               {test.subjects.map((s) => (
                 <tr key={s.subject} className="border-b border-[#f7f2ec]">
-                  <td className="py-2 pr-3 font-semibold text-slate-800">{s.subject}</td><td className="pr-3 font-semibold">{s.marks}/{s.max}</td>
+                  <td className="py-2 pr-3 font-semibold text-slate-800"><span className="inline-flex items-center gap-2"><SubjectIcon subject={s.subject} className="w-6 h-6" />{s.subject}</span></td><td className="pr-3 font-semibold">{s.marks}/{s.max}</td>
                   <td className="pr-3 text-emerald-700">{s.correct}</td><td className="pr-3 text-red-600">{s.wrong}</td><td className="pr-3 text-amber-600">{s.skipped}</td>
                   <td className="pr-3">{pct(s.correct, s.correct + s.wrong)}%</td><td>{s.mins} min</td>
                 </tr>

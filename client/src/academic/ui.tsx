@@ -324,3 +324,52 @@ export const EditableCard: React.FC<{ id: string; title: string; fields: Field[]
     </Card>
   );
 };
+
+// ---------- chapter icons (line pictograms, one per chapter topic) ----------
+const P = ({ d }: { d: string }) => <path d={d} />;
+const CH: Record<string, React.ReactNode> = {
+  chart: <><P d="M4 20V10M10 20V4M16 20v-8M22 20H2" /></>,
+  target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.5" /></>,
+  bolt: <P d="M13 2 4 14h7l-1 8 9-12h-7z" />,
+  gear: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" /></>,
+  planet: <><circle cx="12" cy="12" r="5" /><ellipse cx="12" cy="12" rx="10" ry="3.5" transform="rotate(-20 12 12)" /></>,
+  flame: <P d="M12 22c4 0 7-3 7-7 0-4-3-6-4-10-3 2-4 5-4 7-1-1-2-2-2-4-3 2-4 5-4 7 0 4 3 7 7 7z" />,
+  bulb: <><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10c1 1 1 3 1 3h6s0-2 1-3a6 6 0 0 0-4-10z" /></>,
+  atom: <><ellipse cx="12" cy="12" rx="10" ry="4" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" /></>,
+  link: <><path d="M10 14a4 4 0 0 0 5.6 0l3-3a4 4 0 0 0-5.6-5.6l-1 1M14 10a4 4 0 0 0-5.6 0l-3 3a4 4 0 0 0 5.6 5.6l1-1" /></>,
+  scale: <><path d="M12 3v18M5 21h14M4 7h16M4 7l-2 6a3 3 0 0 0 6 0zM20 7l-2 6a3 3 0 0 0 6 0z" /></>,
+  hex: <><path d="M12 2 21 7v10l-9 5-9-5V7z" /><path d="M12 8l4 2.3v4.4L12 17l-4-2.3v-4.4z" /></>,
+  battery: <><rect x="2" y="7" width="18" height="10" rx="2" /><path d="M22 10v4M7 10v4M11 10v4" /></>,
+  venn: <><circle cx="9" cy="12" r="6" /><circle cx="15" cy="12" r="6" /></>,
+  triangle: <><path d="M3 20 12 4l9 16zM3 20h18" /><path d="M8 20a4 4 0 0 1 1-2.5" /></>,
+  dots: <><circle cx="5" cy="19" r="1.5" /><circle cx="10" cy="14" r="1.5" /><circle cx="15" cy="9" r="1.5" /><circle cx="20" cy="4" r="1.5" /></>,
+  arrow: <P d="M3 12h16M13 6l6 6-6 6" />,
+  curve: <><path d="M3 20 21 20M3 20V3" /><path d="M5 17c4 0 5-12 9-12s3 9 7 9" /></>,
+  integral: <><path d="M14 3c-3 0-3 2-3 5v8c0 3 0 5-3 5" /><path d="M16 8h2M6 16h2" /></>,
+  dice: <><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1" /><circle cx="15.5" cy="15.5" r="1" /><circle cx="12" cy="12" r="1" /></>,
+  cell: <><circle cx="12" cy="12" r="9" /><circle cx="10" cy="11" r="3" /><circle cx="16" cy="15" r="1.2" /></>,
+  leaf: <><path d="M4 20C4 10 10 4 20 4c0 10-6 16-16 16z" /><path d="M4 20 14 10" /></>,
+  fish: <><path d="M3 12c4-6 11-6 15 0-4 6-11 6-15 0zM18 12l4-4v8z" /><circle cx="8" cy="11" r=".8" /></>,
+  dna: <><path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12M8.5 8h7M8.5 16h7" /></>,
+  heart: <P d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" />,
+  globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></>,
+  flask: <><path d="M9 3h6M10 3v6L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-6-10V3" /></>,
+  steps: <P d="M3 20h5v-5h5v-5h5V5h3" />,
+  bin: <><path d="M5 4h4v6H5zM11 4h2v6h-2zM15 14h4v6h-4zM5 14h6v6H5z" /></>,
+  code: <P d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
+  layers: <><path d="M12 3 2 8l10 5 10-5zM2 13l10 5 10-5M2 17.5l10 5 10-5" /></>,
+  toggle: <><rect x="2" y="7" width="20" height="10" rx="5" /><circle cx="16" cy="12" r="3" /></>,
+  nodes: <><circle cx="12" cy="5" r="2.5" /><circle cx="5" cy="19" r="2.5" /><circle cx="19" cy="19" r="2.5" /><path d="M11 7.5 6 16.5M13 7.5l5 9M7.5 19h9" /></>,
+  db: <><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>,
+  flow: <><rect x="9" y="2" width="6" height="5" rx="1" /><rect x="2" y="17" width="6" height="5" rx="1" /><rect x="16" y="17" width="6" height="5" rx="1" /><path d="M12 7v5M5 17v-5h14v5" /></>,
+};
+const CH_MAP: Record<string, string> = {
+  'Kinematics': 'chart', 'Laws of Motion': 'target', 'Work Energy Power': 'bolt', 'Rotational Motion': 'gear', 'Gravitation': 'planet', 'Thermodynamics': 'flame', 'Electrostatics': 'bolt', 'Current Electricity': 'bulb',
+  'Mole Concept': 'scale', 'Atomic Structure': 'atom', 'Chemical Bonding': 'link', 'Equilibrium': 'scale', 'Organic Basics': 'hex', 'Hydrocarbons': 'hex', 'Electrochemistry': 'battery',
+  'Sets & Relations': 'venn', 'Trigonometry': 'triangle', 'Complex Numbers': 'dots', 'Sequences': 'steps', 'Limits': 'arrow', 'Derivatives': 'curve', 'Integrals': 'integral', 'Probability': 'dice',
+  'Cell Biology': 'cell', 'Plant Kingdom': 'leaf', 'Animal Kingdom': 'fish', 'Genetics': 'dna', 'Human Physiology': 'heart', 'Ecology': 'globe', 'Biotechnology': 'flask', 'Evolution': 'steps',
+  'Number Systems': 'bin', 'Python Basics': 'code', 'Data Structures': 'layers', 'Boolean Logic': 'toggle', 'Networking': 'nodes', 'Databases': 'db', 'Algorithms': 'flow', 'Web Basics': 'globe',
+};
+export const ChapterIcon: React.FC<{ chapter: string; className?: string }> = ({ chapter, className = 'w-9 h-9' }) => (
+  <svg viewBox="0 0 24 24" className={`${className} shrink-0`} fill="none" stroke="#d6336c" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">{CH[CH_MAP[chapter] || 'target']}</svg>
+);

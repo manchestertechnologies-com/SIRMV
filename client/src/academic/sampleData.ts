@@ -51,21 +51,21 @@ const PCMC: SubjectName[] = ['Physics', 'Chemistry', 'Mathematics', 'Computer Sc
 const plan: { id: string; label: string; full: string; streams: { stream: string; label: string; batches: { name: string; secs: [string, number][] }[] }[] }[] = [
   { id: '11', label: '11th', full: '11th - Standard', streams: [
     { stream: 'PCMB', label: 'Physics, Chemistry, Maths, Biology', batches: [
-      { name: 'NEET Foundation', secs: [['FTB', 30], ['ATB', 28]] },
-      { name: 'KCET Regular', secs: [['KTB', 27]] } ] },
+      { name: 'NEET Foundation', secs: [['FTB', 30], ['ATB', 30]] },
+      { name: 'KCET Regular', secs: [['KTB', 30]] } ] },
     { stream: 'PCMC', label: 'Physics, Chemistry, Maths, Computer Science', batches: [
-      { name: 'JEE Foundation', secs: [['JTB', 29]] } ] } ] },
+      { name: 'JEE Foundation', secs: [['JTB', 30]] } ] } ] },
   { id: '12', label: '12th', full: '12th - Standard', streams: [
     { stream: 'PCMB', label: 'Physics, Chemistry, Maths, Biology', batches: [
-      { name: 'NEET Achievers', secs: [['FTB', 30], ['ATB', 29]] },
-      { name: 'KCET Regular', secs: [['KTB', 26]] } ] },
+      { name: 'NEET Achievers', secs: [['FTB', 30], ['ATB', 30]] },
+      { name: 'KCET Regular', secs: [['KTB', 30]] } ] },
     { stream: 'PCMC', label: 'Physics, Chemistry, Maths, Computer Science', batches: [
-      { name: 'JEE Achievers', secs: [['JTB', 27]] } ] } ] },
+      { name: 'JEE Achievers', secs: [['JTB', 30]] } ] } ] },
   { id: 'LT', label: 'LT', full: 'LT - Long Term', streams: [
     { stream: 'PCMB', label: 'Physics, Chemistry, Maths, Biology', batches: [
-      { name: 'NEET Repeaters', secs: [['LTB', 24], ['LTC', 22]] } ] },
+      { name: 'NEET Repeaters', secs: [['LTB', 30], ['LTC', 30]] } ] },
     { stream: 'PCMC', label: 'Physics, Chemistry, Maths, Computer Science', batches: [
-      { name: 'JEE Repeaters', secs: [['LTJ', 20]] } ] } ] },
+      { name: 'JEE Repeaters', secs: [['LTJ', 30]] } ] } ] },
 ];
 
 // ---------- staff ----------
@@ -167,6 +167,7 @@ export interface Student {
   sslc: string; hostel: null | { block: string; floor: string; room: string; bed: string };
   warden: null | { name: string; phone: string };
   fatherName: string; fatherOccupation: string; phone: string; dob: string; blood: string; active: boolean;
+  deact: null | { reason: string; staff: string; date: string };
   ability: number; docs: DocItem[];
 }
 const SSLC = ['ICSE', 'CBSE', 'State', 'State', 'CBSE'];
@@ -198,10 +199,20 @@ export const getStudents = (sectionId: string): Student[] => {
       warden: hosteler ? wd : null,
       fatherName: `${pick(r, FIRST_M)} ${pick(r, LAST)}`, fatherOccupation: pick(r, OCC), phone: `9${Math.floor(r() * 900000000 + 100000000)}`,
       dob: `200${7 + Math.floor(r() * 2)}-${String(1 + Math.floor(r() * 12)).padStart(2, '0')}-${String(1 + Math.floor(r() * 28)).padStart(2, '0')}`,
-      blood: pick(r, ['A+', 'B+', 'O+', 'AB+', 'O-', 'B-']), active: r() > 0.06,
+      blood: pick(r, ['A+', 'B+', 'O+', 'AB+', 'O-', 'B-']), active: true, deact: null,
       ability: 0.45 + r() * 0.5,
       docs: [d('SSLC Marks Card', 0.85), d('Aadhaar Card', 0.8), d('Transfer Certificate', 0.7), d('Caste / Income Certificate', 0.6), d('Passport Photo', 0.9), d('Hostel Agreement', hosteler ? 0.75 : 0.2)],
     });
+  }
+  // a few students per section are deactivated, each with a recorded reason
+  const REASONS = ['College Discontinued (admission cancelled, confirmed by principal)', 'College Discontinued (due to health issues, TC taken)', 'Shifted to another college (TC issued)', 'College Discontinued (fees not cleared, parent request)', 'Joined a state-level sports academy'];
+  const STAFF_BY = ['Sai Babu', 'Mrs. Shobha R', 'Mr. Manjunath G'];
+  const dr = rng('deact-' + sectionId); const nDeact = 2 + Math.floor(dr() * 3);
+  for (let k = 0; k < nDeact; k++) {
+    const st = list[list.length - 1 - k * 5];
+    const dt = new Date(2026, 5 + Math.floor(dr() * 4), 1 + Math.floor(dr() * 27), 10 + Math.floor(dr() * 7), Math.floor(dr() * 60));
+    st.active = false;
+    st.deact = { reason: pick(dr, REASONS), staff: pick(dr, STAFF_BY), date: dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' - ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) };
   }
   studentCache.set(sectionId, list);
   return list;
@@ -295,15 +306,33 @@ export const sectionTestSummary = (sectionId: string) => {
     return { name, avg, appeared: all.length, pass, top: Math.max(...all.map((t) => t.percent)) };
   });
 };
-export const chapterReport = (st: Student, subject: SubjectName) => {
+export interface ChapterRow { chapter: string; correct: number; wrong: number; skipped: number; total: number; accuracy: number; percent: number; tests: number; avgSecs: number; secs: number }
+const chapterOf = (st: Student, subject: SubjectName): ChapterRow[] => {
   const tests = studentTests(st);
   return CHAPTERS[subject].map((ch) => {
-    let c = 0, w = 0, s = 0, secs = 0;
-    tests.forEach((t) => t.questions.filter((q) => q.subject === subject && q.chapter === ch).forEach((q) => { if (q.status === 'correct') c++; else if (q.status === 'wrong') w++; else s++; secs += q.secs; }));
+    let c = 0, w = 0, s = 0, secs = 0; const seen = new Set<string>();
+    tests.forEach((t) => t.questions.filter((q) => q.subject === subject && q.chapter === ch).forEach((q) => { seen.add(t.id); if (q.status === 'correct') c++; else if (q.status === 'wrong') w++; else s++; secs += q.secs; }));
     const n = c + w + s;
-    return { chapter: ch, correct: c, wrong: w, skipped: s, total: n, accuracy: pct(c, c + w), avgSecs: n ? Math.round(secs / n) : 0 };
+    return { chapter: ch, correct: c, wrong: w, skipped: s, total: n, accuracy: pct(c, c + w), percent: n ? Math.max(0, Math.round(((c * 4 - w) / (n * 4)) * 10000) / 100) : 0, tests: seen.size, avgSecs: n ? Math.round(secs / n) : 0, secs };
   });
 };
+export const chapterReport = chapterOf;
+export const chapterRanks = (st: Student, subject: SubjectName): Record<string, number> => {
+  const out: Record<string, number> = {};
+  const all = getStudents(st.sectionId).filter((x) => x.active).map((x) => ({ id: x.id, rows: chapterOf(x, subject) }));
+  CHAPTERS[subject].forEach((ch, i) => {
+    const sorted = [...all].sort((a, b) => b.rows[i].percent - a.rows[i].percent);
+    out[ch] = sorted.findIndex((x) => x.id === st.id) + 1 || sorted.length;
+  });
+  return out;
+};
+export interface ChapterTest { test: TestResult; questions: QResult[]; correct: number; wrong: number; skipped: number; marks: number; max: number; secs: number }
+export const chapterTests = (st: Student, subject: SubjectName, chapter: string): ChapterTest[] =>
+  studentTests(st).map((test) => {
+    const questions = test.questions.filter((q) => q.subject === subject && q.chapter === chapter);
+    const correct = questions.filter((q) => q.status === 'correct').length; const wrong = questions.filter((q) => q.status === 'wrong').length;
+    return { test, questions, correct, wrong, skipped: questions.length - correct - wrong, marks: correct * 4 - wrong, max: questions.length * 4, secs: questions.reduce((a, q) => a + q.secs, 0) };
+  }).filter((x) => x.questions.length > 0);
 
 // ---------- attendance (students) ----------
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
