@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
+import { ModuleIcon } from './ModuleIcon';
 import { X, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface SidebarProps {
@@ -96,7 +97,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         <div className="py-2 px-2 flex-1 overflow-y-auto space-y-0.5 custom-scrollbar">
           <nav className="space-y-0.5">
             {menuItems.map((item) => {
-              const Icon = item.icon;
               const isActive =
                 activeTab === item.targetTab ||
                 (item.id === 'dashboard' && activeTab === 'dashboard-home');
@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                   }`}
                 >
                   <div className="shrink-0 flex items-center justify-center">
-                    <Icon className="w-4.5 h-4.5" />
+                    <ModuleIcon item={item} className="w-5 h-5" />
                   </div>
                   <span className={`truncate whitespace-nowrap ${label}`}>{item.label}</span>
                 </button>
@@ -129,8 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
             </div>
             <nav className="space-y-0.5">
               {otherTools.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.targetTab;
+                  const isActive = activeTab === item.targetTab;
 
                 return (
                   <button
@@ -144,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                     }`}
                   >
                     <div className="shrink-0 flex items-center justify-center">
-                      <Icon className="w-4.5 h-4.5" />
+                      <ModuleIcon item={item} className="w-5 h-5" />
                     </div>
                     <span className={`truncate whitespace-nowrap ${label}`}>{item.label}</span>
                   </button>

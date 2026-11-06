@@ -21,9 +21,13 @@ import {
   IconLeaderboard,
   IconSettings,
   IconReportCard,
-  IconExamManagement
+  IconExamManagement,
+  IconCalendar,
+  IconDiscipline,
+  IconIssues,
+  IconNotifications,
+  IconProfile
 } from '../components/ModuleIcons';
-import { CalendarDays, UserCircle, Wrench, ShieldAlert, Bell } from 'lucide-react';
 import { UserRole } from '../context/AuthContext';
 
 export interface NavItemConfig {
@@ -55,9 +59,9 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'live-class', label: 'Class Recordings', icon: IconLiveClass, targetTab: 'live-class', description: 'Upload lecture streams for absent students' },
           { id: 'my-exam-duty', label: 'My Exam Duties', icon: IconExamManagement, targetTab: 'my-exam-duty', description: 'Invigilation assignments & student seating' },
           { id: 'counsellings', label: 'Counselling', icon: IconCounsellings, targetTab: 'counsellings', description: 'Log & track student counselling sessions' },
-          { id: 'college-calendar', label: 'College Calendar', icon: CalendarDays, targetTab: 'college-calendar', description: 'Holidays, exams & institutional events' },
+          { id: 'college-calendar', label: 'College Calendar', icon: IconCalendar, targetTab: 'college-calendar', description: 'Holidays, exams & institutional events' },
           { id: 'noticeboard', label: 'Announcements & Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Campus circulars & academic notices' },
-          { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
+          { id: 'settings', label: 'Notifications', icon: IconNotifications, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: [
           { id: 'questions', label: 'Question Paper Suite', icon: IconQuestions, targetTab: 'questions', description: 'Institutional 4-Set Question Paper Generator (75k+ Qs)', isOtherTool: true },
@@ -80,9 +84,9 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'reports', label: 'Academic Reports', icon: IconReports, targetTab: 'reports', description: 'Performance & syllabus analytics' },
           { id: 'invigilator-requests', label: 'Invigilator Requests', icon: IconExamManagement, targetTab: 'invigilator-requests', description: 'Approve invigilators for exams' },
           { id: 'counsellings', label: 'Counselling', icon: IconCounsellings, targetTab: 'counsellings', description: 'Log & track student counselling sessions' },
-          { id: 'college-calendar', label: 'College Calendar', icon: CalendarDays, targetTab: 'college-calendar', description: 'Holidays, exams & institutional events' },
+          { id: 'college-calendar', label: 'College Calendar', icon: IconCalendar, targetTab: 'college-calendar', description: 'Holidays, exams & institutional events' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Institutional circulars' },
-          { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
+          { id: 'settings', label: 'Notifications', icon: IconNotifications, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: [
           { id: 'report-card', label: 'Report Card Review', icon: IconReportCard, targetTab: 'report-card', description: 'HOD remarks & verification', isOtherTool: true }
@@ -132,13 +136,13 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
         roleSubtitle: 'Manage 1-Page Consolidated Classroom Lecture records, faculty time-in, photo verification & topics taught.',
         menuItems: [
           { id: 'dashboard', label: 'Floor Dashboard', icon: IconDashboard, targetTab: 'dashboard-home', description: 'Ongoing classes & floor room status' },
-          { id: 'my-profile', label: 'My Profile', icon: UserCircle, targetTab: 'my-profile', description: 'Your staff profile & contact details' },
+          { id: 'my-profile', label: 'My Profile', icon: IconProfile, targetTab: 'my-profile', description: 'Your staff profile & contact details' },
           { id: 'attendance', label: 'Daily Lecture Record', icon: IconAttendance, targetTab: 'attendance', description: 'Consolidated classroom log sheet (includes syllabus/topic taught)' },
           { id: 'invigilation-scan', label: 'Exam Invigilation Attendance', icon: IconExamManagement, targetTab: 'invigilation-scan', description: "Scan an invigilator's duty QR to verify attendance" },
           { id: 'timetable', label: 'Floor Timetable', icon: IconTimetable, targetTab: 'timetable', description: 'Room 201-204 scheduled lectures' },
-          { id: 'floor-issues', label: 'Reporting Issues', icon: Wrench, targetTab: 'floor-issues', description: 'Report maintenance/operational issues on your floor' },
+          { id: 'floor-issues', label: 'Reporting Issues', icon: IconIssues, targetTab: 'floor-issues', description: 'Report maintenance/operational issues on your floor' },
           { id: 'noticeboard', label: 'Announcements & Duty Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Daily floor assignments' },
-          { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
+          { id: 'settings', label: 'Notifications', icon: IconNotifications, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: []
       };
@@ -167,13 +171,13 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'attendance', label: 'Night Roll-Call & Study', icon: IconAttendance, targetTab: 'attendance', description: 'Night attendance & study tracking' },
           { id: 'gate-pass', label: 'Hostel Outpasses', icon: IconGatePass, targetTab: 'gate-pass', description: 'Review hosteller check-in/out' },
           { id: 'students', label: 'Hosteller Registry & Admission', icon: IconStudents, targetTab: 'students', description: 'Resident student profile & emergency contacts' },
-          { id: 'discipline', label: 'Student Discipline', icon: ShieldAlert, targetTab: 'discipline', description: 'Log & track hosteller discipline incidents' },
+          { id: 'discipline', label: 'Student Discipline', icon: IconDiscipline, targetTab: 'discipline', description: 'Log & track hosteller discipline incidents' },
           // Announcements are a Head Warden privilege only — a regular
           // Warden doesn't get to broadcast hostel-wide notices.
           ...(role === 'HEAD_WARDEN'
             ? [{ id: 'noticeboard', label: 'Announcements & Hostel Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Mess schedule & hostel rules' }]
             : []),
-          { id: 'settings', label: 'Notifications', icon: Bell, targetTab: 'settings', description: 'Your alerts & device notification settings' }
+          { id: 'settings', label: 'Notifications', icon: IconNotifications, targetTab: 'settings', description: 'Your alerts & device notification settings' }
         ],
         otherTools: []
       };
@@ -232,9 +236,9 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'sms', label: 'Sms', icon: IconSms, targetTab: 'sms' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard' },
           { id: 'counsellings', label: 'Counsellings', icon: IconCounsellings, targetTab: 'counsellings' },
-          { id: 'college-calendar', label: 'College Calendar', icon: CalendarDays, targetTab: 'college-calendar' },
-          { id: 'discipline', label: 'Student Discipline', icon: ShieldAlert, targetTab: 'discipline' },
-          { id: 'floor-issues', label: 'Reported Issues', icon: Wrench, targetTab: 'floor-issues' },
+          { id: 'college-calendar', label: 'College Calendar', icon: IconCalendar, targetTab: 'college-calendar' },
+          { id: 'discipline', label: 'Student Discipline', icon: IconDiscipline, targetTab: 'discipline' },
+          { id: 'floor-issues', label: 'Reported Issues', icon: IconIssues, targetTab: 'floor-issues' },
           { id: 'hostel', label: 'Hostel', icon: IconHostel, targetTab: 'hostel' },
           { id: 'gate-pass', label: 'Gate Pass', icon: IconGatePass, targetTab: 'gate-pass' },
           { id: 'admission', label: 'Admission', icon: IconAdmission, targetTab: 'admission' },

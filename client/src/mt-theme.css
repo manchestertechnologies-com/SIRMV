@@ -523,3 +523,17 @@ option { color: #2b1a1a; background: #fff; }
   main { scroll-padding-bottom: 5rem; }
   #mt-top { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); }
 }
+
+/* ==========================================================================
+   Dashboard tiles: flat white cards on a soft grey-blue page, large uniform icons
+   ========================================================================== */
+body { background: #f4f6fa; }
+.mt-tile-card {
+  border: 0 !important;
+  box-shadow: 0 2px 14px rgba(40, 40, 90, 0.06);
+}
+.mt-tile-card:hover { box-shadow: 0 14px 30px -10px rgba(74, 7, 9, 0.22); }
+.mt-tile { transform: translateY(var(--ty, 0px)) !important; }   /* flat, no tilt */
+.mt-tile-icon::after { display: none; }                          /* no shimmer on the clean icons */
+.mt-tile-icon > * { filter: none; }
+.mt-tile:hover .mt-tile-icon { background-color: transparent !important; }

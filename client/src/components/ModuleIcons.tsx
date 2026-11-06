@@ -373,3 +373,56 @@ export const IconExamManagement: React.FC<IconProps> = ({ className = 'w-12 h-12
     <rect x="40" y="40" width="10" height="6" rx="1.5" fill="#C4B5FD" />
   </svg>
 );
+
+
+// ---- Icons that were previously plain line icons; redrawn in the same coloured, outlined style ----
+export const IconCalendar: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <rect x="8" y="12" width="48" height="44" rx="7" fill="#FFFFFF" stroke="#2B2D42" strokeWidth="2.5" />
+    <path d="M8 26V19a7 7 0 0 1 7-7h34a7 7 0 0 1 7 7v7H8Z" fill="#EF4444" stroke="#2B2D42" strokeWidth="2.5" strokeLinejoin="round" />
+    <path d="M20 7v10M44 7v10" stroke="#2B2D42" strokeWidth="3" strokeLinecap="round" />
+    <rect x="16" y="33" width="8" height="7" rx="2" fill="#F59E0B" />
+    <rect x="28" y="33" width="8" height="7" rx="2" fill="#10B981" />
+    <rect x="40" y="33" width="8" height="7" rx="2" fill="#3B82F6" />
+    <rect x="16" y="44" width="8" height="7" rx="2" fill="#8B5CF6" />
+    <rect x="28" y="44" width="8" height="7" rx="2" fill="#EC4899" />
+  </svg>
+);
+
+export const IconDiscipline: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <path d="M32 6 54 14v18c0 14-10 22-22 26C20 54 10 46 10 32V14L32 6Z" fill="#F87171" stroke="#2B2D42" strokeWidth="2.5" strokeLinejoin="round" />
+    <path d="M32 6 54 14v18c0 14-10 22-22 26V6Z" fill="#EF4444" opacity="0.55" />
+    <path d="M32 20v15" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" />
+    <circle cx="32" cy="43" r="3" fill="#FFFFFF" />
+  </svg>
+);
+
+export const IconIssues: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <g transform="rotate(45 32 32)">
+      <rect x="27.5" y="20" width="9" height="38" rx="4.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.5" />
+      <circle cx="32" cy="16" r="11" fill="#FBBF24" stroke="#2B2D42" strokeWidth="2.5" />
+      <rect x="28.5" y="2" width="7" height="12" fill="#FFFFFF" />
+      <path d="M28.5 3.5v10.5M35.5 3.5v10.5" stroke="#2B2D42" strokeWidth="2.5" />
+    </g>
+  </svg>
+);
+
+export const IconNotifications: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <path d="M32 9c-10 0-14 8-14 18v7l-6 8h40l-6-8v-7c0-10-4-18-14-18Z" fill="#FBBF24" stroke="#2B2D42" strokeWidth="2.5" strokeLinejoin="round" />
+    <path d="M26 46a6 6 0 0 0 12 0" fill="#EF4444" stroke="#2B2D42" strokeWidth="2.5" strokeLinejoin="round" />
+    <circle cx="32" cy="8" r="2.5" fill="#2B2D42" />
+    <circle cx="47" cy="14" r="6" fill="#EF4444" stroke="#2B2D42" strokeWidth="2" />
+  </svg>
+);
+
+export const IconProfile: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <path d="M10 57c0-14 9-21 22-21s22 7 22 21H10Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="2.5" strokeLinejoin="round" />
+    <circle cx="32" cy="22" r="11" fill="#FDE68A" stroke="#2B2D42" strokeWidth="2.5" />
+    <path d="M22 19c2-6 9-8 14-5 3 1 5 3 6 5" stroke="#2B2D42" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M28 40l4 6 4-6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

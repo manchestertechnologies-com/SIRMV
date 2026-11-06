@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, CornerDownLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
+import { ModuleIcon } from './ModuleIcon';
 
 interface Props {
   onNavigate: (tab: string) => void;
@@ -94,7 +95,6 @@ export const CommandPalette: React.FC<Props> = ({ onNavigate }) => {
             <div className="px-4 py-8 text-center text-sm text-slate-400">Nothing matches “{query}”.</div>
           )}
           {items.map((item, i) => {
-            const Icon = item.icon;
             const sel = i === index;
             return (
               <button
@@ -108,7 +108,7 @@ export const CommandPalette: React.FC<Props> = ({ onNavigate }) => {
                 }`}
               >
                 <span className="w-9 h-9 rounded-lg bg-[#fbf6ec] border border-[#f5e8cc] flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5" />
+                  <ModuleIcon item={item} className="w-6 h-6" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-semibold text-slate-900 truncate">{item.label}</span>

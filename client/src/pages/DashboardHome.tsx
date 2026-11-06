@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
 import { ArrowRight } from 'lucide-react';
+import { ModuleIcon } from '../components/ModuleIcon';
 
 interface DashboardHomeProps {
   onNavigateTab: (tab: string) => void;
@@ -76,25 +77,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
           {mainTiles.map((tile, idx) => {
-            const Icon = tile.icon;
             return (
               <button
                 key={tile.id}
                 style={{ ['--i' as any]: idx }}
                 onClick={() => onNavigateTab(tile.targetTab)}
-                className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm shadow-[#4a0709]/5 min-h-[156px] cursor-pointer"
+                className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[158px] cursor-pointer"
               >
-                <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
-                  <Icon className="w-10 h-10" />
+                <div className="mt-tile-icon shrink-0 mb-4 w-16 h-16 flex items-center justify-center">
+                  <ModuleIcon item={tile} className="w-16 h-16" />
                 </div>
-                <span className="mt-tile-label text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b]">
+                <span className="mt-tile-label text-[15px] font-semibold text-[#2f2d4a] group-hover:text-[#a3161b]">
                   {tile.label}
                 </span>
-                {tile.description && (
-                  <span className="text-[10px] text-slate-400 mt-1 line-clamp-1 max-w-[140px]">
-                    {tile.description}
-                  </span>
-                )}
                 <span className="mt-tile-go">Open <ArrowRight className="w-3.5 h-3.5" /></span>
               </button>
             );
@@ -111,25 +106,19 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
             {otherTools.map((tile, idx) => {
-              const Icon = tile.icon;
-              return (
+                return (
                 <button
                   key={tile.id}
                   style={{ ['--i' as any]: idx }}
                   onClick={() => onNavigateTab(tile.targetTab)}
-                  className="mt-tile mt-pop group bg-white border border-slate-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm shadow-[#4a0709]/5 min-h-[156px] cursor-pointer"
+                  className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[158px] cursor-pointer"
                 >
-                  <div className="mt-tile-icon shrink-0 mb-3.5 w-[68px] h-[68px] rounded-2xl bg-[#fdf6ec] flex items-center justify-center">
-                    <Icon className="w-10 h-10" />
+                  <div className="mt-tile-icon shrink-0 mb-4 w-16 h-16 flex items-center justify-center">
+                    <ModuleIcon item={tile} className="w-16 h-16" />
                   </div>
-                  <span className="mt-tile-label text-[13px] font-semibold text-slate-900 group-hover:text-[#a3161b]">
+                  <span className="mt-tile-label text-[15px] font-semibold text-[#2f2d4a] group-hover:text-[#a3161b]">
                     {tile.label}
                   </span>
-                  {tile.description && (
-                    <span className="text-[10px] text-slate-400 mt-1 line-clamp-1 max-w-[140px]">
-                      {tile.description}
-                    </span>
-                  )}
                   <span className="mt-tile-go">Open <ArrowRight className="w-3.5 h-3.5" /></span>
                 </button>
               );
