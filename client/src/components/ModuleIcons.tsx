@@ -19,59 +19,9 @@ export const IconStaffs: React.FC<IconProps> = ({ className = 'w-12 h-12', size 
   </svg>
 );
 
-// 2. Students Icon
-export const IconStudents: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <circle cx="22" cy="22" r="8" fill="#FDE68A" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M15 18C15 15 18 14 22 14C26 14 29 15 29 18" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M10 42C10 34 15 30 22 30C29 30 34 34 34 42V46H10V42Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="2" />
-    <circle cx="42" cy="24" r="7.5" fill="#FECDD3" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M34 20C34 16 38 15 42 15C46 15 50 16 50 20" stroke="#831843" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M32 44C32 37 36 33 42 33C48 33 52 37 52 44V46H32V44Z" fill="#EC4899" stroke="#2B2D42" strokeWidth="2" />
-    <rect x="20" y="44" width="24" height="14" rx="3" fill="#10B981" stroke="#065F46" strokeWidth="2" />
-    <line x1="32" y1="44" x2="32" y2="58" stroke="#065F46" strokeWidth="2" />
-    <path d="M24 48H28M24 52H29M35 48H39M35 52H40" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
 
-// 3. Classes Icon
-export const IconClasses: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <rect x="10" y="8" width="44" height="34" rx="4" fill="#065F46" stroke="#047857" strokeWidth="2.5" />
-    <rect x="14" y="12" width="36" height="26" rx="2" fill="#047857" />
-    <path d="M18 20L24 28L34 16L44 26" stroke="#FDE047" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="34" cy="16" r="2" fill="#FDE047" />
-    <path d="M18 42L12 58M46 42L52 58M32 42V56" stroke="#92400E" strokeWidth="3" strokeLinecap="round" />
-  </svg>
-);
 
-// 4. Batches Icon
-export const IconBatches: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <circle cx="32" cy="18" r="6.5" fill="#FDE68A" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M22 36C22 30 26 26 32 26C38 26 42 30 42 36V38H22V36Z" fill="#4F46E5" stroke="#2B2D42" strokeWidth="2" />
-    <circle cx="16" cy="26" r="5.5" fill="#FED7AA" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M8 44C8 39 11 36 16 36C21 36 24 39 24 44V46H8V44Z" fill="#10B981" stroke="#2B2D42" strokeWidth="2" />
-    <circle cx="48" cy="26" r="5.5" fill="#FECDD3" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M40 44C40 39 43 36 48 36C53 36 56 39 56 44V46H40V44Z" fill="#F59E0B" stroke="#2B2D42" strokeWidth="2" />
-    <path d="M16 52H48" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" strokeDasharray="3 3" />
-    <circle cx="32" cy="52" r="3" fill="#6366F1" />
-  </svg>
-);
 
-// 5. Tests / Exams Icon
-export const IconTests: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <rect x="8" y="12" width="22" height="22" rx="4" fill="#FEE2E2" stroke="#EF4444" strokeWidth="2" />
-    <text x="14" y="28" fill="#EF4444" fontSize="14" fontWeight="bold" fontFamily="sans-serif">A</text>
-    <rect x="34" y="12" width="22" height="22" rx="4" fill="#DBEAFE" stroke="#3B82F6" strokeWidth="2" />
-    <text x="40" y="28" fill="#3B82F6" fontSize="14" fontWeight="bold" fontFamily="sans-serif">B</text>
-    <rect x="26" y="32" width="12" height="26" rx="2" transform="rotate(-30 26 32)" fill="#F59E0B" stroke="#B45309" strokeWidth="2" />
-    <path d="M38 52L39 58L34 56L38 52Z" fill="#1F2937" />
-    <circle cx="16" cy="46" r="5" fill="#10B981" />
-    <path d="M14 46L16 48L19 44" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 // 6. Board Marks Icon
 export const IconBoardMarks: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
@@ -86,31 +36,7 @@ export const IconBoardMarks: React.FC<IconProps> = ({ className = 'w-12 h-12', s
   </svg>
 );
 
-// 7. Questions Icon
-export const IconQuestions: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <rect x="10" y="10" width="20" height="20" rx="4" fill="#FEE2E2" stroke="#EF4444" strokeWidth="2" />
-    <text x="16" y="25" fill="#DC2626" fontSize="12" fontWeight="bold" fontFamily="sans-serif">A</text>
-    <rect x="34" y="10" width="20" height="20" rx="4" fill="#DCFCE7" stroke="#22C55E" strokeWidth="2" />
-    <text x="40" y="25" fill="#16A34A" fontSize="12" fontWeight="bold" fontFamily="sans-serif">B</text>
-    <rect x="10" y="34" width="20" height="20" rx="4" fill="#FEF3C7" stroke="#F59E0B" strokeWidth="2" />
-    <text x="16" y="49" fill="#D97706" fontSize="12" fontWeight="bold" fontFamily="sans-serif">C</text>
-    <rect x="34" y="34" width="20" height="20" rx="4" fill="#DBEAFE" stroke="#3B82F6" strokeWidth="2" />
-    <text x="40" y="49" fill="#2563EB" fontSize="12" fontWeight="bold" fontFamily="sans-serif">D</text>
-  </svg>
-);
 
-// 8. Reports Icon
-export const IconReports: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <rect x="8" y="46" width="50" height="6" rx="2" fill="#374151" />
-    <rect x="14" y="34" width="8" height="12" rx="2" fill="#EF4444" />
-    <rect x="26" y="24" width="8" height="22" rx="2" fill="#F59E0B" />
-    <rect x="38" y="16" width="8" height="30" rx="2" fill="#10B981" />
-    <path d="M14 30L26 20L38 12L48 8" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M42 8H48V14" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 // 9. Attendance Icon
 export const IconAttendance: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
@@ -240,28 +166,7 @@ export const IconAdmission: React.FC<IconProps> = ({ className = 'w-12 h-12', si
   </svg>
 );
 
-// 19. Leaderboard Icon
-export const IconLeaderboard: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <rect x="22" y="24" width="20" height="32" rx="2" fill="#FBBF24" stroke="#D97706" strokeWidth="2" />
-    <text x="30" y="44" fill="#78350F" fontSize="14" fontWeight="bold" fontFamily="sans-serif">1</text>
-    <rect x="6" y="34" width="16" height="22" rx="2" fill="#94A3B8" stroke="#475569" strokeWidth="2" />
-    <text x="12" y="50" fill="#1E293B" fontSize="12" fontWeight="bold" fontFamily="sans-serif">2</text>
-    <rect x="42" y="38" width="16" height="18" rx="2" fill="#F97316" stroke="#C2410C" strokeWidth="2" />
-    <text x="48" y="52" fill="#FFFFFF" fontSize="12" fontWeight="bold" fontFamily="sans-serif">3</text>
-    <path d="M26 12H38V16C38 19 35 22 32 22C29 22 26 19 26 16V12Z" fill="#FDE047" stroke="#CA8A04" strokeWidth="1.5" />
-    <circle cx="32" cy="8" r="2" fill="#F59E0B" />
-  </svg>
-);
 
-// 20. Settings Icon
-export const IconSettings: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
-  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
-    <circle cx="32" cy="32" r="16" fill="#F3F4F6" stroke="#4B5563" strokeWidth="3" />
-    <circle cx="32" cy="32" r="8" fill="#3B82F6" />
-    <path d="M32 8V14M32 50V56M8 32H14M50 32H56M15 15L19 19M45 45L49 49M15 49L19 45M45 19L49 15" stroke="#4B5563" strokeWidth="3.5" strokeLinecap="round" />
-  </svg>
-);
 
 // 21. Report Card Icon
 export const IconReportCard: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
@@ -424,5 +329,138 @@ export const IconProfile: React.FC<IconProps> = ({ className = 'w-12 h-12', size
     <circle cx="32" cy="22" r="11" fill="#FDE68A" stroke="#2B2D42" strokeWidth="2.5" />
     <path d="M22 19c2-6 9-8 14-5 3 1 5 3 6 5" stroke="#2B2D42" strokeWidth="2.5" strokeLinecap="round" />
     <path d="M28 40l4 6 4-6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const IconStudents: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <path d="M10 24C10 10 34 10 34 24V37H10Z" fill="#F2905C" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M9 47C9 38 14 35 22 35C30 35 35 38 35 47V50H9Z" fill="#FFFFFF" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M17 35L22 42L27 35" fill="#2B4C9B" stroke="#2B2D42" strokeWidth="1.8" />
+    <ellipse cx="22" cy="26" rx="8" ry="9" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M14 24C15 15 29 15 30 24C26 20 18 20 14 24Z" fill="#F2905C" stroke="#2B2D42" strokeWidth="2" />
+    <circle cx="19" cy="27" r="1.3" fill="#2B2D42" /><circle cx="25" cy="27" r="1.3" fill="#2B2D42" />
+    <path d="M19.5 31C21 32.5 23 32.5 24.5 31" stroke="#2B2D42" strokeWidth="1.5" />
+    <path d="M30 47C30 38 35 35 43 35C51 35 56 38 56 47V50H30Z" fill="#2B4C9B" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M38 35L43 42L48 35" fill="#FFFFFF" stroke="#2B2D42" strokeWidth="1.8" />
+    <ellipse cx="43" cy="26" rx="8" ry="9" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M34 25C33 13 53 13 52 25C50 20 46 19 43 19C39 19 36 21 34 25Z" fill="#8B5A3C" stroke="#2B2D42" strokeWidth="2" />
+    <circle cx="40" cy="27" r="1.3" fill="#2B2D42" /><circle cx="46" cy="27" r="1.3" fill="#2B2D42" />
+    <path d="M40.5 31C42 32.5 44 32.5 45.5 31" stroke="#2B2D42" strokeWidth="1.5" />
+    <rect x="5" y="46" width="54" height="13" rx="3" fill="#D98B4A" stroke="#2B2D42" strokeWidth="2.2" />
+    <rect x="5" y="46" width="54" height="4.5" rx="2" fill="#F2B56B" stroke="#2B2D42" strokeWidth="2.2" />
+  </svg>
+);
+
+export const IconClasses: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <rect x="24" y="5" width="36" height="28" rx="2.5" fill="#FFFFFF" stroke="#2B2D42" strokeWidth="2.2" />
+    <rect x="38" y="24" width="5" height="6" fill="#F59E0B" stroke="#2B2D42" strokeWidth="1.5" />
+    <rect x="45" y="19" width="5" height="11" fill="#EF4444" stroke="#2B2D42" strokeWidth="1.5" />
+    <rect x="52" y="13" width="5" height="17" fill="#22C55E" stroke="#2B2D42" strokeWidth="1.5" />
+    <path d="M28 20L36 14L42 16L55 8" stroke="#2B2D42" strokeWidth="1.8" />
+    <rect x="5" y="22" width="15" height="19" rx="4" fill="#EF6B7A" stroke="#2B2D42" strokeWidth="2.2" />
+    <circle cx="12.5" cy="13" r="6" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M6.5 12C7 6 18 6 18.5 12C16 10 9 10 6.5 12Z" fill="#7A4A2B" stroke="#2B2D42" strokeWidth="1.6" />
+    <path d="M19 27L30 21" stroke="#2B2D42" strokeWidth="6" />
+    <path d="M19 27L30 21" stroke="#FFD9BC" strokeWidth="3" />
+    <rect x="6" y="41" width="6" height="16" rx="2" fill="#F6C177" stroke="#2B2D42" strokeWidth="2.2" />
+    <rect x="13" y="41" width="6" height="16" rx="2" fill="#F6C177" stroke="#2B2D42" strokeWidth="2.2" />
+    <circle cx="32" cy="46" r="4" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" /><path d="M26 56a6 6 0 0 1 12 0Z" fill="#38BDF8" stroke="#2B2D42" strokeWidth="1.8" />
+    <circle cx="43" cy="46" r="4" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" /><path d="M37 56a6 6 0 0 1 12 0Z" fill="#FBBF24" stroke="#2B2D42" strokeWidth="1.8" />
+    <circle cx="54" cy="46" r="4" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" /><path d="M48 56a6 6 0 0 1 12 0Z" fill="#34D399" stroke="#2B2D42" strokeWidth="1.8" />
+  </svg>
+);
+
+export const IconBatches: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <path d="M32 24V30M24 40L28 36M40 40L36 36" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M23 27C23 18 27 16 32 16C37 16 41 18 41 27Z" fill="#F59E0B" stroke="#2B2D42" strokeWidth="2" />
+    <circle cx="32" cy="10" r="5.5" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2" />
+    <path d="M26.5 9C27 3 37 3 37.5 9C34 7 30 7 26.5 9Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.5" />
+    <path d="M4 60C4 51 8 49 13 49C18 49 22 51 22 60Z" fill="#EF4444" stroke="#2B2D42" strokeWidth="2" />
+    <circle cx="13" cy="43" r="5.5" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2" />
+    <path d="M7.5 42C8 36 18 36 18.5 42C15 40 11 40 7.5 42Z" fill="#7A4A2B" stroke="#2B2D42" strokeWidth="1.5" />
+    <path d="M42 60C42 51 46 49 51 49C56 49 60 51 60 60Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="2" />
+    <circle cx="51" cy="43" r="5.5" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="2" />
+    <path d="M45.5 42C46 36 56 36 56.5 42C53 40 49 40 45.5 42Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.5" />
+    <circle cx="32" cy="35" r="6.5" fill="#22C55E" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M28.7 35.2L31 37.5L35.5 32.8" stroke="#FFFFFF" strokeWidth="2.2" />
+  </svg>
+);
+
+export const IconTests: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <path d="M6 10a5 5 0 0 1 5-5h12a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5h-3l-4 5v-5h-5a5 5 0 0 1-5-5Z" fill="#FBBF24" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="17" y="19.5" textAnchor="middle" fontSize="12" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">A</text>
+    <path d="M58 11a5 5 0 0 0-5-5H41a5 5 0 0 0-5 5v9a5 5 0 0 0 5 5h3l4 5v-5h5a5 5 0 0 0 5-5Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="47" y="20.5" textAnchor="middle" fontSize="12" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#FFFFFF">B</text>
+    <path d="M6 41a5 5 0 0 1 5-5h12a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5h-3l-4 5v-5h-5a5 5 0 0 1-5-5Z" fill="#CBD5E1" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="17" y="50.5" textAnchor="middle" fontSize="12" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">C</text>
+    <g transform="rotate(14 36 44)">
+      <rect x="32" y="31" width="8" height="19" rx="2" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" />
+      <path d="M32 50H40L36 58Z" fill="#FDE68A" stroke="#2B2D42" strokeWidth="2" />
+      <rect x="31" y="40" width="14" height="12" rx="3" fill="#E2E8F0" stroke="#2B2D42" strokeWidth="2" opacity="0" />
+    </g>
+    <rect x="46" y="36" width="10" height="14" rx="2.5" fill="#34D399" stroke="#2B2D42" strokeWidth="2.2" />
+  </svg>
+);
+
+export const IconQuestions: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <rect x="3" y="8" width="14" height="14" rx="3.5" fill="#EC4899" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="10" y="19" textAnchor="middle" fontSize="10" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#FFFFFF">A</text>
+    <path d="M21 12H27M21 18H25" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="3" y="36" width="14" height="14" rx="3.5" fill="#FBBF24" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="10" y="47" textAnchor="middle" fontSize="10" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">B</text>
+    <path d="M21 40H27M21 46H25" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="37" y="8" width="14" height="14" rx="3.5" fill="#86EFAC" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="44" y="19" textAnchor="middle" fontSize="10" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">C</text>
+    <path d="M55 12H61M55 18H59" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="37" y="36" width="14" height="14" rx="3.5" fill="#38BDF8" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="44" y="47" textAnchor="middle" fontSize="10" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#FFFFFF">D</text>
+    <path d="M55 40H61M55 46H59" stroke="#2B2D42" strokeWidth="2" />
+  </svg>
+);
+
+export const IconReports: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <rect x="7" y="38" width="9" height="16" rx="1.5" fill="#334155" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="18" y="34" width="9" height="20" rx="1.5" fill="#38BDF8" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="29" y="24" width="9" height="30" rx="1.5" fill="#22C55E" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="40" y="29" width="9" height="25" rx="1.5" fill="#F59E0B" stroke="#2B2D42" strokeWidth="2" />
+    <rect x="51" y="16" width="9" height="38" rx="1.5" fill="#EF4444" stroke="#2B2D42" strokeWidth="2" />
+    <path d="M11 30L22 24L33 14L44 20L55 8" stroke="#2B2D42" strokeWidth="2" />
+    <g fill="#FFFFFF" stroke="#2B2D42" strokeWidth="1.8"><circle cx="11" cy="30" r="2.4"/><circle cx="22" cy="24" r="2.4"/><circle cx="33" cy="14" r="2.4"/><circle cx="44" cy="20" r="2.4"/><circle cx="55" cy="8" r="2.4"/></g>
+    <path d="M4 57H61" stroke="#2B2D42" strokeWidth="3" />
+  </svg>
+);
+
+export const IconLeaderboard: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <path d="M24 5H40V15C40 21 36.5 25 32 25C27.5 25 24 21 24 15Z" fill="#FBBF24" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M24 8H19C19 14 21 17 24 17M40 8H45C45 14 43 17 40 17" stroke="#2B2D42" strokeWidth="2.2" />
+    <rect x="29.5" y="25" width="5" height="4" fill="#F59E0B" stroke="#2B2D42" strokeWidth="1.8" />
+    <rect x="26" y="29" width="12" height="3.5" rx="1" fill="#F59E0B" stroke="#2B2D42" strokeWidth="1.8" />
+    <rect x="5" y="40" width="18" height="17" rx="2" fill="#5EEAD4" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="14" y="53" textAnchor="middle" fontSize="12" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">2</text>
+    <rect x="23" y="33" width="18" height="24" rx="2" fill="#EF4444" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="32" y="50" textAnchor="middle" fontSize="13" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#FFFFFF">1</text>
+    <rect x="41" y="44" width="18" height="13" rx="2" fill="#7DD3FC" stroke="#2B2D42" strokeWidth="2.2" />
+    <text x="50" y="55" textAnchor="middle" fontSize="12" fontWeight="800" fontFamily="Poppins, Inter, Arial, sans-serif" fill="#2B2D42">3</text>
+  </svg>
+);
+
+export const IconSettings: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
+    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(0 32 32)" />
+    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(45 32 32)" />
+    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(90 32 32)" />
+    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(135 32 32)" />
+    <circle cx="32" cy="32" r="19" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" />
+    <circle cx="32" cy="32" r="12.5" fill="#E2E8F0" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M23 43C23 36 27 34.5 32 34.5C37 34.5 41 36 41 43C38 45.5 26 45.5 23 43Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="1.8" />
+    <circle cx="32" cy="28" r="5" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" />
+    <path d="M27 27C27.5 22 36.5 22 37 27C35 25.5 29 25.5 27 27Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.4" />
   </svg>
 );

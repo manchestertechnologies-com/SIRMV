@@ -178,7 +178,7 @@ export function App() {
                       Staff & Faculty Directory
                     </h1>
                     <p className="text-xs text-slate-500">
-                      Manchester Technologies • Academic & Operational Personnel
+                      SIR MV PU College • Academic & Operational Personnel
                     </p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export function App() {
                     Students & Academic Registry
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Student Profiles & Batches
+                    SIR MV PU College • Student Profiles & Batches
                   </p>
                 </div>
               </div>
@@ -245,8 +245,8 @@ export function App() {
                   </h1>
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
-                      ? 'Manchester Technologies • Calendar & Period-wise Record'
-                      : 'Manchester Technologies • Manual & Verified Attendance'}
+                      ? 'SIR MV PU College • Calendar & Period-wise Record'
+                      : 'SIR MV PU College • Manual & Verified Attendance'}
                   </p>
                 </div>
               </div>
@@ -268,8 +268,8 @@ export function App() {
                   </h1>
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
-                      ? 'Manchester Technologies • My Room, Roommates & Maintenance'
-                      : 'Manchester Technologies • Blocks, Floors & Room Allotment'}
+                      ? 'SIR MV PU College • My Room, Roommates & Maintenance'
+                      : 'SIR MV PU College • Blocks, Floors & Room Allotment'}
                   </p>
                 </div>
               </div>
@@ -291,8 +291,8 @@ export function App() {
                   </h1>
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
-                      ? 'Manchester Technologies • Outpass Requests & Hostel Grievances'
-                      : 'Manchester Technologies • 6-Factor Secure Gate Control System'}
+                      ? 'SIR MV PU College • Outpass Requests & Hostel Grievances'
+                      : 'SIR MV PU College • 6-Factor Secure Gate Control System'}
                   </p>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export function App() {
                     Report Card Generator
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Examination Reports & Performance Sheets
+                    SIR MV PU College • Examination Reports & Performance Sheets
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export function App() {
                     Executive Reports & Analytics
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Academic & Operational Intelligence
+                    SIR MV PU College • Academic & Operational Intelligence
                   </p>
                 </div>
               </div>
@@ -360,10 +360,10 @@ export function App() {
                   </h1>
                   <p className="text-xs text-slate-500">
                     {user?.role === 'STUDENT'
-                      ? 'Manchester Technologies • Your Weekly Lecture Schedule'
+                      ? 'SIR MV PU College • Your Weekly Lecture Schedule'
                       : user?.role === 'ADMIN' || user?.role === 'PRINCIPAL'
-                      ? 'Manchester Technologies • Published Timetables for Every Class, Section & Batch'
-                      : 'Manchester Technologies • Daily Lecture Matrices'}
+                      ? 'SIR MV PU College • Published Timetables for Every Class, Section & Batch'
+                      : 'SIR MV PU College • Daily Lecture Matrices'}
                   </p>
                 </div>
               </div>
@@ -415,7 +415,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Classes & Sections</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Classes & Sections</p>
                 </div>
               </div>
               <ClassesPage />
@@ -432,7 +432,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • NEET / JEE / KCET Batches</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • NEET / JEE / KCET Batches</p>
                 </div>
               </div>
               <BatchesPage />
@@ -449,7 +449,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Online & Offline Tests</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Online & Offline Tests</p>
                 </div>
               </div>
               {user?.role === 'STUDENT' ? <StudentTestsView /> : <TestsPage />}
@@ -466,7 +466,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">{moduleTitles[activeTab]}</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Cycle 1 / 2 / 3 Board Marks</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Cycle 1 / 2 / 3 Board Marks</p>
                 </div>
               </div>
               <BoardMarksPage />
@@ -507,7 +507,7 @@ export function App() {
                     Live Classes & Recorded Lectures
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Recorded Lectures for Absent Students
+                    SIR MV PU College • Recorded Lectures for Absent Students
                   </p>
                 </div>
               </div>
@@ -528,7 +528,7 @@ export function App() {
                     SMS Notification Workflow
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Automated Alerts & Manual Messaging to Parents
+                    SIR MV PU College • Automated Alerts & Manual Messaging to Parents
                   </p>
                 </div>
               </div>
@@ -549,7 +549,7 @@ export function App() {
                     Noticeboard & Circulars
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Institutional Announcements
+                    SIR MV PU College • Institutional Announcements
                   </p>
                 </div>
               </div>
@@ -570,7 +570,7 @@ export function App() {
                     Fee & Receipts Desk
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Tuition & Term Payments
+                    SIR MV PU College • Tuition & Term Payments
                   </p>
                 </div>
               </div>
@@ -590,7 +590,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">Student Counselling</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Counselling Session Log</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Counselling Session Log</p>
                 </div>
               </div>
               <CounsellingModule />
@@ -607,7 +607,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">College Calendar</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Holidays, Exams & Events</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Holidays, Exams & Events</p>
                 </div>
               </div>
               <CalendarPage />
@@ -624,7 +624,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">Reporting Issues</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Floor Maintenance & Operational Issues</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Floor Maintenance & Operational Issues</p>
                 </div>
               </div>
               <FloorIssuesPage />
@@ -641,7 +641,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">Student Discipline</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Hostel Discipline Records</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Hostel Discipline Records</p>
                 </div>
               </div>
               <DisciplineRecordsPage />
@@ -658,7 +658,7 @@ export function App() {
                 </button>
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 font-heading">My Profile</h1>
-                  <p className="text-xs text-slate-500">Manchester Technologies • Staff Profile</p>
+                  <p className="text-xs text-slate-500">SIR MV PU College • Staff Profile</p>
                 </div>
               </div>
               <MyProfilePage />
@@ -678,7 +678,7 @@ export function App() {
                     {moduleTitles[activeTab] || activeTab}
                   </h1>
                   <p className="text-xs text-slate-500">
-                    Manchester Technologies • Module Workspace
+                    SIR MV PU College • Module Workspace
                   </p>
                 </div>
               </div>

@@ -29,7 +29,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <div className="w-full h-full rounded-[14px] bg-white flex items-center justify-center overflow-hidden relative">
           <img
             src="/logo.png"
-            alt="Manchester Technologies Logo"
+            alt="SIR MV PU College Logo"
             className="w-full h-full object-contain p-0.5"
           />
         </div>
@@ -40,7 +40,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span className="font-extrabold tracking-tight text-slate-900 text-lg leading-tight font-heading">
-              MANCHESTER <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-600">TECHNOLOGIES</span>
+              SIR MV <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-600">PU COLLEGE</span>
             </span>
             <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-xs">
               CORE ERP

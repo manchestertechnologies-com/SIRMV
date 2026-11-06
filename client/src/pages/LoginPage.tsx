@@ -61,11 +61,11 @@ export const LoginPage: React.FC = () => {
         <div className="relative z-10 mt-slide flex items-center gap-3" style={{ ['--i' as any]: 0 }}>
           <img
             src="/logo.png"
-            alt="Manchester Technologies Logo"
+            alt="SIR MV PU College Logo"
             className="w-14 h-14 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
           />
           <div>
-            <div className="font-heading font-black tracking-tight text-lg leading-none">MANCHESTER TECHNOLOGIES</div>
+            <div className="font-heading font-black tracking-tight text-lg leading-none">SIR MV PU COLLEGE</div>
             <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">SIRMV Campus</div>
           </div>
         </div>
@@ -106,7 +106,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <p className="relative z-10 text-[11px] text-white/45">
-          &copy; 2026-2027 Manchester Technologies · SIRMV Campus. All rights reserved.
+          &copy; 2026-2027 SIR MV PU College · SIRMV Campus. All rights reserved.
         </p>
       </aside>
 
@@ -122,10 +122,10 @@ export const LoginPage: React.FC = () => {
           <div className="lg:hidden mt-reveal flex flex-col items-center text-white mb-6" style={{ ['--i' as any]: 0 }}>
             <img
               src="/logo.png"
-              alt="Manchester Technologies Logo"
+              alt="SIR MV PU College Logo"
               className="w-16 h-16 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
             />
-            <div className="font-heading font-black tracking-tight mt-3 text-lg">MANCHESTER TECHNOLOGIES</div>
+            <div className="font-heading font-black tracking-tight mt-3 text-lg">SIR MV PU COLLEGE</div>
           </div>
 
           <div className="mt-pop bg-white rounded-3xl border border-slate-200 shadow-xl shadow-[#4a0709]/10 overflow-hidden" style={{ ['--i' as any]: 1 }}>
@@ -252,7 +252,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <p className="text-center text-[11px] text-slate-400 mt-5 lg:hidden">
-            &copy; 2026-2027 Manchester Technologies · SIRMV Campus.
+            &copy; 2026-2027 SIR MV PU College · SIRMV Campus.
           </p>
           <p className="text-center text-[11px] text-slate-400 mt-5 hidden lg:block">
             Secured Institutional ERP &bull; Authorized Access Only

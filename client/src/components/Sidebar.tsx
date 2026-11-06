@@ -72,12 +72,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         <div className="p-3.5 flex items-center gap-2.5 border-b border-white/10">
           <img
             src="/logo.png"
-            alt="Manchester Technologies Logo"
+            alt="SIR MV PU College Logo"
             className="w-10 h-10 object-contain rounded-xl bg-white p-0.5 ring-1 ring-[#c28535]/60 shrink-0"
           />
           <div className={`min-w-0 flex-1 whitespace-nowrap ${label}`}>
             <div className="font-extrabold text-white text-[13px] tracking-tight font-heading leading-tight truncate">
-              MANCHESTER TECHNOLOGIES
+              SIR MV PU COLLEGE
             </div>
             <div className="text-[10px] text-[#e6c28f] font-extrabold uppercase tracking-wider truncate">
               SIRMV CAMPUS
