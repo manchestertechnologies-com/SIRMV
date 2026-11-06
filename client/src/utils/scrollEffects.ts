@@ -24,15 +24,15 @@ export function initScrollEffects() {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left)
           .forEach((e) => {
             const el = e.target as HTMLElement;
-            el.style.setProperty('--d', `${Math.min(batch, 10) * 35}ms`);
+            el.style.setProperty('--d', `${Math.min(batch, 6) * 90}ms`);
             batch += 1;
             el.classList.add('mt-in');
             io.unobserve(el);
             // drop the hidden-state class once the transition has finished
             window.setTimeout(() => {
-              el.classList.remove('mt-pre', 'mt-in', 'mt-from-left', 'mt-from-right', 'mt-v-head', 'mt-v-zoom');
+              el.classList.remove('mt-pre', 'mt-in');
               el.style.removeProperty('--d');
-            }, 900);
+            }, 1700);
           });
         if (batchTimer) window.clearTimeout(batchTimer);
         batchTimer = window.setTimeout(() => { batch = 0; }, 160);
@@ -48,19 +48,7 @@ export function initScrollEffects() {
       if (el.parentElement?.closest('.mt-pre')) return; // nested inside a hidden card
       const isHeading = /^H[23]$/.test(el.tagName);
       if (!isHeading && el.offsetHeight < 56) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.bottom < 0) return; // already scrolled past — don't hide it
-      if (isHeading) {
-        el.classList.add('mt-v-head'); // text wipes up out of its baseline
-      } else {
-        // vary the entrance by position: outer columns slide in sideways while rising
-        const pr = el.parentElement?.getBoundingClientRect();
-        if (pr && rect.width < pr.width * 0.7) {
-          if (rect.left - pr.left < pr.width * 0.03) el.classList.add('mt-from-left');
-          else if (pr.right - rect.right < pr.width * 0.03) el.classList.add('mt-from-right');
-          else el.classList.add('mt-v-zoom');
-        }
-      }
+      if (el.getBoundingClientRect().bottom < 0) return; // already scrolled past — don't hide it
       el.classList.add('mt-pre');
       io.observe(el);
     };
@@ -105,13 +93,6 @@ export function initScrollEffects() {
     const p = max > 0 ? el.scrollTop / max : 0;
     bar.style.transform = `scaleX(${p})`;
     top.classList.toggle('show', el.scrollTop > 420);
-    // the dashboard banner drifts up slower than the page and fades as you leave it
-    const hero = document.querySelector<HTMLElement>('.mt-hero');
-    if (hero && el.tagName === 'MAIN') {
-      const st = el.scrollTop;
-      hero.style.setProperty('--py', `${Math.min(st * 0.22, 56).toFixed(1)}px`);
-      hero.style.setProperty('--ho', `${Math.max(0.25, 1 - st / 520).toFixed(3)}`);
-    }
   };
   document.addEventListener('scroll', onScroll, { capture: true, passive: true });
   top.addEventListener('click', () => {
