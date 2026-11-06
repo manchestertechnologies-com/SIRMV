@@ -66,7 +66,7 @@ export const LoginPage: React.FC = () => {
           />
           <div>
             <div className="font-heading font-black tracking-tight text-lg leading-none">MANCHESTER TECHNOLOGIES</div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">Davangere Campus</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">SIRMV Campus</div>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <p className="relative z-10 text-[11px] text-white/45">
-          &copy; 2026-2027 Manchester Technologies, Davangere Campus. All rights reserved.
+          &copy; 2026-2027 Manchester Technologies · SIRMV Campus. All rights reserved.
         </p>
       </aside>
 
@@ -135,7 +135,7 @@ export const LoginPage: React.FC = () => {
               <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fdf0f0] text-[11px] font-bold text-[#b3191f] tracking-wider uppercase border border-[#f1cfd1]">
                   <Shield className="w-3 h-3" />
-                  <span>Davangere Campus</span>
+                  <span>SIRMV Campus</span>
                 </div>
                 <h2 className="font-heading font-black text-2xl text-[#4a0709] tracking-tight mt-3">Welcome Back!</h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">
@@ -252,7 +252,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <p className="text-center text-[11px] text-slate-400 mt-5 lg:hidden">
-            &copy; 2026-2027 Manchester Technologies, Davangere Campus.
+            &copy; 2026-2027 Manchester Technologies · SIRMV Campus.
           </p>
           <p className="text-center text-[11px] text-slate-400 mt-5 hidden lg:block">
             Secured Institutional ERP &bull; Authorized Access Only

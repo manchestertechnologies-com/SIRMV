@@ -151,7 +151,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           </button>
 
           {/* Official Institution Logo */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-0.5 shadow-md shrink-0 ring-1 ring-[#c28535]/60 transition-transform duration-500 hover:rotate-6 hover:scale-110">
+          {/* the sidebar already carries the logo on desktop; show it here only on mobile */}
+          <div className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-0.5 shrink-0 ring-1 ring-[#c28535]/60">
             <img
               src="/logo.png"
               alt="Manchester Technologies Logo"
@@ -170,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
             </div>
             <div className="hidden sm:flex text-[11px] text-[#e6c28f] font-bold items-center gap-1">
               <Building2 className="w-3 h-3 text-white/60" />
-              <span>Davangere PU Campus</span>
+              <span>SIRMV Campus</span>
             </div>
           </div>
         </div>

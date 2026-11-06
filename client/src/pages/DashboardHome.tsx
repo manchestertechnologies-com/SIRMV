@@ -9,7 +9,7 @@ interface DashboardHomeProps {
 }
 
 export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) => {
-  const { user, currentBranch } = useAuth();
+  const { user } = useAuth();
   const { menuItems, otherTools, roleTitle, roleSubtitle } = getRoleNavigation(user?.role);
 
   // Exclude dashboard itself from the tile grid
@@ -31,11 +31,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 {user?.role?.replace('_', ' ') || 'INSTITUTIONAL ACCESS'}
               </span>
               <span className="text-xs text-white/70 font-medium">
-                {/* TEMPORARY: displaying as Davangere regardless of the
+                {/* TEMPORARY: displaying the campus as "SIRMV Campus" regardless of the
                     account's real assigned branch, per request — swap this
                     back to the plain currentBranch?.name line below once
                     the proper multi-campus display is sorted out. */}
-                • {(currentBranch?.name || 'Davangere Campus').replace('Shivamogga', 'Davangere')}
+                • SIRMV Campus
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white font-heading tracking-tight">
@@ -82,10 +82,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 key={tile.id}
                 style={{ ['--i' as any]: idx }}
                 onClick={() => onNavigateTab(tile.targetTab)}
-                className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[158px] cursor-pointer"
+                className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
               >
-                <div className="mt-tile-icon shrink-0 mb-4 w-16 h-16 flex items-center justify-center">
-                  <ModuleIcon item={tile} className="w-16 h-16" />
+                <div className="mt-tile-icon shrink-0 mb-4 w-[72px] h-[72px] sm:w-20 sm:h-20 flex items-center justify-center">
+                  <ModuleIcon item={tile} className="w-full h-full" />
                 </div>
                 <span className="mt-tile-label text-[15px] font-semibold text-[#2f2d4a] group-hover:text-[#a3161b]">
                   {tile.label}
@@ -111,10 +111,10 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                   key={tile.id}
                   style={{ ['--i' as any]: idx }}
                   onClick={() => onNavigateTab(tile.targetTab)}
-                  className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[158px] cursor-pointer"
+                  className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
                 >
-                  <div className="mt-tile-icon shrink-0 mb-4 w-16 h-16 flex items-center justify-center">
-                    <ModuleIcon item={tile} className="w-16 h-16" />
+                  <div className="mt-tile-icon shrink-0 mb-4 w-[72px] h-[72px] sm:w-20 sm:h-20 flex items-center justify-center">
+                    <ModuleIcon item={tile} className="w-full h-full" />
                   </div>
                   <span className="mt-tile-label text-[15px] font-semibold text-[#2f2d4a] group-hover:text-[#a3161b]">
                     {tile.label}

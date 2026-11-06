@@ -88,7 +88,7 @@ export const TeacherPortal: React.FC = () => {
             </div>
             <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
               Emp ID: <span className="font-mono text-slate-800 font-bold">{profile?.employee_id || 'EMP-PHY-002'}</span> •{' '}
-              {profile?.department_name || 'Physics'} • {profile?.branch_name || 'Davangere Campus'}
+              {profile?.department_name || 'Physics'} • {profile?.branch_name || 'SIRMV Campus'}
             </p>
           </div>
         </div>

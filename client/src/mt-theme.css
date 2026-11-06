@@ -118,7 +118,7 @@ body {
 
 /* ---------- Keyframes ---------- */
 @keyframes mt-fade-up {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: none; }
 }
 @keyframes mt-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -266,7 +266,7 @@ tbody tr:hover { background-color: rgba(43, 58, 134, 0.04); }
 }
 .mt-tile:hover .mt-tile-go, .mt-tile:focus-visible .mt-tile-go { transform: translateY(0); }
 .mt-tile-label { transition: transform 0.3s var(--mt-ease), color 0.2s ease; }
-.mt-tile:hover .mt-tile-label, .mt-tile:focus-visible .mt-tile-label { transform: translateY(-8px); }
+.mt-tile:hover .mt-tile-label, .mt-tile:focus-visible .mt-tile-label { transform: translateY(-14px); }
 .mt-tile .mt-tile-icon { transition: transform 0.35s var(--mt-ease), background-color 0.25s ease; }
 .mt-tile:hover .mt-tile-icon { transform: scale(1.1) translateY(-6px); background-color: #fbeedc; }
 
@@ -461,7 +461,7 @@ button, a, [role="button"], select, label, summary { touch-action: manipulation;
    staggered one after another (dashboard tiles, sidebar, filter chips).
    ========================================================================== */
 @keyframes mt-icon-in {
-  0%   { opacity: 0; transform: translateY(6px) scale(0.7); }
+  0%   { opacity: 0; transform: translateY(26px) scale(0.8); }
   100% { opacity: 1; transform: none; }
 }
 .mt-tile-icon > * {
@@ -537,3 +537,10 @@ body { background: #f4f6fa; }
 .mt-tile-icon::after { display: none; }                          /* no shimmer on the clean icons */
 .mt-tile-icon > * { filter: none; }
 .mt-tile:hover .mt-tile-icon { background-color: transparent !important; }
+
+/* upward movement: icons rise as they appear and bob upward while a tile is hovered */
+@keyframes mt-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.mt-tile:hover .mt-tile-icon > *, .mt-tile:focus-visible .mt-tile-icon > * { animation: mt-bob 1.5s ease-in-out infinite; }
+.mt-tile:hover .mt-tile-icon { transform: translateY(0) !important; }
+.mt-tile-card:hover { --ty: -8px; }
+@media (prefers-reduced-motion: reduce) { .mt-tile:hover .mt-tile-icon > * { animation: none; } }

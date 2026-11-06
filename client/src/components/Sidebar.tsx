@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               MANCHESTER TECHNOLOGIES
             </div>
             <div className="text-[10px] text-[#e6c28f] font-extrabold uppercase tracking-wider truncate">
-              DAVANGERE CAMPUS
+              SIRMV CAMPUS
             </div>
           </div>
           {/* Close button — mobile only */}

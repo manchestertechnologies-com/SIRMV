@@ -10,7 +10,7 @@ interface BrandLogoProps {
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   size = 'md',
   variant = 'full',
-  branchName = 'Davangere Campus',
+  branchName = 'SIRMV Campus',
   className = ''
 }) => {
   const getIconSize = () => {
@@ -26,7 +26,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <div className={`flex items-center gap-3.5 ${className}`}>
       {/* Brand Crest */}
       <div className={`relative ${getIconSize()} rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-black p-0.5 shadow-lg shadow-black/25 ring-2 ring-amber-500/30 shrink-0 group`}>
-        <div className="w-full h-full rounded-[14px] bg-black flex items-center justify-center overflow-hidden relative">
+        <div className="w-full h-full rounded-[14px] bg-white flex items-center justify-center overflow-hidden relative">
           <img
             src="/logo.png"
             alt="Manchester Technologies Logo"
