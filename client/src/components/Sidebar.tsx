@@ -37,10 +37,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       title={item.label}
       style={{ ['--i' as any]: index }}
       onClick={() => handleSelect(item.targetTab)}
-      className="press mt-nav-tile mt-rise w-full flex flex-col items-center gap-1.5 px-1 pt-2 pb-2 rounded-2xl"
+      className="press mt-nav-tile mt-rise w-full flex flex-col items-center gap-1.5 px-1 pt-2 pb-2 rounded-[16px]"
     >
-      <span className="mt-nav-icon w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
-        <ModuleIcon item={item} className="w-9 h-9" />
+      <span className="mt-nav-icon w-[54px] h-[54px] rounded-[10px] bg-white flex items-center justify-center">
+        <ModuleIcon item={item} className="w-10 h-10" />
       </span>
       <span className="mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5">
         {item.label}
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           <img
             src="/logo.png"
             alt="SIR MV PU College Logo"
-            className="w-14 h-14 object-contain rounded-2xl bg-white p-1 ring-2 ring-[#d9a85a]/70"
+            className="w-14 h-14 object-contain rounded-[14px] bg-white p-1 ring-2 ring-[#d9a85a]/70"
           />
         </div>
 

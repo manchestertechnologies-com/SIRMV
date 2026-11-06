@@ -389,6 +389,7 @@ export const getTimetables = () => {
   if (ttCache) return ttCache;
   ttCache = new Map();
   const busy = new Set<string>();
+  const load = new Map<string, number>();
   const secs = allSections();
   secs.forEach((sec, si) => {
     const pool: SubjectName[] = [...sec.subjects, 'English', sec.std === 'LT' ? 'Physics' : (si % 2 ? 'Kannada' : 'Hindi')];
@@ -400,11 +401,11 @@ export const getTimetables = () => {
         let teacher: Staff | undefined;
         for (const sub of [pool[(p + d * 2 + si) % pool.length], ...pool]) {
           const t = getStaff().filter((s) => s.subject === sub && s.role !== 'Non-Teaching');
-          const free = t.find((x) => !busy.has(`${x.id}|${d}|${p}`));
+          const free = t.filter((x) => !busy.has(`${x.id}|${d}|${p}`)).sort((a, b) => (load.get(a.id) || 0) - (load.get(b.id) || 0))[0];
           if (free) { teacher = free; subject = sub; break; }
         }
         const t = teacher || getStaff().find((s) => s.role === 'Teacher')!;
-        busy.add(`${t.id}|${d}|${p}`);
+        busy.add(`${t.id}|${d}|${p}`); load.set(t.id, (load.get(t.id) || 0) + 1);
         row.push({ subject, staffId: t.id, room: `Room ${100 + (si * 7 + p) % 30}` });
       }
       grid.push(row);

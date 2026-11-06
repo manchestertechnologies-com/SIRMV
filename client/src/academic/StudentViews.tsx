@@ -3,7 +3,7 @@ import { Download, FileText, Phone } from 'lucide-react';
 import {
   Student, SubjectName, TestResult, chapterReport, leaderboard, ordinal, pct, sectionById, sectionResults, studentTests, getStudents, staffById,
 } from './sampleData';
-import { Avatar, Bar, BarChart, Card, Chip, Donut, GREEN, GREY, AMBER, RED, Legend, LineChart, Pill, StatCard, Stacked, TabBar } from './ui';
+import { Avatar, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, GREY, AMBER, RED, Legend, LineChart, Pill, StatCard, Stacked, TabBar } from './ui';
 
 // ---------- student grid (photo + roll number) ----------
 export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => void }> = ({ sectionId, onOpen }) => {
@@ -27,7 +27,7 @@ export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => 
           {list.map((s) => (
             <button key={s.id} onClick={() => onOpen(s.id)} className="mt-tile-card text-left rounded-2xl border border-[#ece4da] bg-white p-3 flex items-center gap-3 hover:border-[#d9a85a] transition">
               <span className="w-7 text-xs font-semibold text-slate-400 text-right shrink-0">{s.no}.</span>
-              <Avatar name={s.name} size={52} square />
+              <Avatar name={s.name} pid={s.id} size={52} square />
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-slate-900 truncate">{s.name}</span>
                 <span className="block text-xs text-slate-500">Roll Number: {s.roll}</span>
@@ -52,7 +52,7 @@ export const StudentProfile: React.FC<{ student: Student }> = ({ student }) => {
     <div className="space-y-5">
       {/* header card */}
       <div className="rounded-3xl bg-[#8f1218] text-white p-5 sm:p-6 flex flex-col sm:flex-row gap-5">
-        <Avatar name={student.name} size={92} square />
+        <PhotoBox pid={student.id} name={student.name} size={96} />
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold font-heading">{student.name}</h2>
           <dl className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-[13px] text-white/85">
@@ -83,14 +83,7 @@ export const StudentProfile: React.FC<{ student: Student }> = ({ student }) => {
       )}
       {tab === 'Documents' && <Documents student={student} />}
       {tab === 'Personal Details' && (
-        <Card title="Personal details">
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2.5 text-sm">
-            {([['Full name', student.name], ['Gender', student.gender], ['Date of birth', student.dob], ['Blood group', student.blood], ["Father's name", student.fatherName], ['Father occupation', student.fatherOccupation], ['Parent mobile', student.phone], ['SSLC board', student.sslc], ['Class teacher', staffById(sec.classTeacherId)?.name || '-'], ['Batch', sec.batch]] as [string, string][]).map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-4 border-b border-[#f3ede6] py-1.5"><dt className="text-slate-500">{k}</dt><dd className="font-medium text-slate-900 text-right">{v}</dd></div>
-            ))}
-          </dl>
-          {warden && <p className="text-xs text-slate-500 mt-4 inline-flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Warden {warden.name}: {warden.phone}</p>}
-        </Card>
+        <EditableCard id={student.id} title="Personal details" fields={([['name', 'Full name', student.name], ['gender', 'Gender', student.gender], ['dob', 'Date of birth', student.dob], ['blood', 'Blood group', student.blood], ['father', "Father's name", student.fatherName], ['occ', 'Father occupation', student.fatherOccupation], ['phone', 'Parent mobile', student.phone], ['sslc', 'SSLC board', student.sslc], ['ct', 'Class teacher', staffById(sec.classTeacherId)?.name || '-'], ['batch', 'Batch', sec.batch]] as [string, string, string][]).map(([key, label, value]) => ({ key, label, value, locked: key === 'ct' || key === 'batch' }))} />
       )}
     </div>
   );

@@ -176,7 +176,7 @@ export function App() {
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => setActiveTab(tab)} />
           ) : activeTab === 'staffs' && useAcademic('staffs') ? (
-            <StaffsAcademic onExit={() => setActiveTab('dashboard-home')} onManage={() => setManageTabs((m) => ({ ...m, staffs: true }))} />
+            <StaffsAcademic onExit={() => setActiveTab('dashboard-home')} />
           ) : activeTab === 'students' && useAcademic('students') ? (
             <StudentsAcademic onExit={() => setActiveTab('dashboard-home')} onManage={() => setManageTabs((m) => ({ ...m, students: true }))} />
           ) : activeTab === 'classes' && useAcademic('classes') ? (

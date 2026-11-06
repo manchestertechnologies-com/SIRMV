@@ -111,7 +111,7 @@ body {
 .mt-bar-pre { transform: scaleX(0); transform-origin: left center; }
 .mt-bar-grow {
   transform-origin: left center;
-  animation: mt-bar-grow 0.8s var(--mt-ease) var(--bd, 0ms) backwards;
+  animation: mt-bar-grow 1.6s var(--mt-ease) var(--bd, 0ms) backwards;
 }
 [style*="width"][class*="rounded"] { transition: width 0.9s var(--mt-ease); }
 @media (prefers-reduced-motion: reduce) { .mt-bar-pre { transform: none !important; } .mt-bar-grow { animation: none !important; } }
@@ -581,26 +581,26 @@ body { background: #f4f6fa; }
    Calm pass — one motion only: things appear by moving smoothly upward, with a
    short delay between neighbours. Hover = a small lift, nothing else moves.
    ========================================================================== */
-@keyframes mt-fade-up { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes mt-fade-up { from { opacity: 0; transform: translateY(44px); } to { opacity: 1; transform: none; } }
 
 /* page + dashboard entrances */
-main:not([data-static]) > *                 { animation: mt-fade-up 0.9s var(--mt-ease) 60ms backwards; }
-main:not([data-static]) > :nth-child(2)     { animation-delay: 170ms; }
-main:not([data-static]) > :nth-child(3)     { animation-delay: 280ms; }
-main:not([data-static]) > :nth-child(n+4)   { animation-delay: 390ms; }
+main:not([data-static]) > *                 { animation: mt-fade-up 1.4s var(--mt-ease) 80ms backwards; }
+main:not([data-static]) > :nth-child(2)     { animation-delay: 220ms; }
+main:not([data-static]) > :nth-child(3)     { animation-delay: 360ms; }
+main:not([data-static]) > :nth-child(n+4)   { animation-delay: 500ms; }
 .mt-reveal, .mt-pop {
-  animation: mt-fade-up 0.9s var(--mt-ease) backwards;
-  animation-delay: min(calc(120ms + var(--i, 0) * 80ms), 900ms);
+  animation: mt-fade-up 1.4s var(--mt-ease) backwards;
+  animation-delay: min(calc(160ms + var(--i, 0) * 110ms), 1200ms);
 }
-.mt-slide { animation: mt-fade-up 0.8s var(--mt-ease) backwards; animation-delay: min(calc(var(--i, 0) * 45ms), 450ms); }
-.mt-rise  { animation: mt-fade-up 0.8s var(--mt-ease) backwards; animation-delay: min(calc(100ms + var(--i, 0) * 45ms), 600ms); }
+.mt-slide { animation: mt-fade-up 1.3s var(--mt-ease) backwards; animation-delay: min(calc(var(--i, 0) * 70ms), 700ms); }
+.mt-rise  { animation: mt-fade-up 1.3s var(--mt-ease) backwards; animation-delay: min(calc(120ms + var(--i, 0) * 70ms), 900ms); }
 
 /* scroll reveal */
-.mt-pre { opacity: 0; transform: translate3d(0, 28px, 0); filter: none; will-change: opacity, transform; }
+.mt-pre { opacity: 0; transform: translate3d(0, 44px, 0); filter: none; will-change: opacity, transform; }
 .mt-in  {
   opacity: 1; transform: none; filter: none;
   transition-property: opacity, transform;
-  transition-duration: 0.95s, 0.95s;
+  transition-duration: 1.5s, 1.5s;
   transition-timing-function: var(--mt-ease), var(--mt-ease);
   transition-delay: var(--d, 0ms), var(--d, 0ms);
 }
@@ -609,10 +609,14 @@ main:not([data-static]) > :nth-child(n+4)   { animation-delay: 390ms; }
    label shifts, banner parallax, underline drawing, tilt */
 .mt-tile:hover .mt-tile-icon > *, .mt-tile:focus-visible .mt-tile-icon > *,
 .mt-tile-icon > *, .mt-nav-item > div:first-child, .mt-chip > svg { animation: none; }
-.mt-tile-go { display: none; }
-.mt-tile:hover .mt-tile-label, .mt-tile:focus-visible .mt-tile-label { transform: none; }
+.mt-tile:hover .mt-tile-label, .mt-tile:focus-visible .mt-tile-label { transform: translateY(-14px); }
 .mt-tile:hover .mt-tile-icon { transform: none !important; }
 .mt-hero { translate: none; opacity: 1; will-change: auto; }
 .mt-underline-draw::after { animation: none; transform: scaleX(1); }
 .mt-ripple { display: none; }
 .mt-tile-card:hover { --ty: -4px; }
+
+/* box-shaped sidebar icons + scrollable boxes */
+.mt-nav-icon { border-radius: 10px !important; }
+.mt-box-scroll { max-height: 560px; overflow: auto; }
+.mt-box-scroll thead th { position: sticky; top: 0; background: #fff; z-index: 2; }

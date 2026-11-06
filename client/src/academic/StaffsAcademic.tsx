@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Eye, Settings2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import {
   ALL_DEPTS, Period, SLOTS, Staff, Status, SubjectName, WEEKDAYS, attendanceSeries, checkIn, dayName, getStaff, pct, sectionById, staffPeriodStats, staffStatus, staffOf, staffWeekLoad,
 } from './sampleData';
-import { Avatar, Bar, BarChart, Card, Chip, Donut, GREEN, AMBER, RED, Legend, Pill, PageHead, StatCard, SubjectIcon, TabBar, GREY } from './ui';
+import { Avatar, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, AMBER, RED, Legend, Pill, PageHead, StatCard, SubjectIcon, TabBar, GREY } from './ui';
 
 type Nav = { v: 'home' } | { v: 'dept'; dept: SubjectName; tab?: string } | { v: 'staff'; id: string; tab?: string };
 const PERIODS: { key: Period; label: string }[] = [{ key: 'day', label: 'Day' }, { key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }, { key: 'year', label: 'Year' }];
@@ -16,9 +16,8 @@ const todayCounts = (list: Staff[]) => {
 
 export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
   const [nav, setNav] = useState<Nav>({ v: 'home' });
-  const manage = onManage ? (
-    <button onClick={onManage} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]"><Settings2 className="w-3.5 h-3.5" /> Manage staff</button>
-  ) : null;
+  const manage = null;
+  void onManage;
 
   if (nav.v === 'home') {
     const all = getStaff(); const t = todayCounts(all);
@@ -66,7 +65,7 @@ export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => voi
               <div>
                 <h3 className="text-sm font-bold font-heading text-slate-900 mb-2">Head of department</h3>
                 <button onClick={() => setNav({ v: 'staff', id: g.hod!.id })} className="mt-tile-card w-full sm:w-auto sm:min-w-[360px] text-left rounded-2xl bg-[#8f1218] text-white p-4 flex items-center gap-4">
-                  <Avatar name={g.hod.name} size={64} />
+                  <Avatar name={g.hod.name} pid={g.hod.id} size={64} />
                   <span><b className="block text-base font-heading">{g.hod.name}</b><span className="text-xs text-white/75">{g.hod.designation}</span><span className="block text-xs text-white/75 mt-0.5">{g.hod.qualification} · {g.hod.experience} yrs</span></span>
                 </button>
               </div>
@@ -101,7 +100,7 @@ const Group: React.FC<{ title: string; list: Staff[]; onOpen: (id: string) => vo
           const st = staffStatus(s.id, new Date());
           return (
             <button key={s.id} onClick={() => onOpen(s.id)} className="mt-tile-card text-left rounded-2xl border border-[#ece4da] bg-white p-3 flex items-center gap-3 hover:border-[#d9a85a] transition">
-              <Avatar name={s.name} size={46} />
+              <Avatar name={s.name} pid={s.id} size={46} />
               <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{s.name}</b><span className="block text-[11px] text-slate-500 truncate">{s.designation}</span></span>
               <StatusPill st={st} />
             </button>
@@ -149,7 +148,7 @@ const DeptAttendance: React.FC<{ list: Staff[]; onOpen: (id: string) => void }> 
                 const today = staffStatus(s.id, new Date());
                 return (
                   <tr key={s.id} className="border-b border-[#f7f2ec]">
-                    <td className="py-2.5 pr-3"><span className="inline-flex items-center gap-2"><Avatar name={s.name} size={30} /><span><b className="block text-slate-900 text-[13px]">{s.name}</b><span className="text-[11px] text-slate-500">{s.role}</span></span></span></td>
+                    <td className="py-2.5 pr-3"><span className="inline-flex items-center gap-2"><Avatar name={s.name} pid={s.id} size={30} /><span><b className="block text-slate-900 text-[13px]">{s.name}</b><span className="text-[11px] text-slate-500">{s.role}</span></span></span></td>
                     {period === 'day' ? <><td className="pr-3"><StatusPill st={today} /></td><td className="pr-3 text-xs text-slate-600">{today === 'P' ? checkIn(s.id) : '-'}</td></> : <>
                       <td className="pr-3 text-emerald-700 font-semibold">{st.present}</td><td className="pr-3 text-amber-600 font-semibold">{st.leave}</td><td className="pr-3 text-red-600 font-semibold">{st.absent}</td>
                       <td className="pr-3"><div className="flex items-center gap-2"><div className="flex-1"><Bar value={st.percent} color={st.percent >= 90 ? GREEN : st.percent >= 80 ? AMBER : RED} /></div><b className="text-xs w-9 text-right">{st.percent}%</b></div></td></>}
@@ -168,18 +167,12 @@ const DeptAttendance: React.FC<{ list: Staff[]; onOpen: (id: string) => void }> 
 const StaffDetail: React.FC<{ staff: Staff; tab: string; setTab: (t: string) => void }> = ({ staff, tab, setTab }) => (
   <div className="space-y-5">
     <div className="rounded-3xl bg-[#8f1218] text-white p-5 flex items-center gap-4">
-      <Avatar name={staff.name} size={76} />
+      <PhotoBox pid={staff.id} name={staff.name} size={96} />
       <div className="min-w-0"><h2 className="text-xl font-bold font-heading">{staff.name}</h2><p className="text-sm text-white/80">{staff.designation}</p><p className="text-xs text-white/65 mt-1">{staff.empId} · {staff.mobile}</p></div>
     </div>
     <TabBar items={staff.role === 'Non-Teaching' ? ['Account', 'Attendance'] : ['Account', 'Attendance', 'Timetable']} value={tab} onChange={setTab} />
     {tab === 'Account' && (
-      <Card title="Account details">
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
-          {([['Name', staff.name], ['Gender', staff.gender], ['Region', staff.region], ['Department', staff.subject], ['Designation', staff.designation], ['Mobile', staff.mobile], ['Email', staff.email], ['Employee ID', staff.empId], ['Qualification', staff.qualification], ['Experience', `${staff.experience} years`], ['Joined on', staff.joined], ['Teaching subject', staff.role === 'Non-Teaching' ? 'Not applicable' : staff.subject]] as [string, string][]).map(([k, v]) => (
-            <div key={k}><p className="text-[11px] text-slate-500 mb-1">{k}</p><div className="px-3.5 py-2.5 rounded-xl border border-[#ece4da] bg-[#fcfaf7] text-sm text-slate-900">{v}</div></div>
-          ))}
-        </div>
-      </Card>
+      <EditableCard id={staff.id} title="Account details" fields={([['name', 'Name', staff.name], ['gender', 'Gender', staff.gender], ['region', 'Region', staff.region], ['dept', 'Department', staff.subject], ['designation', 'Designation', staff.designation], ['mobile', 'Mobile', staff.mobile], ['email', 'Email', staff.email], ['empId', 'Employee ID', staff.empId], ['qualification', 'Qualification', staff.qualification], ['experience', 'Experience', `${staff.experience} years`], ['joined', 'Joined on', staff.joined], ['teaches', 'Teaching subject', staff.role === 'Non-Teaching' ? 'Not applicable' : staff.subject]] as [string, string, string][]).map(([key, label, value]) => ({ key, label, value, locked: key === 'empId' }))} />
     )}
     {tab === 'Attendance' && <OneAttendance staff={staff} />}
     {tab === 'Timetable' && <StaffTimetable staff={staff} />}
@@ -224,7 +217,7 @@ const StaffTimetable: React.FC<{ staff: Staff }> = ({ staff }) => {
   let p = -1;
   return (
     <Card title="Weekly class hours" right={<Pill tone="gold">{total} periods / week</Pill>}>
-      <div className="overflow-x-auto">
+      <div className="mt-box-scroll">
         <table className="w-full text-xs min-w-[640px]">
           <thead><tr className="text-left text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-3 w-36">Time</th>{WEEKDAYS.map((d) => <th key={d} className="pr-2">{d}</th>)}</tr></thead>
           <tbody>

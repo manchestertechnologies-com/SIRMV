@@ -131,7 +131,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-5">
       <Card title="Class hours" right={<div className="flex gap-1.5 flex-wrap justify-end">{WEEKDAYS.map((d, i) => <Chip key={d} active={day === i} onClick={() => setDay(i)}>{d}</Chip>)}</div>}>
-        <ul className="divide-y divide-[#f3ede6]">
+        <ul className="divide-y divide-[#f3ede6] mt-box-scroll">
           {SLOTS.map((s) => {
             if (s.kind === 'break') return <li key={s.key} className="py-2.5 flex items-center gap-3 text-xs text-slate-500"><span className="w-[148px] shrink-0 font-medium">{s.start} – {s.end}</span><span className="flex-1 text-center rounded-lg bg-[#fbf3e4] py-1.5 font-semibold text-[#8a5a14]">{s.label}</span></li>;
             p++; const c = row[p]; const t = staffById(c.staffId)!;
@@ -147,7 +147,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
         </ul>
       </Card>
       <Card title="Faculty hours per week">
-        <ul className="space-y-3">
+        <ul className="space-y-3 mt-box-scroll">
           {load.map(([id, v]) => { const t = staffById(id)!; return (
             <li key={id} className="flex items-center gap-3"><Avatar name={t.name} size={34} /><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-slate-900 truncate">{t.name}</p><p className="text-[11px] text-slate-500">{v.subject}</p></div><Pill tone="gold">{v.n} hrs</Pill></li>
           ); })}
@@ -267,7 +267,7 @@ const Board: React.FC<{ sec: SectionDef; onStudent: (id: string) => void }> = ({
             <li key={r.st.id}>
               <button onClick={() => onStudent(r.st.id)} className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-[#fff8f4] rounded-xl px-2">
                 <span className="w-8 text-sm font-semibold text-slate-400">{r.rank}</span>
-                <Avatar name={r.st.name} size={36} />
+                <Avatar name={r.st.name} pid={r.st.id} size={36} />
                 <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{r.st.name}</b><span className="text-[11px] text-slate-500">Roll {r.st.roll}</span></span>
                 <span className="w-32 hidden sm:block"><Bar value={r.avg} color={r.avg >= 70 ? GREEN : r.avg >= 45 ? AMBER : RED} /></span>
                 <b className="w-12 text-right text-sm">{r.avg}%</b>

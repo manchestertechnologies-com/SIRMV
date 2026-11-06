@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { Camera, Pencil } from 'lucide-react';
+import { compressImage, getEdits, getPhoto, saveEdits, savePhoto } from './store';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import type { SubjectName } from './sampleData';
 
@@ -10,7 +12,8 @@ export const MAROON = '#a3161b';
 
 // ---------- avatar (initials now; image once photos come from the database) ----------
 const TINTS = ['#a3161b', '#c28535', '#8c1118', '#b4533a', '#7a4a1c', '#c7222a'];
-export const Avatar: React.FC<{ name: string; src?: string; size?: number; square?: boolean }> = ({ name, src, size = 48, square }) => {
+export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?: number; square?: boolean }> = ({ name, src: srcIn, pid, size = 48, square }) => {
+  const src = srcIn || getPhoto(pid);
   const initials = name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s+/i, '').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
   const tint = TINTS[(name.charCodeAt(0) + name.length) % TINTS.length];
   const style: React.CSSProperties = { width: size, height: size, borderRadius: square ? 14 : size, background: src ? undefined : tint, fontSize: size * 0.36 };
@@ -263,3 +266,61 @@ export const PickCard: React.FC<{ icon: React.ReactNode; title: string; lines?: 
 );
 
 export const Empty: React.FC<{ text: string }> = ({ text }) => <div className="text-center text-sm text-slate-500 py-10">{text}</div>;
+
+// photo box: shows the saved picture or an "Add photo" placeholder; picking a file saves it
+export const PhotoBox: React.FC<{ pid: string; name: string; size?: number }> = ({ pid, name, size = 96 }) => {
+  const [src, setSrc] = useState<string | undefined>(getPhoto(pid));
+  const ref = useRef<HTMLInputElement>(null);
+  const pick = async (f?: File) => { if (!f) return; try { const d = await compressImage(f); savePhoto(pid, d); setSrc(d); } catch { /* ignore bad file */ } };
+  return (
+    <button type="button" onClick={() => ref.current?.click()} title="Add or change photo" style={{ width: size, height: size }}
+      className="relative shrink-0 rounded-2xl overflow-hidden bg-white/15 border-2 border-dashed border-white/50 hover:border-white transition group">
+      {src ? <img src={src} alt={name} className="w-full h-full object-cover" /> : (
+        <span className="w-full h-full flex flex-col items-center justify-center gap-1 text-white/80"><Camera className="w-6 h-6" /><span className="text-[10px] font-medium">Add photo</span></span>
+      )}
+      {src && <span className="absolute inset-x-0 bottom-0 bg-black/45 text-white text-[10px] py-1 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1"><Camera className="w-3 h-3" />Change</span>}
+      <input ref={ref} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+    </button>
+  );
+};
+
+// editable details form: read-only until Edit is pressed, saved per record
+export interface Field { key: string; label: string; value: string; locked?: boolean }
+export const useEdits = (id: string, base: Record<string, string>) => {
+  const [vals, setVals] = useState<Record<string, string>>({ ...base, ...getEdits(id) });
+  const save = (v: Record<string, string>) => { saveEdits(id, v); setVals(v); };
+  return [vals, save] as const;
+};
+export const EditableCard: React.FC<{ id: string; title: string; fields: Field[]; onSaved?: (v: Record<string, string>) => void }> = ({ id, title, fields, onSaved }) => {
+  const base = Object.fromEntries(fields.map((f) => [f.key, f.value]));
+  const [vals, save] = useEdits(id, base);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(vals);
+  const [saved, setSaved] = useState(false);
+  return (
+    <Card title={title} right={
+      editing ? (
+        <div className="flex gap-2">
+          <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-xl border border-[#ded9cf] text-xs font-semibold text-slate-600">Cancel</button>
+          <button onClick={() => { save(draft); onSaved?.(draft); setEditing(false); setSaved(true); }} className="px-3 py-1.5 rounded-xl bg-[#a3161b] text-white text-xs font-semibold">Save changes</button>
+        </div>
+      ) : (
+        <button onClick={() => { setDraft(vals); setEditing(true); setSaved(false); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#ded9cf] text-xs font-semibold text-slate-700 hover:text-[#a3161b]"><Pencil className="w-3.5 h-3.5" />Edit</button>
+      )
+    }>
+      <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+        {fields.map((f) => (
+          <div key={f.key}>
+            <p className="text-[11px] text-slate-500 mb-1">{f.label}</p>
+            {editing && !f.locked ? (
+              <input value={draft[f.key] ?? ''} onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9a85a] bg-white text-sm text-slate-900 outline-none focus:border-[#c7222a]" />
+            ) : (
+              <div className="px-3.5 py-2.5 rounded-xl border border-[#ece4da] bg-[#fcfaf7] text-sm text-slate-900 min-h-[42px]">{vals[f.key]}</div>
+            )}
+          </div>
+        ))}
+      </div>
+      {saved && <p className="text-[11px] text-emerald-700 mt-3">Saved on this device. It will sync to the database once it is connected.</p>}
+    </Card>
+  );
+};

@@ -24,7 +24,7 @@ export function initScrollEffects() {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left)
           .forEach((e) => {
             const el = e.target as HTMLElement;
-            el.style.setProperty('--d', `${Math.min(batch, 6) * 90}ms`);
+            el.style.setProperty('--d', `${Math.min(batch, 6) * 130}ms`);
             batch += 1;
             el.classList.add('mt-in');
             io.unobserve(el);
@@ -32,7 +32,7 @@ export function initScrollEffects() {
             window.setTimeout(() => {
               el.classList.remove('mt-pre', 'mt-in');
               el.style.removeProperty('--d');
-            }, 1700);
+            }, 2800);
           });
         if (batchTimer) window.clearTimeout(batchTimer);
         batchTimer = window.setTimeout(() => { batch = 0; }, 160);
@@ -140,11 +140,11 @@ function initLiveData(reduce: boolean) {
 
   const animate = (node: Text, st: CountState, from: number) => {
     cancelAnimationFrame(st.raf);
-    const dur = 900;
+    const dur = 2200;
     const t0 = performance.now();
     const step = (now: number) => {
       const k = Math.min(1, (now - t0) / dur);
-      const eased = 1 - Math.pow(1 - k, 3);
+      const eased = 1 - Math.pow(1 - k, 4);
       st.shown = from + (st.target - from) * eased;
       st.text = k >= 1 ? st.fmt(st.target) : st.fmt(st.shown);
       node.nodeValue = st.text;
@@ -195,7 +195,7 @@ function initLiveData(reduce: boolean) {
         el.style.setProperty('--bd', `${delay}ms`);
         el.classList.remove('mt-bar-pre');
         el.classList.add('mt-bar-grow');
-        window.setTimeout(() => el.classList.remove('mt-bar-grow'), 1800 + delay);
+        window.setTimeout(() => el.classList.remove('mt-bar-grow'), 2400 + delay);
       });
     },
     { threshold: 0.1 }
