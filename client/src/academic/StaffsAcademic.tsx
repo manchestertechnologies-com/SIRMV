@@ -117,7 +117,7 @@ const PeriodSwitch: React.FC<{ value: Period; onChange: (p: Period) => void }> =
   <div className="flex gap-2">{PERIODS.map((p) => <Chip key={p.key} active={value === p.key} onClick={() => onChange(p.key)}>{p.label}</Chip>)}</div>
 );
 
-const DeptAttendance: React.FC<{ list: Staff[]; onOpen: (id: string) => void }> = ({ list, onOpen }) => {
+export const DeptAttendance: React.FC<{ list: Staff[]; onOpen?: (id: string) => void }> = ({ list, onOpen }) => {
   const [period, setPeriod] = useState<Period>('week');
   const series = useMemo(() => attendanceSeries(list, period), [list, period]);
   const sum = series.reduce((a, b) => ({ p: a.p + b.present, a: a.a + b.absent, l: a.l + b.leave }), { p: 0, a: 0, l: 0 });
@@ -142,7 +142,7 @@ const DeptAttendance: React.FC<{ list: Staff[]; onOpen: (id: string) => void }> 
       <Card title="Staff-wise attendance">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-3">Staff</th>{period === 'day' ? <><th className="pr-3">Status</th><th className="pr-3">Check-in</th></> : <><th className="pr-3">Present</th><th className="pr-3">Leave</th><th className="pr-3">Absent</th><th className="pr-3 w-36">Attendance</th></>}<th className="text-right">Details</th></tr></thead>
+            <thead><tr className="text-left text-xs text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-3">Staff</th>{period === 'day' ? <><th className="pr-3">Status</th><th className="pr-3">Check-in</th></> : <><th className="pr-3">Present</th><th className="pr-3">Leave</th><th className="pr-3">Absent</th><th className="pr-3 w-36">Attendance</th></>}{onOpen && <th className="text-right">Details</th>}</tr></thead>
             <tbody>
               {rows.map(({ s, st }) => {
                 const today = staffStatus(s.id, new Date());
@@ -152,7 +152,7 @@ const DeptAttendance: React.FC<{ list: Staff[]; onOpen: (id: string) => void }> 
                     {period === 'day' ? <><td className="pr-3"><StatusPill st={today} /></td><td className="pr-3 text-xs text-slate-600">{today === 'P' ? checkIn(s.id) : '-'}</td></> : <>
                       <td className="pr-3 text-emerald-700 font-semibold">{st.present}</td><td className="pr-3 text-amber-600 font-semibold">{st.leave}</td><td className="pr-3 text-red-600 font-semibold">{st.absent}</td>
                       <td className="pr-3"><div className="flex items-center gap-2"><div className="flex-1"><Bar value={st.percent} color={st.percent >= 90 ? GREEN : st.percent >= 80 ? AMBER : RED} /></div><b className="text-xs w-9 text-right">{st.percent}%</b></div></td></>}
-                    <td className="text-right"><button onClick={() => onOpen(s.id)} className="p-2 rounded-lg border border-[#ded9cf] text-slate-600 hover:text-[#a3161b] hover:border-[#d9a85a]" title="View details"><Eye className="w-4 h-4" /></button></td>
+                    {onOpen && <td className="text-right"><button onClick={() => onOpen(s.id)} className="p-2 rounded-lg border border-[#ded9cf] text-slate-600 hover:text-[#a3161b] hover:border-[#d9a85a]" title="View details"><Eye className="w-4 h-4" /></button></td>}
                   </tr>
                 );
               })}

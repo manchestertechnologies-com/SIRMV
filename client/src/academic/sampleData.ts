@@ -172,13 +172,19 @@ export interface Student {
 }
 const SSLC = ['ICSE', 'CBSE', 'State', 'State', 'CBSE'];
 const OCC = ['Farmer', 'Business', 'Government Employee', 'Teacher', 'Engineer', 'Doctor', 'Driver', 'Shopkeeper', 'Bank Employee'];
-const WARDENS = [{ name: 'Mr. Basavaraj K', phone: '9448012345' }, { name: 'Mrs. Shobha R', phone: '9886023456' }, { name: 'Mr. Manjunath G', phone: '9845034567' }];
-const BLOCKS = ['NEW CAMPUS - D-BLOCK - 2026-27', 'MAIN CAMPUS - A-BLOCK - 2026-27', 'NEW CAMPUS - C-BLOCK - 2026-27'];
-const FLOORS = ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor'];
-const BEDS = ['Bunk Upper Bed', 'Bunk Lower Bed', 'Single Cot'];
+export const WARDENS = [{ name: 'Mr. Basavaraj K', phone: '9448012345' }, { name: 'Mrs. Shobha R', phone: '9886023456' }, { name: 'Mr. Manjunath G', phone: '9845034567' }];
 
 const studentCache = new Map<string, Student[]>();
+let allBuilt = false;
 export const getStudents = (sectionId: string): Student[] => {
+  if (!allBuilt) {
+    allBuilt = true;
+    allSections().forEach((sec) => genSection(sec.id));
+    allocateHostel();
+  }
+  return studentCache.get(sectionId) || [];
+};
+const genSection = (sectionId: string): Student[] => {
   const hit = studentCache.get(sectionId); if (hit) return hit;
   const sec = sectionById(sectionId); if (!sec) return [];
   const r = rng('students-' + sectionId);
@@ -195,7 +201,7 @@ export const getStudents = (sectionId: string): Student[] => {
     list.push({
       id: `${sectionId}-${i + 1}`, sectionId, no: i + 1, name, roll: String(base + Math.floor(r() * 900) + i * 7), gender: female ? 'Female' : 'Male',
       sslc: pick(r, SSLC),
-      hostel: hosteler ? { block: pick(r, BLOCKS), floor: pick(r, FLOORS), room: `Room ${1 + Math.floor(r() * 60)}`, bed: pick(r, BEDS) } : null,
+      hostel: hosteler ? { block: '', floor: '', room: '', bed: '' } : null,
       warden: hosteler ? wd : null,
       fatherName: `${pick(r, FIRST_M)} ${pick(r, LAST)}`, fatherOccupation: pick(r, OCC), phone: `9${Math.floor(r() * 900000000 + 100000000)}`,
       dob: `200${7 + Math.floor(r() * 2)}-${String(1 + Math.floor(r() * 12)).padStart(2, '0')}-${String(1 + Math.floor(r() * 28)).padStart(2, '0')}`,
@@ -449,3 +455,69 @@ export const staffWeekLoad = (staffId: string) => {
   tt.forEach((g, sid) => g.forEach((row, d) => row.forEach((c, p) => { if (c.staffId === staffId) grid[d][p] = { sectionId: sid }; })));
   return grid;
 };
+
+// ---------- hostel blocks (blueprint) ----------
+export interface FloorDef { name: string; rooms: number; share: number }
+export interface BlockDef { id: string; name: string; gender: 'Male' | 'Female'; warden: { name: string; phone: string }; floors: FloorDef[]; shape: 'bar' | 'L' | 'U' }
+export const BLOCKS: BlockDef[] = [
+  { id: 'D', name: 'NEW CAMPUS - D-BLOCK - 2026-27', gender: 'Male', warden: WARDENS[0], shape: 'bar', floors: [{ name: 'Ground Floor', rooms: 10, share: 2 }, { name: '1st Floor', rooms: 10, share: 3 }, { name: '2nd Floor', rooms: 10, share: 4 }, { name: '3rd Floor', rooms: 10, share: 4 }] },
+  { id: 'A', name: 'MAIN CAMPUS - A-BLOCK - 2026-27', gender: 'Male', warden: WARDENS[2], shape: 'L', floors: [{ name: 'Ground Floor', rooms: 8, share: 3 }, { name: '1st Floor', rooms: 8, share: 3 }, { name: '2nd Floor', rooms: 8, share: 3 }] },
+  { id: 'C', name: 'NEW CAMPUS - C-BLOCK - 2026-27', gender: 'Female', warden: WARDENS[1], shape: 'U', floors: [{ name: 'Ground Floor', rooms: 10, share: 3 }, { name: '1st Floor', rooms: 10, share: 3 }, { name: '2nd Floor', rooms: 10, share: 4 }, { name: '3rd Floor', rooms: 10, share: 4 }] },
+];
+export interface RoomDef { block: string; floorIdx: number; floor: string; no: number; label: string; share: number }
+export const blockRooms = (b: BlockDef): RoomDef[] => {
+  const out: RoomDef[] = []; let n = 0;
+  b.floors.forEach((f, fi) => { for (let i = 0; i < f.rooms; i++) { n++; out.push({ block: b.id, floorIdx: fi, floor: f.name, no: n, label: `Room ${n}`, share: f.share }); } });
+  return out;
+};
+export const bedName = (share: number, i: number) => (share === 1 ? 'Single Cot' : i % 2 === 0 ? 'Bunk Lower Bed' : 'Bunk Upper Bed');
+export const blockCapacity = (b: BlockDef) => b.floors.reduce((a, f) => a + f.rooms * f.share, 0);
+
+const allocateHostel = () => {
+  const all = allSections().flatMap((s) => studentCache.get(s.id) || []);
+  BLOCKS.forEach((b) => {
+    const rooms = blockRooms(b);
+    const mine = all.filter((st) => st.hostel && st.active && st.gender === b.gender && !st.hostel.block);
+    const males = b.gender === 'Male';
+    // male students fill D first, then A; female students fill C
+    const targets = males ? (b.id === 'D' ? mine : []) : mine;
+    let ri = 0, bi = 0;
+    targets.forEach((st) => {
+      while (ri < rooms.length && bi >= rooms[ri].share) { ri++; bi = 0; }
+      if (ri >= rooms.length) return;
+      const rm = rooms[ri];
+      st.hostel = { block: b.name, floor: rm.floor, room: rm.label, bed: bedName(rm.share, bi) }; st.warden = b.warden; bi++;
+    });
+  });
+  // overflow of boys goes to A-block
+  const A = BLOCKS[1]; const aRooms = blockRooms(A);
+  let ri = 0, bi = 0;
+  all.filter((st) => st.hostel && !st.hostel.block && st.gender === 'Male').forEach((st) => {
+    while (ri < aRooms.length && bi >= aRooms[ri].share) { ri++; bi = 0; }
+    if (ri >= aRooms.length) { st.hostel = null; st.warden = null; return; }
+    const rm = aRooms[ri]; st.hostel = { block: A.name, floor: rm.floor, room: rm.label, bed: bedName(rm.share, bi) }; st.warden = A.warden; bi++;
+  });
+  all.forEach((st) => { if (st.hostel && !st.hostel.block) { st.hostel = null; st.warden = null; } });
+};
+export const hostelOccupants = (blockName: string) => allSections().flatMap((s) => getStudents(s.id)).filter((st) => st.hostel?.block === blockName);
+export const allStudents = () => allSections().flatMap((s) => getStudents(s.id));
+export const studentAvg = (() => {
+  let cache: Map<string, number> | null = null;
+  return (id: string) => {
+    if (!cache) { cache = new Map(); allSections().forEach((s) => leaderboard(s.id).forEach((r) => cache!.set(r.st.id, r.avg))); }
+    return cache.get(id) ?? 0;
+  };
+})();
+
+// ---------- student daily attendance ----------
+export const studentDayStatus = (id: string, d: Date): Status => {
+  if (d.getDay() === 0) return 'H';
+  const x = rng(`sd-${id}-${iso(d)}`)();
+  return x < 0.9 ? 'P' : x < 0.94 ? 'L' : 'A';
+};
+export const studentMonthPct = (id: string) => {
+  let p = 0, n = 0; const d = new Date();
+  for (let i = 0; i < 30; i++) { const x = new Date(d); x.setDate(x.getDate() - i); const st = studentDayStatus(id, x); if (st === 'H') continue; n++; if (st === 'P') p++; }
+  return pct(p, n);
+};
+export { iso as isoDate };

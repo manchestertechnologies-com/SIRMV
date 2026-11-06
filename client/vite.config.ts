@@ -36,7 +36,9 @@ export default defineConfig({
       injectManifest: {
         // Keep the precache list tight — this app is mostly API-driven, not a static
         // content site, so we don't want to precache every route's JS eagerly.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}']
+        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // the main bundle is a little over the 2 MiB default
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024
       }
     })
   ],
