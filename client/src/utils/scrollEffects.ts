@@ -5,7 +5,7 @@
 // Everything is skipped when the user prefers reduced motion.
 
 const REVEAL_SELECTOR =
-  'main [class*="rounded-2xl"][class*="border"], main button[class*="rounded-2xl"], main [class*="rounded-3xl"][class*="border"]';
+  'main [class*="rounded-2xl"][class*="border"], main button[class*="rounded-2xl"], main [class*="rounded-3xl"][class*="border"], main [class*="rounded-xl"][class*="border"][class*="bg-white"], main h2, main h3';
 const SKIP_ANCESTOR = '[class*="fixed"], [class*="absolute"], [role="dialog"], table, [data-static], [data-no-reveal]';
 
 export function initScrollEffects() {
@@ -30,7 +30,7 @@ export function initScrollEffects() {
             io.unobserve(el);
             // drop the hidden-state class once the transition has finished
             window.setTimeout(() => {
-              el.classList.remove('mt-pre', 'mt-in', 'mt-from-left', 'mt-from-right');
+              el.classList.remove('mt-pre', 'mt-in', 'mt-from-left', 'mt-from-right', 'mt-v-head', 'mt-v-zoom');
               el.style.removeProperty('--d');
             }, 900);
           });
@@ -46,8 +46,21 @@ export function initScrollEffects() {
       if (el.classList.contains('mt-pop') || el.classList.contains('mt-reveal')) return; // has its own entrance
       if (el.closest(SKIP_ANCESTOR) && !el.matches('main button')) return;
       if (el.parentElement?.closest('.mt-pre')) return; // nested inside a hidden card
-      if (el.offsetHeight < 48) return;
-      if (el.getBoundingClientRect().bottom < 0) return; // already scrolled past — don't hide it
+      const isHeading = /^H[23]$/.test(el.tagName);
+      if (!isHeading && el.offsetHeight < 56) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom < 0) return; // already scrolled past — don't hide it
+      if (isHeading) {
+        el.classList.add('mt-v-head'); // text wipes up out of its baseline
+      } else {
+        // vary the entrance by position: outer columns slide in sideways while rising
+        const pr = el.parentElement?.getBoundingClientRect();
+        if (pr && rect.width < pr.width * 0.7) {
+          if (rect.left - pr.left < pr.width * 0.03) el.classList.add('mt-from-left');
+          else if (pr.right - rect.right < pr.width * 0.03) el.classList.add('mt-from-right');
+          else el.classList.add('mt-v-zoom');
+        }
+      }
       el.classList.add('mt-pre');
       io.observe(el);
     };
@@ -92,6 +105,13 @@ export function initScrollEffects() {
     const p = max > 0 ? el.scrollTop / max : 0;
     bar.style.transform = `scaleX(${p})`;
     top.classList.toggle('show', el.scrollTop > 420);
+    // the dashboard banner drifts up slower than the page and fades as you leave it
+    const hero = document.querySelector<HTMLElement>('.mt-hero');
+    if (hero && el.tagName === 'MAIN') {
+      const st = el.scrollTop;
+      hero.style.setProperty('--py', `${Math.min(st * 0.22, 56).toFixed(1)}px`);
+      hero.style.setProperty('--ho', `${Math.max(0.25, 1 - st / 520).toFixed(3)}`);
+    }
   };
   document.addEventListener('scroll', onScroll, { capture: true, passive: true });
   top.addEventListener('click', () => {

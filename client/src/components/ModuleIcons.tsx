@@ -453,14 +453,18 @@ export const IconLeaderboard: React.FC<IconProps> = ({ className = 'w-12 h-12', 
 
 export const IconSettings: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
   <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size} strokeLinejoin="round" strokeLinecap="round">
-    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(0 32 32)" />
-    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(45 32 32)" />
-    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(90 32 32)" />
-    <rect x="28" y="3" width="8" height="11" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(135 32 32)" />
-    <circle cx="32" cy="32" r="19" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" />
-    <circle cx="32" cy="32" r="12.5" fill="#E2E8F0" stroke="#2B2D42" strokeWidth="2.2" />
-    <path d="M23 43C23 36 27 34.5 32 34.5C37 34.5 41 36 41 43C38 45.5 26 45.5 23 43Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="1.8" />
-    <circle cx="32" cy="28" r="5" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" />
-    <path d="M27 27C27.5 22 36.5 22 37 27C35 25.5 29 25.5 27 27Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.4" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(0 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(45 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(90 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(135 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(180 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(225 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(270 32 32)" />
+    <rect x="27.5" y="3" width="9" height="12" rx="2.5" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" transform="rotate(315 32 32)" />
+    <circle cx="32" cy="32" r="21" fill="#94A3B8" stroke="#2B2D42" strokeWidth="2.2" />
+    <circle cx="32" cy="32" r="14" fill="#E2E8F0" stroke="#2B2D42" strokeWidth="2.2" />
+    <path d="M22.5 46C22.5 38 27 36 32 36C37 36 41.500 38 41.500 46C38 49 26 49 22.500 46Z" fill="#3B82F6" stroke="#2B2D42" strokeWidth="1.8" />
+    <circle cx="32" cy="29.500" r="5.500" fill="#FFD9BC" stroke="#2B2D42" strokeWidth="1.8" />
+    <path d="M26.300 28.500C26.800 23 37.200 23 37.700 28.500C35.500 26.800 28.500 26.800 26.300 28.500Z" fill="#3B2A20" stroke="#2B2D42" strokeWidth="1.4" />
   </svg>
 );

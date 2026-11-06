@@ -544,3 +544,35 @@ body { background: #f4f6fa; }
 .mt-tile:hover .mt-tile-icon { transform: translateY(0) !important; }
 .mt-tile-card:hover { --ty: -8px; }
 @media (prefers-reduced-motion: reduce) { .mt-tile:hover .mt-tile-icon > * { animation: none; } }
+
+/* ==========================================================================
+   Sidebar: large icon tiles with the label underneath
+   ========================================================================== */
+.mt-nav-tile { position: relative; overflow: hidden; color: rgba(255, 255, 255, 0.85); }
+.mt-nav-tile::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(255, 255, 255, 0.13);
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.mt-nav-tile:hover::after, .mt-nav-tile[data-active="true"]::after { opacity: 1; }
+.mt-nav-tile > * { position: relative; z-index: 1; }
+.mt-nav-icon { transition: transform 0.3s var(--mt-ease), box-shadow 0.3s ease; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); }
+.mt-nav-tile:hover .mt-nav-icon { transform: translateY(-4px); box-shadow: 0 8px 14px -4px rgba(0, 0, 0, 0.35); }
+.mt-nav-tile[data-active="true"] .mt-nav-icon { box-shadow: 0 0 0 2px #d9a85a, 0 6px 12px -4px rgba(0, 0, 0, 0.35); }
+.mt-nav-tile[data-active="true"] .mt-nav-label, .mt-nav-tile:hover .mt-nav-label { color: #f3dcae; }
+.mt-nav-label { transition: color 0.2s ease; }
+@keyframes mt-rise { from { opacity: 0; transform: translateY(18px); } }
+.mt-rise { animation: mt-rise 0.5s var(--mt-ease) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
+
+/* ==========================================================================
+   Scroll motion: varied upward entrances, text wipes, banner drift
+   ========================================================================== */
+.mt-pre.mt-from-left  { transform: translate3d(-34px, 26px, 0); }
+.mt-pre.mt-from-right { transform: translate3d(34px, 26px, 0); }
+.mt-pre.mt-v-zoom     { transform: translate3d(0, 30px, 0) scale(0.94); }
+.mt-pre.mt-v-head     { transform: translate3d(0, 18px, 0); clip-path: inset(0 0 100% 0); }
+.mt-in.mt-v-head      { clip-path: inset(0 0 -20% 0); transition-property: opacity, transform, clip-path; }
+.mt-hero { translate: 0 var(--py, 0px); opacity: var(--ho, 1); will-change: translate, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  .mt-hero { translate: none; opacity: 1; }
+  .mt-rise { animation: none; }
+}
