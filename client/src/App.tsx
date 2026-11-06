@@ -52,12 +52,25 @@ import { MyProfilePage } from './pages/MyProfilePage';
 import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
+import { StudentsAcademic } from './academic/StudentsAcademic';
+import { ClassesAcademic } from './academic/ClassesAcademic';
+import { StaffsAcademic } from './academic/StaffsAcademic';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard-home');
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
+  // Academic overview (icons -> class -> students) for leadership/teaching roles;
+  // "Manage" flips a tab back to the classic record-editing screen.
+  const [manageTabs, setManageTabs] = useState<Record<string, boolean>>({});
+  const academicRole = !!user && ['ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'EXAM_DEPARTMENT'].includes(user.role);
+  const useAcademic = (tab: string) => academicRole && !manageTabs[tab];
+  const manageBar = (tab: string) => (
+    <button onClick={() => setManageTabs((m) => ({ ...m, [tab]: false }))} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a3161b] hover:underline">
+      <ArrowLeft className="w-3.5 h-3.5" /> Back to overview
+    </button>
+  );
 
   // Switching accounts via the role-switcher (or logging in as someone else)
   // changes `user` but previously left `activeTab` pointing at whatever the
@@ -162,8 +175,15 @@ export function App() {
         <main key={activeTab} className="mt-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => setActiveTab(tab)} />
+          ) : activeTab === 'staffs' && useAcademic('staffs') ? (
+            <StaffsAcademic onExit={() => setActiveTab('dashboard-home')} onManage={() => setManageTabs((m) => ({ ...m, staffs: true }))} />
+          ) : activeTab === 'students' && useAcademic('students') ? (
+            <StudentsAcademic onExit={() => setActiveTab('dashboard-home')} onManage={() => setManageTabs((m) => ({ ...m, students: true }))} />
+          ) : activeTab === 'classes' && useAcademic('classes') ? (
+            <ClassesAcademic onExit={() => setActiveTab('dashboard-home')} onManage={() => setManageTabs((m) => ({ ...m, classes: true }))} />
           ) : activeTab === 'staffs' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
+              {academicRole && manageBar('staffs')}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ded9cf]">
                 <div className="flex items-center gap-3">
                   <button
@@ -210,6 +230,7 @@ export function App() {
             </div>
           ) : activeTab === 'students' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
+              {academicRole && manageBar('students')}
               <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
                 <button
                   onClick={() => setActiveTab('dashboard-home')}
@@ -405,6 +426,7 @@ export function App() {
             </div>
           ) : activeTab === 'classes' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
+              {academicRole && manageBar('classes')}
               <div className="flex items-center gap-3 pb-2 border-b border-[#ded9cf]">
                 <button
                   onClick={() => setActiveTab('dashboard-home')}
