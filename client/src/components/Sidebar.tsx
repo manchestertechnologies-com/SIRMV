@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
@@ -18,6 +18,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
   // hovering the rail opens it (names under the icons); the button pins it open
   const [pinned, setPinned] = useState(() => { try { return localStorage.getItem('mt-sidebar-wide') === '1'; } catch { return false; } });
   const [hover, setHover] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  // small delays so brushing past the rail doesn't flicker it open or shut
+  const setHoverSoon = (v: boolean) => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setHover(v), v ? 90 : 160); };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   const wide = pinned || hover;
   const toggle = () => setPinned((w) => { const n = !w; try { localStorage.setItem('mt-sidebar-wide', n ? '1' : '0'); } catch { /* ignore */ } return n; });
 
@@ -49,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       <span className="mt-nav-icon w-10 h-10 rounded-[10px] bg-white flex items-center justify-center shrink-0">
         <ModuleIcon item={item} className="w-7 h-7" />
       </span>
-      <span className={`mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5 ${wide ? '' : 'md:hidden'}`}>
+      <span className={`mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5 min-h-[26px] transition-opacity duration-200 ${wide ? 'opacity-100' : 'md:opacity-0'}`}>
         {item.label}
       </span>
     </button>
@@ -67,11 +71,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       )}
 
       <aside
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onMouseEnter={() => setHoverSoon(true)}
+        onMouseLeave={() => setHoverSoon(false)}
         className={`
           fixed md:absolute top-0 left-0 h-screen md:h-full z-50
-          mt-sidebar w-28 ${wide ? 'md:w-28' : 'md:w-[68px]'} overflow-hidden
+          mt-sidebar w-28 ${wide ? 'md:w-28' : 'md:w-[68px]'} overflow-hidden md:transition-[width] md:duration-200
           flex flex-col select-none safe-top safe-bottom
           transform transition-transform duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0

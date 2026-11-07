@@ -395,6 +395,11 @@ body.mt-scrolled .mt-navbar { box-shadow: 0 10px 28px -10px rgba(74, 7, 9, 0.55)
    ========================================================================== */
 * { scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+/* tables and boxes scroll sideways with a thin visible bar, and never trap the page scroll */
+.overflow-x-auto, .overflow-auto, .overflow-y-auto { overscroll-behavior: auto !important; }
+.overflow-x-auto { scrollbar-width: thin; scrollbar-color: #d9b98a transparent; }
+.overflow-x-auto::-webkit-scrollbar { display: block !important; height: 6px !important; }
+.overflow-x-auto::-webkit-scrollbar-thumb { background: #d9b98a; border-radius: 6px; }
 html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
 button, a, [role="button"], select, label, summary { touch-action: manipulation; }
 

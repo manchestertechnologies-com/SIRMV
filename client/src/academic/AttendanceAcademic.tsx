@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
-import { AttendanceModule } from '../pages/AttendanceModule';
 import {
   ALL_DEPTS, SectionDef, Status, Student, TEACHING_SUBJECTS, allSections, fmtDate, getStandards, getStaff, getStudents, pct, sectionById, staffStatus, standardTotals, studentDayStatus, studentMonthPct, SubjectName,
 } from './sampleData';
 import { Avatar, Bar, Card, Chip, Donut, GREEN, AMBER, RED, PageHead, PickCard, StandardIcon, StatCard, SubjectIcon, GroupIcon } from './ui';
 import { DeptAttendance } from './StaffsAcademic';
-import { ClassroomBlueprint } from './ClassroomBlueprint';
 
-type Nav = { v: 'home' } | { v: 'students' } | { v: 'std'; std: string } | { v: 'sec'; sec: string } | { v: 'teachers'; group: 'Teaching' | 'Non-Teaching' } | { v: 'dept'; dept: SubjectName; group: 'Teaching' | 'Non-Teaching' } | { v: 'rooms' } | { v: 'records' };
+type Nav = { v: 'home' } | { v: 'students' } | { v: 'std'; std: string } | { v: 'sec'; sec: string } | { v: 'teachers'; group: 'Teaching' | 'Non-Teaching' } | { v: 'dept'; dept: SubjectName; group: 'Teaching' | 'Non-Teaching' };
 
 const dayCounts = (list: Student[], d: Date) => { let p = 0, a = 0, l = 0; list.forEach((s) => { const x = studentDayStatus(s.id, d); if (x === 'P') p++; else if (x === 'A') a++; else if (x === 'L') l++; }); return { p, a, l, pct: pct(p, p + a + l) }; };
 const prevWorkday = () => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() - 1); return d; };
@@ -31,18 +29,14 @@ export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit })
           <StatCard label="Students on leave" value={today.l} tone="gold" />
           <StatCard label="Staff present today" value={st} suffix={`of ${staff.length}`} tone="slate" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <PickCard icon={<GroupIcon kind="section" />} title="Students" lines={['College overall', 'Class, section and P / A / L']} onClick={() => setNav({ v: 'students' })} />
           <PickCard icon={<GroupIcon kind="class" />} title="Teachers and staff" lines={['Overall and subject-wise', 'Teaching and non-teaching']} onClick={() => setNav({ v: 'teachers', group: 'Teaching' })} />
-          <PickCard icon={<GroupIcon kind="batch" />} title="Classroom blueprint" lines={['Floors, rooms and benches', 'Whole college capacity']} onClick={() => setNav({ v: 'rooms' })} />
         </div>
-        <button onClick={() => setNav({ v: 'records' })} className="text-xs font-semibold text-[#a3161b] hover:underline">Open attendance records (live data)</button>
       </div>
     );
   }
   const home = () => setNav({ v: 'home' });
-  if (nav.v === 'records') return <div className="space-y-5 max-w-7xl mx-auto"><button onClick={home} className="text-xs font-semibold text-[#a3161b] hover:underline">← Back to Attendance</button><AttendanceModule /></div>;
-  if (nav.v === 'rooms') return <div className="space-y-5 max-w-7xl mx-auto"><PageHead title="Classroom blueprint" sub="Floors, classroom names, benches and capacity" onBack={home} crumbs={[{ label: 'Attendance', onClick: home }, { label: 'Classroom blueprint' }]} /><ClassroomBlueprint /></div>;
 
   if (nav.v === 'students') {
     const d = prevWorkday(); const t = dayCounts(everyone, d);
@@ -50,7 +44,7 @@ export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit })
       <div className="space-y-6 max-w-7xl mx-auto">
         <PageHead title="Students attendance" sub={`College overall · ${fmtDate(d)}`} onBack={home} crumbs={[{ label: 'Attendance', onClick: home }, { label: 'Students' }]} />
         <Card><Donut centre={`${t.pct}%`} centreSub="present" parts={[{ label: 'Present', v: t.p, color: GREEN }, { label: 'Leave', v: t.l, color: AMBER }, { label: 'Absent', v: t.a, color: RED }]} /></Card>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {standards.map((s) => { const list = allSections().filter((x) => x.std === s.id).flatMap((x) => getStudents(x.id).filter((y) => y.active)); const c = dayCounts(list, d); const tt = standardTotals(s); return (
             <PickCard key={s.id} icon={<StandardIcon id={s.id} />} title={s.full} lines={[`${tt.classes} sections · ${tt.students} students`, `Present ${c.pct}% (${c.p}/${c.p + c.a + c.l})`]} onClick={() => setNav({ v: 'std', std: s.id })} />); })}
         </div>

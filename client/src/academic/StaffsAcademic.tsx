@@ -15,7 +15,11 @@ const todayCounts = (list: Staff[]) => {
 };
 
 export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
-  const [nav, setNav] = useState<Nav>({ v: 'home' });
+  const [nav, setNav] = useState<Nav>(() => {
+    // another screen (for example Exam Management) can ask to open one faculty member
+    try { const id = sessionStorage.getItem('mt-open-staff'); if (id) { sessionStorage.removeItem('mt-open-staff'); return { v: 'staff', id }; } } catch { /* ignore */ }
+    return { v: 'home' };
+  });
   const manage = null;
   void onManage;
 

@@ -199,7 +199,7 @@ export function App() {
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'exam-management' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenStaff={(id) => { try { sessionStorage.setItem('mt-open-staff', id); } catch { /* ignore */ } selectTab('staffs'); }} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
           ) : activeTab === 'staffs' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ded9cf]">

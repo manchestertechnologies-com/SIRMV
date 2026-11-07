@@ -42,7 +42,8 @@
   .overflow-x-auto,
   .overflow-auto {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    /* never trap the wheel: vertical scrolling over a box continues on the page */
+    overscroll-behavior: auto;
   }
 
   button, a, [role="button"] {

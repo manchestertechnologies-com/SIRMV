@@ -3,6 +3,9 @@ import { Trash2 } from 'lucide-react';
 import { BLOCKS, BlockDef, FloorDef, floorLabel, hasSavedBlocks, setBlocks } from './sampleData';
 import { Classroom, ClassroomSetup, generateClassrooms, hasSavedClassrooms, saveClassrooms, loadClassrooms } from './classrooms';
 import { ClassroomBlueprint } from './ClassroomBlueprint';
+import { HallModel } from './ClassModel';
+import { loadPlan } from './examPlan';
+import { allSections } from './sampleData';
 import { Blueprint as HostelBlueprint } from './HostelAcademic';
 import { Card, PageHead, TabBar } from './ui';
 
@@ -51,6 +54,7 @@ const ClassSide: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-end"><button onClick={() => setEditing(true)} className="px-4 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]">Start again with new details</button></div>
+      <HallModel rooms={rooms} sections={allSections()} halls={loadPlan()?.halls || {}} title="3D model · updates as you change rooms (green = hall used by the saved exam)" />
       <ClassroomBlueprint key={rooms.length} initial={rooms} onChange={setRooms} />
     </div>
   );

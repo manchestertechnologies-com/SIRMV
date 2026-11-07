@@ -1,3 +1,4 @@
+import { Blueprint3D, Floor3D } from './Blueprint3D';
 import React, { useMemo, useState } from 'react';
 import { Shuffle } from 'lucide-react';
 import { HostelDashboard } from '../pages/HostelDashboard';
@@ -65,6 +66,7 @@ export const Blueprint: React.FC = () => {
   const rooms = useMemo(() => blockRooms(block), [block]);
   const occ = useMemo(() => { const m = new Map<string, Student[]>(); hostelOccupants(block.name).forEach((s) => { const a = m.get(s.hostel!.room) || []; a.push(s); m.set(s.hostel!.room, a); }); return m; }, [block]);
   const cap = blockCapacity(block); const used = Array.from(occ.values()).reduce((a, v) => a + v.length, 0);
+  const floors3d: Floor3D[] = useMemo(() => block.floors.map((f, fi) => ({ name: f.name, boxes: rooms.filter((r) => r.floorIdx === fi).map((r) => { const n = (occ.get(r.label) || []).length; return { id: r.label, label: String(r.no), sub: `${n}/${r.share}`, fill: n / r.share }; }) })), [block, rooms, occ]);
   const selRoom = rooms.find((r) => r.label === sel) || null; const people = sel ? occ.get(sel) || [] : [];
   return (
     <div className="space-y-5">
@@ -80,6 +82,7 @@ export const Blueprint: React.FC = () => {
       <div className="grid lg:grid-cols-[1fr_300px] gap-5 items-start">
         <Card title={`${block.name} · ${block.gender === 'Male' ? 'Boys' : 'Girls'} hostel`} right={<span className="text-[11px] text-slate-400">{block.shape === 'bar' ? 'Straight block' : block.shape === 'L' ? 'L-shaped block' : 'U-shaped block with courtyard'}</span>}>
           <div className="space-y-4">{[...block.floors.keys()].reverse().map((fi) => <FloorPlan key={fi} block={block} fi={fi} rooms={rooms} occ={occ} sel={sel} onSel={setSel} />)}</div>
+          <div className="mt-5 pt-4 border-t border-[#f0ebe4]"><p className="text-xs font-semibold text-slate-700 mb-2">3D model · tap a room</p><Blueprint3D floors={floors3d} selected={sel} onSelect={setSel} height={400} /></div>
           <div className="flex flex-wrap gap-4 mt-4 text-[11px] text-slate-600">
             {[['Full', '#8c1118'], ['Partly filled', '#c28535'], ['Empty', '#d8d2c8']].map(([l, c]) => <span key={l} className="inline-flex items-center gap-1.5"><i className="w-3 h-3 rounded-sm border-2" style={{ borderColor: c }} />{l}</span>)}
             <span className="inline-flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-[2px] bg-[#8c1118]" />Bed in use</span>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, FileText, Filter, LayoutGrid, Network, Plus, Settings, User, Pencil, FileSpreadsheet } from 'lucide-react';
 import { SectionDef, Student, allSections, getStaff, getStudents } from './sampleData';
-import { Avatar, PageHead } from './ui';
+import { Avatar, PageHead, SubjectIcon } from './ui';
 
 interface Report { id: string; name: string; sectionIds: string[]; tests: number; theories: number; staff: string; date: string }
 const KEY = 'mt-reports-custom';
@@ -110,8 +110,11 @@ const Menu: React.FC<{ icon: React.ReactNode; title: string; children: (close: (
   );
 };
 const MenuHead: React.FC<{ children: React.ReactNode }> = ({ children }) => <p className="px-4 pt-2 pb-1 text-[10px] font-bold tracking-wide text-slate-400 uppercase">{children}</p>;
-const MenuItem: React.FC<{ active?: boolean; color?: string; onClick: () => void; children: React.ReactNode }> = ({ active, color = '#a3161b', onClick, children }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left hover:bg-[#fff6f4] ${active ? 'bg-[#fff1ee] font-semibold text-[#8c1118]' : 'text-slate-700'}`}><i className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: color }} />{children}</button>
+const subjIcon = (n: string) => (n === 'Botany' || n === 'Zoology' ? 'Biology' : n);
+const MenuItem: React.FC<{ active?: boolean; color?: string; subject?: string; onClick: () => void; children: React.ReactNode }> = ({ active, color = '#a3161b', subject, onClick, children }) => (
+  <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-1.5 text-sm text-left hover:bg-[#fff6f4] ${active ? 'bg-[#fff1ee] font-semibold text-[#8c1118]' : 'text-slate-700'}`}>
+    {subject ? <SubjectIcon subject={subjIcon(subject)} className="w-6 h-6 shrink-0" /> : <i className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: color }} />}{children}
+  </button>
 );
 
 const ReportTable: React.FC<{ report: Report; onEdit: () => void }> = ({ report, onEdit }) => {
@@ -142,10 +145,10 @@ const ReportTable: React.FC<{ report: Report; onEdit: () => void }> = ({ report,
           <Menu icon={<LayoutGrid className="w-4 h-4" />} title="Subjects">{(close) => (<>
             <MenuHead>Tests subjects</MenuHead>
             <MenuItem active={tSub === 'All'} onClick={() => { setTSub('All'); close(); }}>All</MenuItem>
-            {TEST_SUBJ.map((s) => <MenuItem key={s.n} active={tSub === s.n} color={s.c} onClick={() => { setTSub(s.n); close(); }}>{s.n}</MenuItem>)}
+            {TEST_SUBJ.map((s) => <MenuItem key={s.n} active={tSub === s.n} color={s.c} subject={s.n} onClick={() => { setTSub(s.n); close(); }}>{s.n}</MenuItem>)}
             {report.theories > 0 && (<><MenuHead>Theory subjects</MenuHead>
               <MenuItem active={thSub === 'All'} onClick={() => { setThSub('All'); close(); }}>All</MenuItem>
-              {THEORY_SUBJ.map((s) => <MenuItem key={s.n} active={thSub === s.n} color={s.c} onClick={() => { setThSub(s.n); close(); }}>{s.n}</MenuItem>)}</>)}
+              {THEORY_SUBJ.map((s) => <MenuItem key={s.n} active={thSub === s.n} color={s.c} subject={s.n} onClick={() => { setThSub(s.n); close(); }}>{s.n}</MenuItem>)}</>)}
           </>)}</Menu>
           <Menu icon={<Filter className="w-4 h-4" />} title="Filters">{() => (<>
             <MenuHead>Filters</MenuHead>
@@ -173,7 +176,7 @@ const ReportTable: React.FC<{ report: Report; onEdit: () => void }> = ({ report,
               {showTests && thCols.length > 0 && <th colSpan={(showSubj ? thCols.length : 0) + (showTotal ? 1 : 0)} className={`${th} !bg-[#ecd3a2]`}>Theories</th>}
             </tr>
             <tr>
-              {showTests && showSubj && tCols.map((c) => <th key={c.n} className={th}>{c.n}{sub('180')}</th>)}{showTests && showTotal && <th className={th}>Total{sub(String(tCols.length * 180))}</th>}
+              {showTests && showSubj && tCols.map((c) => <th key={c.n} className={th}><span className="inline-flex flex-col items-center gap-0.5"><SubjectIcon subject={subjIcon(c.n)} className="w-5 h-5" />{c.n}</span>{sub('180')}</th>)}{showTests && showTotal && <th className={th}>Total{sub(String(tCols.length * 180))}</th>}
               {showTests && showSubj && thCols.map((c) => <th key={c.n} className={th}>{c.n}{sub('35')}</th>)}{showTests && showTotal && thCols.length > 0 && <th className={th}>Total{sub(String(thCols.length * 35))}</th>}
             </tr>
           </thead>
