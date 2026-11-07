@@ -13,7 +13,6 @@ import { dutyPdf, studentListPdf } from './examPdf';
 import { gotoDetail, usePS } from './persist';
 import { Avatar, Card, PageHead, Pill, StatCard, TabBar } from './ui';
 
-const Legacy = lazyWithRetry(() => import('../pages/ExamManagementModule').then((m) => ({ default: m.ExamManagementModule })));
 const field = 'mt-1 w-full px-3 py-2.5 rounded-xl border border-[#ded9cf] bg-white text-sm text-slate-900 outline-none focus:border-[#c7222a]';
 const T = 'exam-management';
 const GOLD = '#c28535', RED = '#a3161b', EMPTY = '#cfc8bc', OK = '#2e9e62', ABS = '#d64545', LEAVE = '#e6b23a';
@@ -40,7 +39,7 @@ export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint }) => {
   const showSetup = role !== 'HOD' && role !== 'TEACHER';
   const unread = loadNotes().filter((n) => !n.read && audience(n, role)).length;
   const pending = loadRequests().filter((r) => r.status === 'pending').length;
-  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role === 'HOD' || role === 'ADMIN' || role === 'PRINCIPAL' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, 'Halls', 'Schedule & results'];
+  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role === 'HOD' || role === 'ADMIN' || role === 'PRINCIPAL' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, 'Halls'];
   const cur = tabs.find((t) => t.split(' (')[0] === tab.split(' (')[0]) || tabs[0];
   const key = cur.split(' (')[0];
   return (
@@ -52,7 +51,6 @@ export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint }) => {
       {key === 'Duty requests' && <Requests key={ver} onChanged={() => setVer((v) => v + 1)} />}
       {key === 'Notifications' && <Notifications key={ver} role={role} />}
       {key === 'Halls' && <Halls key={ver} onOpenBlueprint={onOpenBlueprint} />}
-      {key === 'Schedule & results' && <Suspense fallback={<p className="text-sm text-slate-500 py-10 text-center">Loading…</p>}><Legacy /></Suspense>}
     </div>
   );
 };
