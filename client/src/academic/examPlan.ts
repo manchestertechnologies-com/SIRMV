@@ -1,18 +1,18 @@
 import { SLOTS, Staff, WEEKDAYS, allSections, getStaff, getTimetables } from './sampleData';
 
 // One exam plan saved on this device until the database is connected.
-export type Syllabus = '1st' | '2nd' | 'both';
+export type Syllabus = '1st' | '2nd'; // the paper LT (repeater) classes write; 11th and 12th follow their own class
 export interface ExamPlan {
   name: string; date: string; start: string; durationMin: number;
-  syllabus: Syllabus; sectionIds: string[]; roomIds: string[]; demand: Record<string, number>; // demand = faculty wanted from each department
+  syllabus: Syllabus; /* LT paper */ sectionIds: string[]; roomIds: string[]; demand: Record<string, number>; // demand = faculty wanted from each department
 }
-export const sectionsFor = (sy: Syllabus) => allSections().filter((s) => sy === 'both' || (sy === '1st' ? s.std === '11' : s.std !== '11'));
+export const sectionsFor = () => allSections();
 const KEY = 'mt-exam-plan';
 // Old saved plans may miss fields; fill them in so a screen never crashes on them.
 export const fixPlan = (p: any): ExamPlan => ({
   name: typeof p?.name === 'string' ? p.name : 'Exam', date: typeof p?.date === 'string' ? p.date : todayIso(),
   start: typeof p?.start === 'string' ? p.start : '09:00', durationMin: Number(p?.durationMin) || 180,
-  syllabus: p?.syllabus === '1st' || p?.syllabus === '2nd' || p?.syllabus === 'both' ? p.syllabus : 'both',
+  syllabus: p?.syllabus === '1st' ? '1st' : '2nd',
   sectionIds: Array.isArray(p?.sectionIds) ? p.sectionIds : [], roomIds: Array.isArray(p?.roomIds) ? p.roomIds : [],
   demand: p?.demand && typeof p.demand === 'object' ? p.demand : {},
 });

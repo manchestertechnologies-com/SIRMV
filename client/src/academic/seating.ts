@@ -5,7 +5,8 @@ import { SectionDef, Student } from './sampleData';
 //  - papers for two syllabuses (1st PU and 2nd PU): the two classes sit on alternate seats, so every seat is used
 //  - one syllabus only: 2 students per bench, the middle seat stays empty; the rest sit in the next room
 export type Group = '1st' | '2nd';
-export const groupOf = (std: string): Group => (std === '11' ? '1st' : '2nd'); // LT (repeaters) write the 2nd PU paper
+// 11th = 1st PU paper, 12th = 2nd PU paper. LT (repeaters) can write either, so the exam says which (lt).
+export const groupOf = (std: string, lt: Group = '2nd'): Group => (std === '11' ? '1st' : std === 'LT' ? lt : '2nd');
 export const groupName = (g: Group) => (g === '1st' ? '1st PU' : '2nd PU');
 
 export interface Seat { bench: number; side: number; row: number; col: number; label: string; student?: Student; group?: Group }
@@ -14,9 +15,9 @@ export interface RoomPlan { room: Classroom; cols: number; seats: Seat[]; count:
 export const benchCols = (room: Classroom) => Math.min(Math.max(room.benches, 1), room.benches > 24 ? 6 : room.benches > 12 ? 5 : 4);
 export const seatsFor = (room: Classroom, twoGroups: boolean) => room.benches * (twoGroups || room.perBench === 1 ? room.perBench : Math.ceil(room.perBench / 2));
 
-export const buildSeating = (rooms: Classroom[], secs: SectionDef[], studentsOf: (sectionId: string) => Student[]) => {
+export const buildSeating = (rooms: Classroom[], secs: SectionDef[], studentsOf: (sectionId: string) => Student[], lt: Group = '2nd') => {
   const q: Record<Group, Student[]> = { '1st': [], '2nd': [] };
-  secs.forEach((s) => studentsOf(s.id).filter((x) => x.active).forEach((x) => q[groupOf(s.std)].push(x)));
+  secs.forEach((s) => studentsOf(s.id).filter((x) => x.active).forEach((x) => q[groupOf(s.std, lt)].push(x)));
   const total = q['1st'].length + q['2nd'].length;
   const two = q['1st'].length > 0 && q['2nd'].length > 0; const only: Group = q['1st'].length ? '1st' : '2nd';
   const plans: RoomPlan[] = rooms.map((room) => {
@@ -40,9 +41,9 @@ export const buildSeating = (rooms: Classroom[], secs: SectionDef[], studentsOf:
 };
 
 // add rooms (largest first) until everyone has a seat
-export const autoRooms = (all: Classroom[], secs: SectionDef[], studentsOf: (sectionId: string) => Student[]) => {
+export const autoRooms = (all: Classroom[], secs: SectionDef[], studentsOf: (sectionId: string) => Student[], lt: Group = '2nd') => {
   const sorted = [...all].sort((a, b) => a.floor - b.floor || a.name.localeCompare(b.name, undefined, { numeric: true }));
   const chosen: Classroom[] = [];
-  for (const r of sorted) { if (chosen.length && buildSeating(chosen, secs, studentsOf).unplaced === 0) break; chosen.push(r); }
+  for (const r of sorted) { if (chosen.length && buildSeating(chosen, secs, studentsOf, lt).unplaced === 0) break; chosen.push(r); }
   return chosen.map((r) => r.id);
 };

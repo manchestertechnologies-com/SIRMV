@@ -63,11 +63,11 @@ const StaffLink: React.FC<{ s: Pick<Staff, 'id' | 'name'>; size?: number }> = ({
 );
 
 const spreadDemand = (rooms: number): Record<string, number> => { const d: Record<string, number> = {}; for (let i = 0; i < rooms; i++) { const k = TEACHING_SUBJECTS[i % TEACHING_SUBJECTS.length]; d[k] = (d[k] || 0) + 1; } return d; };
-const newPlan = (): ExamPlan => ({ name: 'Grand Test 4', date: todayIso(), start: '09:00', durationMin: 180, syllabus: 'both', sectionIds: [], roomIds: [], demand: {} });
+const newPlan = (): ExamPlan => ({ name: 'Grand Test 4', date: todayIso(), start: '09:00', durationMin: 180, syllabus: '2nd', sectionIds: [], roomIds: [], demand: {} });
 
 // ---------- set up: 5 steps ----------
 const STEPS = ['Exam', 'Classes', 'Rooms', 'Seating', 'Faculty'];
-const SYL: [Syllabus, string, string][] = [['1st', '1st PU syllabus', 'Only 11th classes write'], ['2nd', '2nd PU syllabus', '12th and LT classes write'], ['both', 'Both syllabuses', '1st PU and 2nd PU papers together']];
+const SYL: [Syllabus, string, string][] = [['1st', '1st PU syllabus', 'LT students write the 1st PU paper'], ['2nd', '2nd PU syllabus', 'LT students write the 2nd PU paper']];
 
 const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = ({ onSaved, onOpenBlueprint }) => {
   const rooms = useMemo(() => loadClassrooms(), []);
@@ -77,19 +77,19 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
   const plan = fixPlan(rawPlan);
   const [seatRoom, setSeatRoom] = usePS<string>(T, 'seatroom', '');
   const set = (p: Partial<ExamPlan>) => setPlan((x) => ({ ...x, ...p }));
-  const allowed = useMemo(() => sectionsFor(plan.syllabus), [plan.syllabus]);
+  const allowed = useMemo(() => sectionsFor(), []);
   const picked = allowed.filter((s) => plan.sectionIds.includes(s.id));
   const chosenRooms = rooms.filter((r) => plan.roomIds.includes(r.id));
-  const seating = useMemo(() => buildSeating(chosenRooms, picked, studentsOf), [chosenRooms, picked]);
+  const seating = useMemo(() => buildSeating(chosenRooms, picked, studentsOf, plan.syllabus), [chosenRooms, picked, plan.syllabus]);
   const used = seating.plans.filter((p) => p.count > 0);
   const total = Object.values(plan.demand).reduce((a, b) => a + b, 0);
   const canNext = step === 0 ? !!plan.name.trim() && !!plan.date : step === 1 ? picked.length > 0 : step === 2 ? seating.unplaced === 0 && chosenRooms.length > 0 : true;
   const hint = step === 1 && !picked.length ? 'Choose at least one class.' : step === 2 && seating.unplaced > 0 ? `${seating.unplaced} students still need a seat. Add a room.` : step === 4 && total !== used.length ? `You need ${used.length} faculty in total, you asked for ${total}.` : '';
 
-  const pickSyllabus = (sy: Syllabus) => set({ syllabus: sy, sectionIds: plan.sectionIds.filter((id) => sectionsFor(sy).some((s) => s.id === id)), roomIds: [], demand: {} });
-  const autoPick = () => set({ roomIds: autoRooms(rooms, picked, studentsOf), demand: {} });
+  const pickSyllabus = (sy: Syllabus) => set({ syllabus: sy, roomIds: [], demand: {} });
+  const autoPick = () => set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus), demand: {} });
   const goNext = () => {
-    if (step === 1 && !plan.roomIds.length) set({ roomIds: autoRooms(rooms, picked, studentsOf) });
+    if (step === 1 && !plan.roomIds.length) set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus) });
     if (step === 3 && !Object.keys(plan.demand).length) set({ demand: spreadDemand(used.length) });
     setStep(step + 1);
   };
@@ -131,11 +131,6 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
             <label className="text-xs text-slate-500">Starts at<input type="time" value={plan.start} onChange={(e) => set({ start: e.target.value })} className={field} /></label>
             <label className="text-xs text-slate-500">How long (minutes)<select value={plan.durationMin} onChange={(e) => set({ durationMin: +e.target.value })} className={field}>{[60, 90, 120, 180, 200, 240].map((m) => <option key={m} value={m}>{m} minutes</option>)}</select></label>
           </div>
-          <p className="mt-5 text-xs font-semibold text-slate-700">Which syllabus is the paper on?</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {SYL.map(([v, t, d]) => <button key={v} onClick={() => pickSyllabus(v)} className={`text-left px-4 py-2.5 rounded-xl border ${plan.syllabus === v ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white border-[#ded9cf] text-slate-700'}`}><b className="block text-sm">{t}</b><span className={`text-[11px] ${plan.syllabus === v ? 'text-white/80' : 'text-slate-500'}`}>{d}</span></button>)}
-          </div>
-          <p className="mt-3 text-[11px] text-slate-500">{plan.syllabus === 'both' ? 'Each bench has 3 seats. 1st PU and 2nd PU students sit on alternate seats, so every seat is used.' : 'Same paper for everyone: only 2 students sit on each bench, the middle seat stays empty, and the rest sit in the next room.'}</p>
         </Card>
       )}
 
@@ -150,13 +145,22 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
               </div>
             </div>
           ))}
+          {picked.some((s) => s.std === 'LT') && (
+            <div className="mt-4 pt-4 border-t border-[#ece4da]">
+              <p className="text-xs font-semibold text-slate-700">Which syllabus is the paper on for LT students?</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {SYL.map(([v, t, d]) => <button key={v} onClick={() => pickSyllabus(v)} className={`text-left px-4 py-2.5 rounded-xl border ${plan.syllabus === v ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white border-[#ded9cf] text-slate-700'}`}><b className="block text-sm">{t}</b><span className={`text-[11px] ${plan.syllabus === v ? 'text-white/80' : 'text-slate-500'}`}>{d}</span></button>)}
+              </div>
+            </div>
+          )}
+          <p className="mt-3 text-[11px] text-slate-500">{(() => { const g = new Set(picked.map((s) => (s.std === '11' ? '1st' : s.std === 'LT' ? plan.syllabus : '2nd'))); return g.size > 1 ? 'You picked 1st PU and 2nd PU papers: they sit on alternate seats, so all 3 seats on a bench are used.' : 'All the classes you picked write the same paper: only 2 students sit on each bench, the middle seat stays empty, and the rest sit in the next room.'; })()}</p>
           <p className="text-xs text-slate-500 mt-2">{picked.length} classes · {picked.reduce((a, s) => a + s.count, 0)} students</p>
         </Card>
       )}
 
       {step === 2 && (
         <Card title="Which rooms?" right={<button onClick={autoPick} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a3161b] hover:underline"><Wand2 className="w-3.5 h-3.5" />Pick rooms for me</button>}>
-          <p className="text-xs text-slate-500 mb-3">{seating.two ? 'Two syllabuses share every bench on alternate seats.' : 'One syllabus: 2 students per bench, middle seat empty.'} Tap rooms to add or remove them. Students who do not fit move to the next room.</p>
+          <p className="text-xs text-slate-500 mb-3">{seating.two ? '1st PU and 2nd PU papers share every bench on alternate seats.' : 'Same paper for all: 2 students per bench, middle seat empty.'} Tap rooms to add or remove them. Students who do not fit move to the next room.</p>
           {[...Array(Math.max(1, ...rooms.map((r) => r.floor + 1))).keys()].map((f) => (
             <div key={f} className="mb-3 last:mb-0">
               <p className="text-[11px] font-semibold text-slate-500 mb-1.5">{floorName(f)}</p>
@@ -224,7 +228,7 @@ const Halls: React.FC<{ onOpenBlueprint?: () => void }> = ({ onOpenBlueprint }) 
 // ---------- live exam ----------
 const clock = (s: number) => `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 const samplePlan = (): ExamPlan => {
-  const rooms = loadClassrooms(); const secs = sectionsFor('2nd').filter((s) => s.stream === 'PCMB'); const d = new Date(); d.setMinutes(d.getMinutes() - 74);
+  const rooms = loadClassrooms(); const secs = sectionsFor().filter((s) => s.std !== '11' && s.stream === 'PCMB'); const d = new Date(); d.setMinutes(d.getMinutes() - 74);
   return { name: 'Grand Test 4', date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, start: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, durationMin: 200, syllabus: '2nd', sectionIds: secs.map((s) => s.id), roomIds: autoRooms(rooms, secs, studentsOf), demand: {} };
 };
 type Mark = 'present' | 'absent' | 'leave';
@@ -244,7 +248,7 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
   const [now, setNow] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
   const secs = useMemo(() => allSections().filter((s) => plan.sectionIds.includes(s.id)), [plan]);
-  const seating = useMemo(() => buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf), [rooms, plan, secs]);
+  const seating = useMemo(() => buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus), [rooms, plan, secs]);
   const used = seating.plans.filter((p) => p.count > 0);
   const inv = useMemo(() => invigilators(plan, !!saved), [plan, saved]);
   const start = planStart(plan); const endMs = +start + plan.durationMin * 60000;
@@ -356,7 +360,7 @@ const Notifications: React.FC<{ role: string }> = ({ role }) => {
   const pdf = async (staffId: string, roomId: string) => {
     const plan = loadPlan(); const st = staffById(staffId); if (!plan || !st) return;
     const rooms = loadClassrooms(); const secs = allSections().filter((s) => plan.sectionIds.includes(s.id));
-    const rp = buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf).plans.find((p) => p.room.id === roomId); if (!rp) return;
+    const rp = buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus).plans.find((p) => p.room.id === roomId); if (!rp) return;
     await dutyPdf(plan, rp, floorName(rp.room.floor), st, (id) => sectionById(id)?.title || id);
   };
   return (
