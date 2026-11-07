@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import React, { useMemo, useState } from 'react';
 import { Settings2 } from 'lucide-react';
 import {
@@ -10,7 +11,7 @@ import { StudentGrid, StudentProfile } from './StudentViews';
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'class'; std: string; stream: string } | { v: 'sec'; sec: string; tab?: string } | { v: 'stu'; id: string };
 
 export const ClassesAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
-  const [nav, setNav] = useState<Nav>({ v: 'home' });
+  const [nav, setNav] = usePS<Nav>('classes', 'nav', { v: 'home' });
   const standards = getStandards();
   const manage = onManage ? (
     <button onClick={onManage} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]"><Settings2 className="w-3.5 h-3.5" /> Manage classes</button>

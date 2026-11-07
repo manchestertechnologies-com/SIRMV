@@ -115,8 +115,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(res.user);
         }
       } catch (err) {
-        removeAuthToken();
-        setUser(null);
+        // a demo sign-in (backend asleep) keeps its user so a refresh stays signed in
+        let demo: User | null = null;
+        try { demo = token === 'sirmv_demo_token_shivamogga' ? (JSON.parse(localStorage.getItem('mt-demo-user') || 'null') as User | null) : null; } catch { /* ignore */ }
+        if (demo) setUser(demo);
+        else { removeAuthToken(); setUser(null); }
       } finally {
         setIsLoading(false);
       }
@@ -173,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           branch_city: 'Shivamogga'
         };
         setUser(fallbackUser);
+        try { localStorage.setItem('mt-demo-user', JSON.stringify(fallbackUser)); } catch { /* ignore */ }
         setAuthToken('sirmv_demo_token_shivamogga');
         return;
       }

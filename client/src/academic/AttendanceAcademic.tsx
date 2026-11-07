@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import {
@@ -12,7 +13,7 @@ const dayCounts = (list: Student[], d: Date) => { let p = 0, a = 0, l = 0; list.
 const prevWorkday = () => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() - 1); return d; };
 
 export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-  const [nav, setNav] = useState<Nav>({ v: 'home' });
+  const [nav, setNav] = usePS<Nav>('attendance', 'nav', { v: 'home' });
   const standards = getStandards();
   const everyone = useMemo(() => allSections().flatMap((s) => getStudents(s.id).filter((x) => x.active)), []);
   const staff = getStaff();

@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { BLOCKS, BlockDef, FloorDef, floorLabel, hasSavedBlocks, setBlocks } from './sampleData';
@@ -5,7 +6,6 @@ import { Classroom, ClassroomSetup, generateClassrooms, hasSavedClassrooms, save
 import { ClassroomBlueprint } from './ClassroomBlueprint';
 import { HallModel } from './ClassModel';
 import { loadPlan } from './examPlan';
-import { allSections } from './sampleData';
 import { Blueprint as HostelBlueprint } from './HostelAcademic';
 import { Card, PageHead, TabBar } from './ui';
 
@@ -15,7 +15,7 @@ const Num: React.FC<{ label: string; value: number; min?: number; max?: number; 
 );
 
 export const BlueprintModule: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-  const [tab, setTab] = useState('Classroom blueprint');
+  const [tab, setTab] = usePS('blueprint', 'tab', 'Classroom blueprint');
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
       <PageHead title="Blueprint" sub="Enter your floors, rooms and capacity once. Classes, exams and hostel use it." onBack={onExit} />
@@ -29,7 +29,7 @@ export const BlueprintModule: React.FC<{ onExit: () => void }> = ({ onExit }) =>
 const ClassSide: React.FC = () => {
   const [saved, setSaved] = useState(hasSavedClassrooms());
   const [rooms, setRooms] = useState<Classroom[]>(loadClassrooms());
-  const [cfg, setCfg] = useState<ClassroomSetup>({ floors: 4, roomsPerFloor: 6, benches: 15, perBench: 2, prefix: 'Room' });
+  const [cfg, setCfg] = useState<ClassroomSetup>({ floors: 4, roomsPerFloor: 6, benches: 15, perBench: 3, prefix: 'Room' });
   const [editing, setEditing] = useState(!hasSavedClassrooms());
   const build = () => { const l = generateClassrooms(cfg); saveClassrooms(l); setRooms(l); setSaved(true); setEditing(false); };
   if (editing) {
@@ -54,7 +54,7 @@ const ClassSide: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-end"><button onClick={() => setEditing(true)} className="px-4 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]">Start again with new details</button></div>
-      <HallModel rooms={rooms} sections={allSections()} halls={loadPlan()?.halls || {}} title="3D model · updates as you change rooms (green = hall used by the saved exam)" />
+      <HallModel rooms={rooms} used={Object.fromEntries((loadPlan()?.roomIds || []).map((id) => [id, 'exam']))} title="3D model · updates as you change rooms (green = hall used by the saved exam)" />
       <ClassroomBlueprint key={rooms.length} initial={rooms} onChange={setRooms} />
     </div>
   );

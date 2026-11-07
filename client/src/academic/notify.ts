@@ -1,12 +1,13 @@
 import { SubjectName } from './sampleData';
 
 // Invigilation requests and notifications, kept on this device until the backend is connected.
+// One request per department: Exam Management says how many faculty it needs, the HOD picks them.
 export interface DutyRequest {
-  id: string; examName: string; sectionId: string; hallName: string; classTitle: string;
-  date: string; start: string; durationMin: number; sectionIds: string[];
-  dept: SubjectName; status: 'pending' | 'assigned'; staffId?: string; createdAt: number; assignedAt?: number;
+  id: string; examName: string; date: string; start: string; durationMin: number; sectionIds: string[];
+  dept: SubjectName; count: number; roomIds: string[]; roomNames: string[];   // one room for each faculty wanted
+  status: 'pending' | 'assigned'; staffIds: string[]; createdAt: number; assignedAt?: number;
 }
-export interface Note { id: string; to: 'exam' | 'hod' | 'staff'; dept?: SubjectName; staffId?: string; text: string; ts: number; read: boolean }
+export interface Note { id: string; to: 'exam' | 'hod' | 'staff'; dept?: SubjectName; staffId?: string; reqId?: string; roomId?: string; text: string; ts: number; read: boolean }
 
 const RK = 'mt-duty-requests', NK = 'mt-notes';
 const read = <T,>(k: string): T[] => { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T[]) : []; } catch { return []; } };

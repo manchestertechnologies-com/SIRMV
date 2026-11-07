@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import React, { useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, FileText, Filter, LayoutGrid, Network, Plus, Settings, User, Pencil, FileSpreadsheet } from 'lucide-react';
 import { SectionDef, Student, allSections, getStaff, getStudents } from './sampleData';
@@ -23,7 +24,7 @@ const loadCustom = (): Report[] => { try { const v = localStorage.getItem(KEY); 
 
 export const ReportsAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const [custom, setCustom] = useState<Report[]>(loadCustom());
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = usePS<string | null>('reports', 'open', null);
   const [modal, setModal] = useState<{ edit?: Report } | null>(null);
   const reports = [...custom, ...seedReports()];
   const save = (r: Report) => { const next = custom.some((c) => c.id === r.id) ? custom.map((c) => (c.id === r.id ? r : c)) : [r, ...custom]; setCustom(next); try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ } };

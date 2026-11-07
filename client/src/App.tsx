@@ -52,6 +52,7 @@ import { MyProfilePage } from './pages/MyProfilePage';
 import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
+import { clearAllState, clearTabState } from './academic/persist';
 const StudentsAcademic = lazyWithRetry(() => import('./academic/StudentsAcademic').then((m) => ({ default: m.StudentsAcademic })));
 const ClassesAcademic = lazyWithRetry(() => import('./academic/ClassesAcademic').then((m) => ({ default: m.ClassesAcademic })));
 const StaffsAcademic = lazyWithRetry(() => import('./academic/StaffsAcademic').then((m) => ({ default: m.StaffsAcademic })));
@@ -65,7 +66,10 @@ const BlueprintModule = lazyWithRetry(() => import('./academic/BlueprintModule')
 const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<string>('dashboard-home');
+  // the open screen survives a refresh (kept per logged-in user for this browser tab)
+  const [activeTab, setActiveTabRaw] = useState<string>(() => { try { return JSON.parse(sessionStorage.getItem('mt-active-tab') || 'null')?.tab || 'dashboard-home'; } catch { return 'dashboard-home'; } });
+  const activeUid = useRef<string | undefined>(undefined);
+  const setActiveTab = (tab: string) => { setActiveTabRaw(tab); try { sessionStorage.setItem('mt-active-tab', JSON.stringify({ uid: activeUid.current, tab })); } catch { /* ignore */ } };
   const [staffSubTab, setStaffSubTab] = useState<'teaching' | 'non-teaching'>('teaching');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, isLoading } = useAuth();
@@ -74,7 +78,32 @@ export function App() {
   const hostelRole = academicRole || user?.role === 'WARDEN' || user?.role === 'HEAD_WARDEN';
   // tapping a sidebar icon always returns to that module's first page
   const [navNonce, setNavNonce] = useState(0);
-  const selectTab = (tab: string) => { setActiveTab(tab); setNavNonce((n) => n + 1); };
+  const activeTabRef = useRef(activeTab); activeTabRef.current = activeTab;
+  // a sidebar tap starts that module from its first page
+  const selectTab = (tab: string) => { clearTabState(tab); try { sessionStorage.removeItem('mt-return'); } catch { /* ignore */ } setActiveTab(tab); setNavNonce((n) => n + 1); };
+  activeUid.current = user?.id;
+
+  // detail pages (faculty / student) opened from another screen, with a way back to the exact spot
+  useEffect(() => {
+    const go = (e: Event) => {
+      const d = (e as CustomEvent).detail as { tab: string; key: string; id: string };
+      const main = document.querySelector('main');
+      try {
+        sessionStorage.setItem('mt-return', JSON.stringify({ tab: activeTabRef.current, scroll: main?.scrollTop || 0 }));
+        sessionStorage.setItem(d.key, d.id);
+      } catch { /* ignore */ }
+      setActiveTab(d.tab); setNavNonce((n) => n + 1);
+    };
+    const back = () => {
+      let r: { tab: string; scroll: number } | null = null;
+      try { r = JSON.parse(sessionStorage.getItem('mt-return') || 'null'); sessionStorage.removeItem('mt-return'); } catch { /* ignore */ }
+      if (!r) return;
+      setActiveTab(r.tab); setNavNonce((n) => n + 1);
+      let n = 0; const t = window.setInterval(() => { const m = document.querySelector('main'); if (m) m.scrollTo({ top: r!.scroll, behavior: 'auto' }); if (++n > 12) window.clearInterval(t); }, 80);
+    };
+    window.addEventListener('mt-goto', go); window.addEventListener('mt-return', back);
+    return () => { window.removeEventListener('mt-goto', go); window.removeEventListener('mt-return', back); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Switching accounts via the role-switcher (or logging in as someone else)
   // changes `user` but previously left `activeTab` pointing at whatever the
@@ -85,7 +114,13 @@ export function App() {
   const previousUserIdRef = useRef<string | undefined>(user?.id);
   useEffect(() => {
     if (user?.id !== previousUserIdRef.current) {
+      const first = previousUserIdRef.current === undefined && !!user?.id; // page load: the user arrives after the first render
       previousUserIdRef.current = user?.id;
+      let saved: { uid?: string; tab?: string } | null = null;
+      try { saved = JSON.parse(sessionStorage.getItem('mt-active-tab') || 'null'); } catch { /* ignore */ }
+      if (first && saved?.uid === user?.id && saved?.tab) { setActiveTabRaw(saved.tab); return; } // refresh: stay on the same screen
+      if (!user?.id) clearAllState();
+      clearAllState();
       setActiveTab('dashboard-home');
     }
   }, [user?.id]);
@@ -164,7 +199,7 @@ export function App() {
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-transparent text-slate-800 font-sans">
       <ToastContainer />
-      <CommandPalette onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />
+      <CommandPalette onNavigate={(tab) => { selectTab(tab); setIsSidebarOpen(false); }} />
       {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
       <Sidebar
         activeTab={activeTab}
@@ -175,11 +210,11 @@ export function App() {
 
       {/* Right Column: Navbar + Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
-        <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => setActiveTab(tab)} />
+        <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => selectTab(tab)} />
 
         <main key={`${activeTab}-${navNonce}`} className="mt-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
           {activeTab === 'dashboard-home' ? (
-            <DashboardHome onNavigateTab={(tab) => setActiveTab(tab)} />
+            <DashboardHome onNavigateTab={(tab) => selectTab(tab)} />
           ) : activeTab === 'staffs' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><StaffsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'students' && academicRole ? (
@@ -199,7 +234,7 @@ export function App() {
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'exam-management' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenStaff={(id) => { try { sessionStorage.setItem('mt-open-staff', id); } catch { /* ignore */ } selectTab('staffs'); }} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
+            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
           ) : activeTab === 'staffs' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ded9cf]">

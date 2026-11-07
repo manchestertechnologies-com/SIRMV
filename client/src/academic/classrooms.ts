@@ -12,7 +12,7 @@ export const generateClassrooms = (c: ClassroomSetup): Classroom[] => {
 };
 const defaults = (): Classroom[] => {
   const out: Classroom[] = [];
-  for (let f = 0; f < 4; f++) for (let n = 1; n <= 6; n++) out.push({ id: `r${f}${n}`, floor: f, name: `Room ${(f + 1) * 100 + n}`, benches: 12 + ((f * 3 + n * 2) % 7), perBench: 2 });
+  for (let f = 0; f < 4; f++) for (let n = 1; n <= 6; n++) out.push({ id: `r${f}${n}`, floor: f, name: `Room ${(f + 1) * 100 + n}`, benches: 14 + ((f * 3 + n * 2) % 7), perBench: 3 });
   return out;
 };
 export const hasSavedClassrooms = () => { try { return localStorage.getItem(KEY) !== null; } catch { return false; } };

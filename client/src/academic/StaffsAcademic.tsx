@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { doneOpen, hasReturn, peekOpen, returnBack, usePS } from './persist';
 import { Eye } from 'lucide-react';
 import {
   ALL_DEPTS, Period, SLOTS, Staff, Status, SubjectName, WEEKDAYS, attendanceSeries, checkIn, dayName, getStaff, pct, sectionById, staffPeriodStats, staffStatus, staffOf, staffWeekLoad,
@@ -15,11 +16,10 @@ const todayCounts = (list: Staff[]) => {
 };
 
 export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
-  const [nav, setNav] = useState<Nav>(() => {
-    // another screen (for example Exam Management) can ask to open one faculty member
-    try { const id = sessionStorage.getItem('mt-open-staff'); if (id) { sessionStorage.removeItem('mt-open-staff'); return { v: 'staff', id }; } } catch { /* ignore */ }
-    return { v: 'home' };
-  });
+  const open = peekOpen('staff');
+  const [nav, setNav] = usePS<Nav>('staffs', 'nav', { v: 'home' }, open ? { v: 'staff', id: open } : undefined);
+  const [via, setVia] = usePS<boolean>('staffs', 'via', false, open ? true : undefined);
+  useEffect(() => { if (open) doneOpen('staff'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const manage = null;
   void onManage;
 
@@ -85,7 +85,7 @@ export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => voi
   }
 
   const staff = getStaff().find((s) => s.id === nav.id)!;
-  const back = () => setNav({ v: 'dept', dept: staff.subject });
+  const back = () => { if (via && hasReturn()) { setVia(false); returnBack(); } else setNav({ v: 'dept', dept: staff.subject }); };
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
       <PageHead title={staff.name} sub={staff.designation} onBack={back}

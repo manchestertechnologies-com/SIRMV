@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import React, { useState } from 'react';
 import { SLOTS, WEEKDAYS, allSections, getStandards, getTimetables, sectionById, staffById, standardTotals } from './sampleData';
 import { Avatar, Chip, PageHead, PickCard, Pill, StandardIcon, SubjectIcon, Card } from './ui';
@@ -5,7 +6,7 @@ import { Avatar, Chip, PageHead, PickCard, Pill, StandardIcon, SubjectIcon, Card
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string };
 
 export const TimetableAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) => {
-  const [nav, setNav] = useState<Nav>({ v: 'home' });
+  const [nav, setNav] = usePS<Nav>('timetable', 'nav', { v: 'home' });
   const standards = getStandards();
   if (nav.v === 'home') {
     return (

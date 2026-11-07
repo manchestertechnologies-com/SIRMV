@@ -1,3 +1,4 @@
+import { usePS } from './persist';
 import { Blueprint3D, Floor3D } from './Blueprint3D';
 import React, { useMemo, useState } from 'react';
 import { Shuffle } from 'lucide-react';
@@ -11,7 +12,7 @@ import { OutpassFlow } from './OutpassFlow';
 const TABS = ['Blueprint', 'Room Shuffle', 'Outpass', 'Records'];
 
 export const HostelAcademic: React.FC<{ onExit: () => void; initialTab?: string }> = ({ onExit, initialTab = 'Blueprint' }) => {
-  const [tab, setTab] = useState(initialTab);
+  const [tab, setTab] = usePS('hostel-' + initialTab, 'tab', initialTab);
   const [ver, setVer] = useState(0); // bump after a shuffle is applied
   return (
     <div className="space-y-5 max-w-7xl mx-auto">

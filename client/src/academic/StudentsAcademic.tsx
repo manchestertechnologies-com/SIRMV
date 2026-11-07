@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { doneOpen, hasReturn, peekOpen, returnBack, usePS } from './persist';
 import { Settings2 } from 'lucide-react';
 import { allSections, findStudent, getStandards, sectionById, staffById, standardTotals } from './sampleData';
 import { Avatar, Card, PageHead, PickCard, StandardIcon } from './ui';
@@ -7,7 +8,11 @@ import { StudentGrid, StudentProfile } from './StudentViews';
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string } | { v: 'stu'; id: string };
 
 export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
-  const [nav, setNav] = useState<Nav>({ v: 'home' });
+  const open = peekOpen('student');
+  const [nav, setNav] = usePS<Nav>('students', 'nav', { v: 'home' }, open ? { v: 'stu', id: open } : undefined);
+  const [via, setVia] = usePS<boolean>('students', 'via', false, open ? true : undefined);
+  useEffect(() => { if (open) doneOpen('student'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const backFromStudent = (id: string) => { if (via && hasReturn()) { setVia(false); returnBack(); } else setNav({ v: 'sec', sec: findStudent(id)!.sectionId }); };
   const standards = getStandards();
   const manage = onManage ? (
     <button onClick={onManage} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#ded9cf] bg-white text-xs font-semibold text-slate-700 hover:text-[#a3161b]"><Settings2 className="w-3.5 h-3.5" /> Manage records</button>
@@ -78,7 +83,7 @@ export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => v
   const std = standards.find((s) => s.id === sec.std)!;
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <PageHead title={student.name} sub={`${sec.title} · Roll ${student.roll}`} onBack={() => setNav({ v: 'sec', sec: sec.id })}
+      <PageHead title={student.name} sub={`${sec.title} · Roll ${student.roll}`} onBack={() => backFromStudent(student.id)}
         crumbs={[{ label: 'Students', onClick: () => setNav({ v: 'home' }) }, { label: std.label, onClick: () => setNav({ v: 'std', std: sec.std }) }, { label: sec.title, onClick: () => setNav({ v: 'sec', sec: sec.id }) }, { label: student.name }]} />
       <StudentProfile student={student} />
       <Card><p className="text-[11px] text-slate-400">Screens use sample data until the database is connected.</p></Card>
