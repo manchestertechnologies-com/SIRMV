@@ -116,6 +116,13 @@ export const getStaff = (): Staff[] => {
   staffCache = out;
   return out;
 };
+// Each demo login is one real person from the staff list, so names and requests stay consistent everywhere.
+export const accountStaff = (email?: string, role?: string): Staff | null => {
+  const e = (email || '').toLowerCase();
+  if (role === 'HOD' || e.startsWith('hod.')) { const d = (TEACHING_SUBJECTS.find((x) => e.includes(x.toLowerCase().replace(/\s/g, ''))) || 'Physics') as SubjectName; return getStaff().find((x) => x.subject === d && x.role === 'HOD') || null; }
+  if (role === 'TEACHER') return getStaff().find((x) => x.subject === 'Physics' && x.role === 'Teacher') || null;
+  return null;
+};
 export const staffOf = (dept: SubjectName) => {
   const all = getStaff().filter((s) => s.subject === dept);
   return {

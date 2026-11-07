@@ -1,3 +1,4 @@
+import { accountStaff } from '../academic/sampleData';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiFetch, setAuthToken, removeAuthToken, getAuthToken } from '../services/api';
 
@@ -30,6 +31,8 @@ export interface User {
   staff_category?: string;
   teacher_id?: string;
   student_id?: string;
+  actualRole?: UserRole;   // the login's real role (the screens use ADMIN for every staff account)
+  staffId?: string;        // the person in the staff list this login belongs to
 }
 
 export interface Branch {
@@ -209,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         // every staff role sees the same workspace and data as the admin; only students and parents keep their own portal
-        user: user && user.role !== 'STUDENT' && user.role !== 'PARENT' ? { ...user, role: 'ADMIN' as UserRole } : user,
+        user: user && user.role !== 'STUDENT' && user.role !== 'PARENT' ? (() => { const st = accountStaff(user.email, user.role); return { ...user, role: 'ADMIN' as UserRole, actualRole: user.role, name: st?.name || user.name, staffId: st?.id }; })() : user,
         branches,
         currentBranch,
         isLoading,

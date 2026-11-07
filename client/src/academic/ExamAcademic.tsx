@@ -23,11 +23,12 @@ const endTime = (start: string, mins: number) => { const m = +start.slice(0, 2) 
 interface Props { onExit: () => void; onOpenBlueprint?: () => void }
 
 // who should see a notification
-const audience = (n: { to: 'exam' | 'hod' | 'staff' }, role: string) => {
+const myDeptOf = (staffId?: string) => TEACHING_SUBJECTS.find((d) => staffOf(d).hod?.id === staffId);
+const audience = (n: { to: 'exam' | 'hod' | 'staff'; dept?: string; staffId?: string }, role: string, staffId?: string) => {
   if (role === 'ADMIN' || role === 'PRINCIPAL') return true;
   if (role === 'EXAM_DEPARTMENT') return n.to === 'exam';
-  if (role === 'HOD') return n.to === 'hod';
-  if (role === 'TEACHER') return n.to === 'staff';
+  if (role === 'HOD') return n.to === 'hod' && n.dept === myDeptOf(staffId);   // only the HOD of that department
+  if (role === 'TEACHER') return n.to === 'staff' && n.staffId === staffId;
   return false;
 };
 
@@ -35,11 +36,11 @@ export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint }) => {
   const { user } = useAuth();
   const [tab, setTab] = usePS(T, 'tab', loadPlan() ? 'Live exam' : 'Set up exam');
   const [ver, setVer] = useState(0);
-  const role = user?.role || 'ADMIN';
-  const showSetup = role !== 'HOD' && role !== 'TEACHER';
-  const unread = loadNotes().filter((n) => !n.read && audience(n, role)).length;
+  const role = user?.actualRole || user?.role || 'ADMIN'; const me = user?.staffId;
+  const showSetup = true;
+  const unread = loadNotes().filter((n) => !n.read && audience(n, role, me)).length;
   const pending = loadRequests().filter((r) => r.status === 'pending').length;
-  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role === 'HOD' || role === 'ADMIN' || role === 'PRINCIPAL' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, 'Halls'];
+  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role !== 'TEACHER' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, 'Halls'];
   const cur = tabs.find((t) => t.split(' (')[0] === tab.split(' (')[0]) || tabs[0];
   const key = cur.split(' (')[0];
   return (
@@ -49,7 +50,7 @@ export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint }) => {
       {key === 'Set up exam' && <Setup key={ver} onSaved={() => { setVer((v) => v + 1); setTab('Live exam'); }} onOpenBlueprint={onOpenBlueprint} />}
       {key === 'Live exam' && <Live key={ver} onSetup={() => setTab('Set up exam')} canSetup={showSetup} />}
       {key === 'Duty requests' && <Requests key={ver} onChanged={() => setVer((v) => v + 1)} />}
-      {key === 'Notifications' && <Notifications key={ver} role={role} />}
+      {key === 'Notifications' && <Notifications key={ver} role={role} me={me} />}
       {key === 'Halls' && <Halls key={ver} onOpenBlueprint={onOpenBlueprint} />}
     </div>
   );
@@ -295,7 +296,7 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
 const Requests: React.FC<{ onChanged: () => void }> = ({ onChanged }) => {
   const { user } = useAuth();
   const [reqs, setReqs] = useState(loadRequests());
-  const myDept = TEACHING_SUBJECTS.find((d) => staffOf(d).hod?.name === user?.name);
+  const myDept = myDeptOf(user?.staffId);
   const [dept, setDept] = usePS<string>(T, 'req-dept', myDept || 'All');
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [pick, setPick] = usePS<Record<string, string[]>>(T, 'req-pick', {});
@@ -351,9 +352,9 @@ const Requests: React.FC<{ onChanged: () => void }> = ({ onChanged }) => {
 };
 
 // ---------- notifications ----------
-const Notifications: React.FC<{ role: string }> = ({ role }) => {
+const Notifications: React.FC<{ role: string; me?: string }> = ({ role, me }) => {
   const [notes, setNotes] = useState(loadNotes());
-  const mine = notes.filter((n) => audience(n, role)); const unread = mine.filter((n) => !n.read);
+  const mine = notes.filter((n) => audience(n, role, me)); const unread = mine.filter((n) => !n.read);
   const markAll = () => { markNotesRead(unread.map((n) => n.id)); setNotes(loadNotes()); };
   const pdf = async (staffId: string, roomId: string) => {
     const plan = loadPlan(); const st = staffById(staffId); if (!plan || !st) return;
