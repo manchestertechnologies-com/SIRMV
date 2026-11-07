@@ -1,9 +1,11 @@
-import { SLOTS, Staff, WEEKDAYS, allSections, getStaff, getTimetables } from './sampleData';
+import type { SeatingMode } from './seating';
+import { SLOTS, Staff, SubjectName, WEEKDAYS, allSections, getStaff, getTimetables } from './sampleData';
 
 // One exam plan saved on this device until the database is connected.
 export interface ExamPlan {
   name: string; date: string; start: string; durationMin: number;
   sectionIds: string[]; halls: Record<string, string>; inv: Record<string, string>;
+  seating?: SeatingMode; reqDept?: Record<string, SubjectName>;
 }
 const KEY = 'mt-exam-plan';
 export const loadPlan = (): ExamPlan | null => { try { const v = localStorage.getItem(KEY); return v ? (JSON.parse(v) as ExamPlan) : null; } catch { return null; } };
