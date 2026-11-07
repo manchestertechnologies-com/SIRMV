@@ -22,19 +22,10 @@ import { BoardMarksPage } from './pages/BoardMarksPage';
 import { NoticeboardModule } from './pages/NoticeboardModule';
 import { FeeModule } from './pages/FeeModule';
 import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
-// Lazy-loaded: pulls in three.js / @react-three (~1.1MB) for the 3D floor
-// view, which most users (students, parents, teachers, staff) never open.
-// Splitting it into its own chunk keeps that weight off everyone else's
-// initial page load — this was making the whole app feel heavy/laggy on
-// mobile, since previously every visitor downloaded and parsed it upfront.
-const ExamManagementModule = lazyWithRetry(() =>
-  import('./pages/ExamManagementModule').then((m) => ({ default: m.ExamManagementModule }))
-);
 import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
 import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
 import { InvigilationScanPage } from './pages/InvigilationScanPage';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { LazyLoadErrorBoundary } from './components/LazyLoadErrorBoundary';
 import { ExamSeatingPage } from './pages/ExamSeatingPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CounsellingModule } from './pages/CounsellingModule';
@@ -239,7 +230,7 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
-          ) : activeTab === 'exam-management' && academicRole ? (
+          ) : activeTab === 'exam-management' ? (
             <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
           ) : activeTab === 'staffs' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -457,14 +448,6 @@ export function App() {
           ) : activeTab === 'timetable-generator' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <TimetableGeneratorModule />
-            </div>
-          ) : activeTab === 'exam-management' ? (
-            <div className="space-y-6 max-w-7xl mx-auto">
-              <LazyLoadErrorBoundary label="Exam Management">
-                <Suspense fallback={<div className="text-center text-slate-400 text-sm py-10">Loading Exam Management… (this can take a moment on a slow connection)</div>}>
-                  <ExamManagementModule />
-                </Suspense>
-              </LazyLoadErrorBoundary>
             </div>
           ) : activeTab === 'my-exam-duty' ? (
             <div className="space-y-6 max-w-7xl mx-auto">

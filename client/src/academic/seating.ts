@@ -12,7 +12,7 @@ export const groupName = (g: Group) => (g === '1st' ? '1st PU' : '2nd PU');
 export interface Seat { bench: number; side: number; row: number; col: number; label: string; student?: Student; group?: Group }
 export interface RoomPlan { room: Classroom; cols: number; seats: Seat[]; count: number }
 
-export const benchCols = (room: Classroom) => Math.min(Math.max(room.benches, 1), room.benches > 24 ? 6 : room.benches > 12 ? 5 : 4);
+export const benchCols = (room: Classroom) => Math.min(Math.max(room.benches, 1), 3); // 3 columns of benches
 export const seatsFor = (room: Classroom, twoGroups: boolean) => room.benches * (twoGroups || room.perBench === 1 ? room.perBench : Math.ceil(room.perBench / 2));
 
 export const buildSeating = (rooms: Classroom[], secs: SectionDef[], studentsOf: (sectionId: string) => Student[], lt: Group = '2nd') => {

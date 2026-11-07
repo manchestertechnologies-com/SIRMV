@@ -17,7 +17,7 @@ const defaults = (): Classroom[] => {
 };
 export const hasSavedClassrooms = () => { try { return localStorage.getItem(KEY) !== null; } catch { return false; } };
 export const loadClassrooms = (): Classroom[] => {
-  try { const v = localStorage.getItem(KEY); if (v) return JSON.parse(v) as Classroom[]; } catch { /* ignore */ }
+  try { const v = localStorage.getItem(KEY); if (v) return (JSON.parse(v) as Classroom[]).map((r) => ({ ...r, perBench: 3 })); } catch { /* ignore */ }
   return defaults();
 };
 export const saveClassrooms = (list: Classroom[]) => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* ignore */ } };
