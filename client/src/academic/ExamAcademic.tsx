@@ -4,7 +4,7 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { useAuth } from '../context/AuthContext';
 import { Staff, SubjectName, TEACHING_SUBJECTS, allSections, getStudents, pct, sectionById, staffById, staffOf } from './sampleData';
 import { floorName, loadClassrooms, totalCapacity } from './classrooms';
-import { ExamPlan, Syllabus, clearPlan, freeFaculty, fmtTime, loadPlan, planStart, savePlan, sectionsFor, todayIso } from './examPlan';
+import { ExamPlan, Syllabus, clearPlan, fixPlan, freeFaculty, fmtTime, loadPlan, planStart, savePlan, sectionsFor, todayIso } from './examPlan';
 import { HallModel } from './ClassModel';
 import { Room3D } from './Room3D';
 import { DutyRequest, addNotes, loadNotes, loadRequests, markNotesRead, saveRequests } from './notify';
@@ -73,7 +73,8 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
   const rooms = useMemo(() => loadClassrooms(), []);
   const saved = loadPlan();
   const [step, setStep] = usePS(T, 'step', 0);
-  const [plan, setPlan] = usePS<ExamPlan>(T, 'plan', saved || newPlan());
+  const [rawPlan, setPlan] = usePS<ExamPlan>(T, 'plan', saved || newPlan());
+  const plan = fixPlan(rawPlan);
   const [seatRoom, setSeatRoom] = usePS<string>(T, 'seatroom', '');
   const set = (p: Partial<ExamPlan>) => setPlan((x) => ({ ...x, ...p }));
   const allowed = useMemo(() => sectionsFor(plan.syllabus), [plan.syllabus]);

@@ -13,7 +13,7 @@ const RK = 'mt-duty-requests', NK = 'mt-notes';
 const read = <T,>(k: string): T[] => { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T[]) : []; } catch { return []; } };
 const write = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
-export const loadRequests = () => read<DutyRequest>(RK);
+export const loadRequests = () => read<DutyRequest>(RK).filter((r) => r && typeof r === 'object').map((r) => ({ ...r, sectionIds: r.sectionIds || [], roomIds: r.roomIds || [], roomNames: r.roomNames || [], staffIds: r.staffIds || [], count: Number(r.count) || 0 }));
 export const saveRequests = (l: DutyRequest[]) => write(RK, l);
 export const loadNotes = () => read<Note>(NK).sort((a, b) => b.ts - a.ts);
 export const addNotes = (n: Omit<Note, 'id' | 'ts' | 'read'>[]) => {

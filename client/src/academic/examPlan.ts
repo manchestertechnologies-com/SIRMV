@@ -8,7 +8,15 @@ export interface ExamPlan {
 }
 export const sectionsFor = (sy: Syllabus) => allSections().filter((s) => sy === 'both' || (sy === '1st' ? s.std === '11' : s.std !== '11'));
 const KEY = 'mt-exam-plan';
-export const loadPlan = (): ExamPlan | null => { try { const v = localStorage.getItem(KEY); return v ? (JSON.parse(v) as ExamPlan) : null; } catch { return null; } };
+// Old saved plans may miss fields; fill them in so a screen never crashes on them.
+export const fixPlan = (p: any): ExamPlan => ({
+  name: typeof p?.name === 'string' ? p.name : 'Exam', date: typeof p?.date === 'string' ? p.date : todayIso(),
+  start: typeof p?.start === 'string' ? p.start : '09:00', durationMin: Number(p?.durationMin) || 180,
+  syllabus: p?.syllabus === '1st' || p?.syllabus === '2nd' || p?.syllabus === 'both' ? p.syllabus : 'both',
+  sectionIds: Array.isArray(p?.sectionIds) ? p.sectionIds : [], roomIds: Array.isArray(p?.roomIds) ? p.roomIds : [],
+  demand: p?.demand && typeof p.demand === 'object' ? p.demand : {},
+});
+export const loadPlan = (): ExamPlan | null => { try { const v = localStorage.getItem(KEY); return v ? fixPlan(JSON.parse(v)) : null; } catch { return null; } };
 export const savePlan = (p: ExamPlan) => { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch { /* ignore */ } };
 export const clearPlan = () => { try { localStorage.removeItem(KEY); } catch { /* ignore */ } };
 

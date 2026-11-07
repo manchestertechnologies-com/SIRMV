@@ -654,3 +654,13 @@ main tbody tr[class*="cursor-pointer"]:hover {
 .mt-nav-tile, .mt-nav-tile *, .mt-tile, .mt-tile-card { animation: none !important; }
 .mt-tile .mt-tile-icon > * { animation: none !important; }
 .mt-tile:hover .mt-tile-icon > * { animation: mt-bob 1.5s ease-in-out infinite !important; }
+
+/* Gold shade that fades in and out on hover (transition only, so nothing replays when the pointer leaves) */
+.mt-tile-icon, .mt-nav-tile > :first-child, .mt-chip > svg, .mt-hover-gold {
+  transition: background-color .45s ease, box-shadow .45s ease, color .45s ease, filter .45s ease; border-radius: 16px;
+}
+.mt-tile:hover .mt-tile-icon, .mt-tile:focus-visible .mt-tile-icon {
+  background-color: rgba(217, 168, 90, 0.22) !important; box-shadow: 0 0 22px 2px rgba(217, 168, 90, 0.45);
+}
+.mt-nav-tile:not([data-active="true"]):hover > :first-child { filter: drop-shadow(0 0 6px rgba(240, 205, 140, 0.95)); color: #f3d79b; }
+.mt-chip:hover > svg { filter: drop-shadow(0 0 5px rgba(217, 168, 90, 0.9)); color: #c28535; }
