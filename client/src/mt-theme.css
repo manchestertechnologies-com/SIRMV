@@ -664,3 +664,10 @@ main tbody tr[class*="cursor-pointer"]:hover {
 }
 .mt-nav-tile:not([data-active="true"]):hover > :first-child { filter: drop-shadow(0 0 6px rgba(240, 205, 140, 0.95)); color: #f3d79b; }
 .mt-chip:hover > svg { filter: drop-shadow(0 0 5px rgba(217, 168, 90, 0.9)); color: #c28535; }
+
+/* Everything on a page appears at once: no staggered reveals, no count-up, no bar growth */
+main > *, main:not([data-static]) > *, .mt-rise, .mt-pop, .mt-slide, .mt-reveal, .mt-bar-grow,
+.mt-tile-icon > *, .mt-nav-item > div:first-child, .mt-chip > svg {
+  animation: none !important; animation-delay: 0s !important;
+}
+.mt-bar-pre { transform: none !important; }

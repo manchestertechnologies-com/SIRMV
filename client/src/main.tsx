@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
-import { initScrollEffects } from './utils/scrollEffects';
 import { initUiEffects } from './utils/uiEffects';
 import { initSelectMenu } from './utils/selectMenu';
 
@@ -37,7 +36,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-initScrollEffects();
+// page content now appears all at once (no scroll reveal or count-up)
 initUiEffects();
 initSelectMenu();
 

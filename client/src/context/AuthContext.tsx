@@ -208,7 +208,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider
       value={{
-        user,
+        // every staff role sees the same workspace and data as the admin; only students and parents keep their own portal
+        user: user && user.role !== 'STUDENT' && user.role !== 'PARENT' ? { ...user, role: 'ADMIN' as UserRole } : user,
         branches,
         currentBranch,
         isLoading,
