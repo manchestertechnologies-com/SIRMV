@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       title={item.label}
       style={{ ['--i' as any]: index }}
       onClick={() => handleSelect(item.targetTab)}
-      className="press mt-nav-tile mt-rise w-full flex flex-col items-center gap-1 px-1 py-1.5 rounded-[12px]"
+      className="press mt-nav-tile w-full flex flex-col items-center gap-1 px-1 py-1.5 rounded-[12px]"
     >
       <span className="mt-nav-icon w-10 h-10 rounded-[10px] bg-white flex items-center justify-center shrink-0">
         <ModuleIcon item={item} className="w-7 h-7" />

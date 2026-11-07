@@ -52,17 +52,17 @@ import { MyProfilePage } from './pages/MyProfilePage';
 import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
+import { StudentsAcademic } from './academic/StudentsAcademic';
+import { ClassesAcademic } from './academic/ClassesAcademic';
+import { StaffsAcademic } from './academic/StaffsAcademic';
+import { HostelAcademic } from './academic/HostelAcademic';
+import { AttendanceAcademic } from './academic/AttendanceAcademic';
+import { ExamAcademic } from './academic/ExamAcademic';
+import { ReportsAcademic } from './academic/ReportsAcademic';
+import { TimetableAcademic } from './academic/TimetableAcademic';
+import { BlueprintModule } from './academic/BlueprintModule';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
-const StudentsAcademic = lazyWithRetry(() => import('./academic/StudentsAcademic').then((m) => ({ default: m.StudentsAcademic })));
-const ClassesAcademic = lazyWithRetry(() => import('./academic/ClassesAcademic').then((m) => ({ default: m.ClassesAcademic })));
-const StaffsAcademic = lazyWithRetry(() => import('./academic/StaffsAcademic').then((m) => ({ default: m.StaffsAcademic })));
-const HostelAcademic = lazyWithRetry(() => import('./academic/HostelAcademic').then((m) => ({ default: m.HostelAcademic })));
-const AttendanceAcademic = lazyWithRetry(() => import('./academic/AttendanceAcademic').then((m) => ({ default: m.AttendanceAcademic })));
-const ExamAcademic = lazyWithRetry(() => import('./academic/ExamAcademic').then((m) => ({ default: m.ExamAcademic })));
-const ReportsAcademic = lazyWithRetry(() => import('./academic/ReportsAcademic').then((m) => ({ default: m.ReportsAcademic })));
-const TimetableAcademic = lazyWithRetry(() => import('./academic/TimetableAcademic').then((m) => ({ default: m.TimetableAcademic })));
-const BlueprintModule = lazyWithRetry(() => import('./academic/BlueprintModule').then((m) => ({ default: m.BlueprintModule })));
 
 const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
 
@@ -218,7 +218,7 @@ export function App() {
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => selectTab(tab)} />
 
         <main key={`${activeTab}-${navNonce}`} className="mt-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
-          <ScreenBoundary onHome={() => selectTab('dashboard-home')}>
+          <ScreenBoundary resetKey={`${activeTab}-${navNonce}`} onHome={() => selectTab('dashboard-home')}>
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => selectTab(tab)} />
           ) : activeTab === 'staffs' && academicRole ? (

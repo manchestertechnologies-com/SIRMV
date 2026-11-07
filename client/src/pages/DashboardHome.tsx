@@ -82,7 +82,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                 key={tile.id}
                 style={{ ['--i' as any]: idx }}
                 onClick={() => onNavigateTab(tile.targetTab)}
-                className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
+                className="mt-tile group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
               >
                 <div className="mt-tile-icon shrink-0 mb-4 w-[72px] h-[72px] sm:w-20 sm:h-20 flex items-center justify-center">
                   <ModuleIcon item={tile} className="w-full h-full" />
@@ -111,7 +111,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
                   key={tile.id}
                   style={{ ['--i' as any]: idx }}
                   onClick={() => onNavigateTab(tile.targetTab)}
-                  className="mt-tile mt-pop group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
+                  className="mt-tile group mt-tile-card bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center min-h-[176px] cursor-pointer"
                 >
                   <div className="mt-tile-icon shrink-0 mb-4 w-[72px] h-[72px] sm:w-20 sm:h-20 flex items-center justify-center">
                     <ModuleIcon item={tile} className="w-full h-full" />
