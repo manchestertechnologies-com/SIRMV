@@ -15,9 +15,12 @@ const todayCounts = (list: Staff[]) => {
   return { p, a, l, pct: pct(p, p + a + l) };
 };
 
-export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => void }> = ({ onExit, onManage }) => {
+export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => void; lockDept?: SubjectName }> = ({ onExit, onManage, lockDept }) => {
   const open = peekOpen('staff');
-  const [nav, setNav] = usePS<Nav>('staffs', 'nav', { v: 'home' }, open ? { v: 'staff', id: open } : undefined);
+  const [navRaw, setNavRaw] = usePS<Nav>('staffs', 'nav', lockDept ? { v: 'dept', dept: lockDept } : { v: 'home' }, open ? { v: 'staff', id: open } : undefined);
+  // a HOD only ever sees their own department
+  const setNav = (n: Nav) => setNavRaw(lockDept && n.v === 'home' ? { v: 'dept', dept: lockDept } : n);
+  const nav: Nav = lockDept && (navRaw.v === 'home' || (navRaw.v === 'dept' && navRaw.dept !== lockDept)) ? { v: 'dept', dept: lockDept } : navRaw;
   const [via, setVia] = usePS<boolean>('staffs', 'via', false, open ? true : undefined);
   useEffect(() => { if (open) doneOpen('staff'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const manage = null;
@@ -60,7 +63,7 @@ export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => voi
     const crumbs = [{ label: 'Staffs', onClick: () => setNav({ v: 'home' }) }, { label: dept }];
     return (
       <div className="space-y-5 max-w-7xl mx-auto">
-        <PageHead title={dept} sub={`${list.length} staff · ${g.teaching.length} teaching · ${g.nonTeaching.length} non-teaching`} onBack={() => setNav({ v: 'home' })} crumbs={crumbs}
+        <PageHead title={dept} sub={`${list.length} staff · ${g.teaching.length} teaching · ${g.nonTeaching.length} non-teaching`} onBack={() => (lockDept ? onExit() : setNav({ v: 'home' }))} crumbs={lockDept ? [{ label: dept }] : crumbs}
           right={<SubjectIcon subject={dept} className="w-11 h-11" />} />
         <TabBar items={['Faculty', 'Attendance']} value={tab} onChange={(t) => setNav({ v: 'dept', dept, tab: t })} />
         {tab === 'Faculty' ? (

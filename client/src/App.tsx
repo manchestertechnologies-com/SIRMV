@@ -52,6 +52,7 @@ import { ExamAcademic } from './academic/ExamAcademic';
 import { ReportsAcademic } from './academic/ReportsAcademic';
 import { TimetableAcademic } from './academic/TimetableAcademic';
 import { BlueprintModule } from './academic/BlueprintModule';
+import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
 
@@ -67,6 +68,9 @@ export function App() {
   const { user, isLoading } = useAuth();
   // Academic overview (icons -> class -> students) for leadership/teaching roles
   const academicRole = !!user && ['ADMIN', 'PRINCIPAL', 'HOD', 'TEACHER', 'EXAM_DEPARTMENT'].includes(user.role);
+  const leadRole = !!user && ['ADMIN', 'PRINCIPAL'].includes(user.role);   // sees every department and class
+  const myClasses = scopedSections(user?.role, user?.staffId) || undefined; // HOD / teacher only see their own classes
+  const myDept = user?.role === 'HOD' ? deptOfHod(user?.staffId) : null;
   const hostelRole = academicRole || user?.role === 'WARDEN' || user?.role === 'HEAD_WARDEN';
   // tapping a sidebar icon always returns to that module's first page
   const [navNonce, setNavNonce] = useState(0);
@@ -212,10 +216,10 @@ export function App() {
           <ScreenBoundary resetKey={`${activeTab}-${navNonce}`} onHome={() => selectTab('dashboard-home')}>
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => selectTab(tab)} />
-          ) : activeTab === 'staffs' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><StaffsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'staffs' && (leadRole || user?.role === 'EXAM_DEPARTMENT' || !!myDept) ? (
+            <Suspense fallback={<AcademicLoading />}><StaffsAcademic onExit={() => setActiveTab('dashboard-home')} lockDept={myDept || undefined} /></Suspense>
           ) : activeTab === 'students' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><StudentsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+            <Suspense fallback={<AcademicLoading />}><StudentsAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} /></Suspense>
           ) : activeTab === 'classes' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><ClassesAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'attendance' && academicRole ? (
@@ -226,12 +230,16 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><HostelAcademic onExit={() => setActiveTab('dashboard-home')} initialTab="Outpass" /></Suspense>
           ) : activeTab === 'reports' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><ReportsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
-          ) : activeTab === 'timetable' && !!user && ['ADMIN', 'PRINCIPAL', 'HOD', 'EXAM_DEPARTMENT'].includes(user.role) ? (
-            <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'timetable' && academicRole ? (
+            <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'exam-management' ? (
             <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
+          ) : activeTab === 'my-exam-duty' && academicRole ? (
+            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} initialTab="Notifications" /></Suspense>
+          ) : activeTab === 'invigilator-requests' && academicRole ? (
+            <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} initialTab="Duty requests" /></Suspense>
           ) : activeTab === 'staffs' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#ded9cf]">

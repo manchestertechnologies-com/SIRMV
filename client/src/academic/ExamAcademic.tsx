@@ -20,7 +20,7 @@ const studentsOf = (id: string) => getStudents(id);
 const fmtDay = (d: string, o: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short' }) => new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', o);
 const endTime = (start: string, mins: number) => { const m = +start.slice(0, 2) * 60 + +start.slice(3) + mins; return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
 
-interface Props { onExit: () => void; onOpenBlueprint?: () => void }
+interface Props { onExit: () => void; onOpenBlueprint?: () => void; initialTab?: string }
 
 // who should see a notification
 const myDeptOf = (staffId?: string) => TEACHING_SUBJECTS.find((d) => staffOf(d).hod?.id === staffId);
@@ -32,15 +32,15 @@ const audience = (n: { to: 'exam' | 'hod' | 'staff'; dept?: string; staffId?: st
   return false;
 };
 
-export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint }) => {
+export const ExamAcademic: React.FC<Props> = ({ onExit, onOpenBlueprint, initialTab }) => {
   const { user } = useAuth();
-  const [tab, setTab] = usePS(T, 'tab', loadPlan() ? 'Live exam' : 'Set up exam');
+  const [tab, setTab] = usePS(T, 'tab', loadPlan() ? 'Live exam' : 'Set up exam', initialTab);
   const [ver, setVer] = useState(0);
-  const role = user?.actualRole || user?.role || 'ADMIN'; const me = user?.staffId;
-  const showSetup = true;
+  const role = user?.role || 'ADMIN'; const me = user?.staffId;
+  const showSetup = role === 'ADMIN' || role === 'PRINCIPAL' || role === 'EXAM_DEPARTMENT';
   const unread = loadNotes().filter((n) => !n.read && audience(n, role, me)).length;
   const pending = loadRequests().filter((r) => r.status === 'pending').length;
-  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role !== 'TEACHER' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, 'Halls'];
+  const tabs = [...(showSetup ? ['Set up exam'] : []), 'Live exam', ...(role === 'HOD' || role === 'ADMIN' || role === 'PRINCIPAL' ? [`Duty requests${pending ? ` (${pending})` : ''}`] : []), `Notifications${unread ? ` (${unread})` : ''}`, ...(showSetup ? ['Halls'] : [])];
   const cur = tabs.find((t) => t.split(' (')[0] === tab.split(' (')[0]) || tabs[0];
   const key = cur.split(' (')[0];
   return (
@@ -296,8 +296,9 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
 const Requests: React.FC<{ onChanged: () => void }> = ({ onChanged }) => {
   const { user } = useAuth();
   const [reqs, setReqs] = useState(loadRequests());
-  const myDept = myDeptOf(user?.staffId);
-  const [dept, setDept] = usePS<string>(T, 'req-dept', myDept || 'All');
+  const myDept = user?.role === 'HOD' ? myDeptOf(user?.staffId) : undefined;
+  const [deptRaw, setDept] = usePS<string>(T, 'req-dept', myDept || 'All');
+  const dept = myDept || deptRaw;
   const [more, setMore] = useState<Record<string, boolean>>({});
   const [pick, setPick] = usePS<Record<string, string[]>>(T, 'req-pick', {});
   const shown = reqs.filter((r) => dept === 'All' || r.dept === dept).sort((a, b) => (a.status === b.status ? 0 : a.status === 'pending' ? -1 : 1));
@@ -316,7 +317,7 @@ const Requests: React.FC<{ onChanged: () => void }> = ({ onChanged }) => {
   const waiting = (d: string) => reqs.filter((r) => (d === 'All' || r.dept === d) && r.status === 'pending').length;
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">{['All', ...TEACHING_SUBJECTS.filter((d) => reqs.some((r) => r.dept === d))].map((d) => <button key={d} onClick={() => setDept(d)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${dept === d ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white text-slate-600 border-[#ded9cf]'}`}>{d}{waiting(d) ? ` · ${waiting(d)} waiting` : ''}</button>)}</div>
+      <div className="flex flex-wrap gap-2">{(myDept ? [myDept] : ['All', ...TEACHING_SUBJECTS.filter((d) => reqs.some((r) => r.dept === d))]).map((d) => <button key={d} onClick={() => setDept(d)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${dept === d ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white text-slate-600 border-[#ded9cf]'}`}>{d}{waiting(d) ? ` · ${waiting(d)} waiting` : ''}</button>)}</div>
       {shown.map((r) => {
         const taken = reqs.filter((x) => x.id !== r.id && x.date === r.date && x.start === r.start).flatMap((x) => x.staffIds);
         const free = freeFaculty(r.date, r.start, r.durationMin, r.sectionIds, taken);

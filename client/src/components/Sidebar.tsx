@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
   const [hover, setHover] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   // small delays so brushing past the rail doesn't flicker it open or shut
-  const setHoverSoon = (v: boolean) => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setHover(v), v ? 90 : 160); };
+  const setHoverSoon = (v: boolean) => { window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setHover(v), 0); };
   useEffect(() => () => window.clearTimeout(timer.current), []);
   const wide = pinned || hover;
   const toggle = () => setPinned((w) => { const n = !w; try { localStorage.setItem('mt-sidebar-wide', n ? '1' : '0'); } catch { /* ignore */ } return n; });
@@ -53,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       <span className="mt-nav-icon w-10 h-10 rounded-[10px] bg-white flex items-center justify-center shrink-0">
         <ModuleIcon item={item} className="w-7 h-7" />
       </span>
-      <span className={`mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5 min-h-[26px] transition-opacity duration-200 ${wide ? 'opacity-100' : 'md:opacity-0'}`}>
+      <span className={`mt-nav-label text-[11px] font-semibold leading-tight text-center line-clamp-2 px-0.5 min-h-[26px] ${wide ? 'opacity-100' : 'md:opacity-0'}`}>
         {item.label}
       </span>
     </button>

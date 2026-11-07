@@ -5,8 +5,25 @@ import { Avatar, Chip, PageHead, PickCard, Pill, StandardIcon, SubjectIcon, Card
 
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string };
 
-export const TimetableAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) => {
+export const TimetableAcademic: React.FC<{ onExit: () => void; only?: string[] }> = ({ onExit, only }) => {
   const [nav, setNav] = usePS<Nav>('timetable', 'nav', { v: 'home' });
+
+  if (only && (nav.v === 'home' || nav.v === 'std')) {
+    const mine = allSections().filter((s) => only.includes(s.id));
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto">
+        <PageHead title="My classes' timetable" sub={`${mine.length} classes`} onBack={onExit} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {mine.map((s) => { const ct = staffById(s.classTeacherId)!; return (
+            <button key={s.id} onClick={() => setNav({ v: 'sec', sec: s.id })} className="mt-tile mt-tile-card text-left rounded-2xl bg-white p-4">
+              <p className="text-sm font-bold text-slate-900 font-heading">{s.title}</p><p className="text-[11px] text-slate-500">{s.batch}</p>
+              <div className="flex items-center gap-3 mt-4"><Avatar name={ct.name} pid={ct.id} size={42} /><div className="min-w-0"><p className="text-xs font-semibold text-slate-800 truncate">{ct.name}</p><p className="text-[11px] text-slate-500">Class teacher</p></div></div>
+              <p className="mt-4 text-xs text-slate-600">Total students: <b className="text-slate-900">{s.count}</b></p>
+            </button>); })}
+        </div>
+      </div>
+    );
+  }
   const standards = getStandards();
   if (nav.v === 'home') {
     return (
