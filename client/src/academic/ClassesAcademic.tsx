@@ -1,4 +1,4 @@
-import { usePS } from './persist';
+import { gotoDetail, usePS } from './persist';
 import React, { useMemo, useState } from 'react';
 import { Settings2 } from 'lucide-react';
 import {
@@ -161,21 +161,26 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
 
 const Staffs: React.FC<{ sec: SectionDef }> = ({ sec }) => {
   const grid = getTimetables().get(sec.id)!;
+  // only the staff who teach this class in the timetable, plus its class teacher (listed first)
   const rows = useMemo(() => {
-    const m = new Map<string, string>();
-    grid.forEach((r) => r.forEach((c) => { m.set(c.subject + '|' + c.staffId, c.subject); }));
-    return Array.from(m.entries()).map(([k, subject]) => ({ subject, staff: staffById(k.split('|')[1])! })).sort((a, b) => a.subject.localeCompare(b.subject));
-  }, [grid]);
+    const m = new Map<string, { subjects: Set<string>; periods: number }>();
+    grid.forEach((r) => r.forEach((c) => { const v = m.get(c.staffId) || { subjects: new Set<string>(), periods: 0 }; v.subjects.add(c.subject); v.periods++; m.set(c.staffId, v); }));
+    const list = Array.from(m.entries()).map(([id, v]) => ({ staff: staffById(id)!, subjects: Array.from(v.subjects), periods: v.periods }));
+    if (!m.has(sec.classTeacherId)) { const ct = staffById(sec.classTeacherId)!; list.push({ staff: ct, subjects: [ct.subject], periods: 0 }); }
+    return list.sort((a, b) => (b.staff.id === sec.classTeacherId ? 1 : 0) - (a.staff.id === sec.classTeacherId ? 1 : 0) || a.subjects[0].localeCompare(b.subjects[0]));
+  }, [grid, sec.classTeacherId]);
   return (
-    <Card title="Staffs">
+    <Card title={`Staffs of ${sec.title}`}>
+      <p className="text-xs text-slate-500 mb-3">Faculty who teach this class in the timetable, with the class teacher. Tap a name to open their details.</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-4">Subject</th><th className="pr-4">Staff</th><th>Status</th></tr></thead>
+          <thead><tr className="text-left text-xs text-slate-500 border-b border-[#f0ebe4]"><th className="py-2 pr-4">Subject</th><th className="pr-4">Staff</th><th className="pr-4">Periods a week</th><th>Role</th></tr></thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="border-b border-[#f7f2ec]">
-                <td className="py-2.5 pr-4"><span className="inline-flex items-center gap-2"><SubjectIcon subject={r.subject} className="w-7 h-7" />{r.subject}</span></td>
-                <td className="pr-4"><span className="inline-flex items-center gap-2"><Avatar name={r.staff.name} size={28} />{r.staff.name}</span></td>
+            {rows.map((r) => (
+              <tr key={r.staff.id} onClick={() => gotoDetail('staff', r.staff.id)} className="border-b border-[#f7f2ec] cursor-pointer hover:bg-[#fffaf7]">
+                <td className="py-2.5 pr-4"><span className="inline-flex items-center gap-2">{r.subjects.map((s) => <SubjectIcon key={s} subject={s} className="w-7 h-7" />)}{r.subjects.join(', ')}</span></td>
+                <td className="pr-4"><span className="inline-flex items-center gap-2 font-medium text-slate-800 hover:text-[#a3161b]"><Avatar name={r.staff.name} pid={r.staff.id} size={28} />{r.staff.name}</span></td>
+                <td className="pr-4">{r.periods}</td>
                 <td>{r.staff.id === sec.classTeacherId ? <Pill tone="gold">Class Teacher</Pill> : <Pill tone="grey">Teacher</Pill>}</td>
               </tr>
             ))}

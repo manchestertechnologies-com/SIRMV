@@ -624,3 +624,27 @@ main:not([data-static]) > :nth-child(n+4)   { animation-delay: 500ms; }
 /* box-shaped sidebar icons + scrollable boxes */
 .mt-nav-icon { border-radius: 10px !important; }
 .mt-box-scroll { overflow-x: auto; }
+
+/* ==========================================================================
+   Gold shimmer: tappable cards, chips, tiles and rows glow gold and shimmer in and out on hover
+   ========================================================================== */
+@keyframes mt-gold-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(217, 168, 90, 0.35), 0 6px 16px -10px rgba(217, 168, 90, 0.25); }
+  50%      { box-shadow: 0 0 0 1.5px rgba(217, 168, 90, 0.95), 0 10px 26px -6px rgba(217, 168, 90, 0.6); }
+}
+@keyframes mt-gold-sweep {
+  0%   { background-position: 170% 0; opacity: 1; }
+  100% { background-position: -70% 0; opacity: 1; }
+}
+.mt-tile-card:hover, .mt-chip:hover,
+main button[class*="rounded"][class*="border"]:not(:disabled):hover,
+main [role="button"][class*="rounded"]:hover,
+main tbody tr[class*="cursor-pointer"]:hover,
+.mt-nav-tile:not([data-active="true"]):hover {
+  background-image: linear-gradient(110deg, transparent 30%, rgba(230, 190, 110, 0.34) 50%, transparent 70%);
+  background-size: 260% 100%; background-repeat: no-repeat;
+  animation: mt-gold-glow 1.9s ease-in-out infinite, mt-gold-sweep 1.9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mt-tile-card:hover, .mt-chip:hover, main button[class*="rounded"][class*="border"]:not(:disabled):hover { animation: none; box-shadow: 0 0 0 1.5px rgba(217, 168, 90, 0.9); }
+}

@@ -52,6 +52,7 @@ import { MyProfilePage } from './pages/MyProfilePage';
 import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
+import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
 const StudentsAcademic = lazyWithRetry(() => import('./academic/StudentsAcademic').then((m) => ({ default: m.StudentsAcademic })));
 const ClassesAcademic = lazyWithRetry(() => import('./academic/ClassesAcademic').then((m) => ({ default: m.ClassesAcademic })));
@@ -195,6 +196,10 @@ export function App() {
   if (!user && !isLoading) {
     return <LoginPage />;
   }
+  // signing the saved session back in on refresh: wait for the user before drawing any screen
+  if (!user) {
+    return <div className="h-[100dvh] flex items-center justify-center text-sm text-slate-500 bg-[#f6f2ec]">Opening your workspace…</div>;
+  }
 
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-transparent text-slate-800 font-sans">
@@ -213,6 +218,7 @@ export function App() {
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} onNavigate={(tab) => selectTab(tab)} />
 
         <main key={`${activeTab}-${navNonce}`} className="mt-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
+          <ScreenBoundary onHome={() => selectTab('dashboard-home')}>
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => selectTab(tab)} />
           ) : activeTab === 'staffs' && academicRole ? (
@@ -769,6 +775,7 @@ export function App() {
               </div>
             </div>
           )}
+          </ScreenBoundary>
         </main>
       </div>
     </div>
