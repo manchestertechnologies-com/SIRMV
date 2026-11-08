@@ -42,6 +42,19 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // heavy libraries load only when a screen that needs them opens
+        manualChunks(id: string) {
+          if (/node_modules\/(react|react-dom|scheduler|react-is|use-sync-external-store)\//.test(id) || id.includes('commonjsHelpers') || id.includes('rolldown')) return 'react';
+          if (id.includes('preload-helper')) return 'react';
+          if (id.includes('node_modules/lucide-react') || id.includes('createLucideIcon')) return 'lucide';
+          if (id.includes('node_modules/three') || id.includes('@react-three') || id.includes('components/three/') || /components\/(ExamFloor3D|HostelFloor3D|ExamSeatingView3D)/.test(id)) return 'three';
+        }
+      }
+    }
+  },
   server: {
     port: 3000,
     proxy: {

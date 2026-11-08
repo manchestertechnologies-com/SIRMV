@@ -73,10 +73,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  // a user remembered from the last visit shows the workspace straight away; the server check runs in the background
+  const cached = (() => { try { return getAuthToken() ? (JSON.parse(localStorage.getItem('mt-last-user') || 'null') as User | null) : null; } catch { return null; } })();
+  const [user, setUser] = useState<User | null>(cached);
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [currentBranch, setCurrentBranch] = useState<Branch | null>(DEFAULT_BRANCHES[0]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(!cached);
 
   // Load branches
   useEffect(() => {
@@ -131,6 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
+  useEffect(() => { try { if (user) localStorage.setItem('mt-last-user', JSON.stringify(user)); else if (!isLoading) localStorage.removeItem('mt-last-user'); } catch { /* ignore */ } }, [user, isLoading]);
+
   // Update current branch based on user
   useEffect(() => {
     if (user && branches.length > 0) {
@@ -139,8 +143,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, branches]);
 
-  const login = async (identifier: string, password: string = '123456') => {
-    setIsLoading(true);
+  const login = async (identifier: string, password: string = '123456', silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const res = await apiFetch<{ token: string; user: User }>('/auth/login', {
         method: 'POST',
@@ -187,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Login error', err);
       throw err;
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -205,7 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const quickSwitchUser = async (identifier: string) => {
-    await login(identifier, '123456');
+    await login(identifier, '123456', true); // no loading screen: the portal changes in place
   };
 
   return (

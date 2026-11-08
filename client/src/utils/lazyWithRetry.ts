@@ -9,8 +9,8 @@ import { lazy, ComponentType } from 'react';
 // the (3D) view the chunk contains.
 export function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
-  retries = 4,
-  delayMs = 1500
+  retries = 3,
+  delayMs = 500
 ) {
   return lazy(() =>
     new Promise<{ default: T }>((resolve, reject) => {

@@ -2,7 +2,8 @@ import { usePS } from './persist';
 import { Blueprint3D, Floor3D } from './Blueprint3D';
 import React, { useMemo, useState } from 'react';
 import { Shuffle } from 'lucide-react';
-import { HostelDashboard } from '../pages/HostelDashboard';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
+const HostelDashboard = lazyWithRetry(() => import('../pages/HostelDashboard').then((m) => ({ default: m.HostelDashboard })));
 import {
   BLOCKS, BlockDef, RoomDef, Student, bedName, blockCapacity, blockRooms, hostelOccupants, sectionById, studentAvg,
 } from './sampleData';
@@ -21,7 +22,7 @@ export const HostelAcademic: React.FC<{ onExit: () => void; initialTab?: string 
       {tab === 'Blueprint' && <Blueprint key={ver} />}
       {tab === 'Room Shuffle' && <ShuffleView onApplied={() => setVer((v) => v + 1)} />}
       {tab === 'Outpass' && <OutpassFlow />}
-      {tab === 'Records' && <HostelDashboard />}
+      {tab === 'Records' && <React.Suspense fallback={<p className="py-10 text-center text-sm text-slate-500">Loading…</p>}><HostelDashboard /></React.Suspense>}
     </div>
   );
 };

@@ -5,42 +5,7 @@ import { ToastContainer } from './components/ToastContainer';
 import { CommandPalette } from './components/CommandPalette';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardHome } from './pages/DashboardHome';
-import { TeachersModule } from './pages/TeachersModule';
-import { StudentsModule } from './pages/StudentsModule';
-import { NonTeachingStaffModule } from './pages/NonTeachingStaffModule';
-import { AttendanceModule } from './pages/AttendanceModule';
-import { HostelDashboard } from './pages/HostelDashboard';
-import { OutpassSystem } from './pages/OutpassSystem';
-import { ReportCardGenerator } from './pages/ReportCardGenerator';
-import { ReportsModule } from './pages/ReportsModule';
-import { LiveClassModule } from './pages/LiveClassModule';
-import { TestsAndMarksModule } from './pages/TestsAndMarksModule';
-import { ClassesPage } from './pages/ClassesPage';
-import { BatchesPage } from './pages/BatchesPage';
-import { TestsPage } from './pages/TestsPage';
-import { BoardMarksPage } from './pages/BoardMarksPage';
-import { NoticeboardModule } from './pages/NoticeboardModule';
-import { FeeModule } from './pages/FeeModule';
-import { TimetableGeneratorModule } from './pages/TimetableGeneratorModule';
-import { MyExamDutiesPage } from './pages/MyExamDutiesPage';
-import { InvigilatorRequestsPage } from './pages/InvigilatorRequestsPage';
-import { InvigilationScanPage } from './pages/InvigilationScanPage';
 import { lazyWithRetry } from './utils/lazyWithRetry';
-import { ExamSeatingPage } from './pages/ExamSeatingPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { CounsellingModule } from './pages/CounsellingModule';
-import { CalendarPage } from './pages/CalendarPage';
-import { FloorIssuesPage } from './pages/FloorIssuesPage';
-import { StudentAttendanceView } from './pages/StudentAttendanceView';
-import { StudentTimetableView } from './pages/StudentTimetableView';
-import { AdminTimetableView } from './pages/AdminTimetableView';
-import { SmsModule } from './pages/SmsModule';
-import { StudentTestsView } from './pages/StudentTestsView';
-import { StudentOutpassView } from './pages/StudentOutpassView';
-import { StudentHostelView } from './pages/StudentHostelView';
-import { DisciplineRecordsPage } from './pages/DisciplineRecordsPage';
-import { MyProfilePage } from './pages/MyProfilePage';
-import { QuestionPaperSuite } from './components/question-paper/QuestionPaperSuite';
 import { useAuth } from './context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import { StudentsAcademic } from './academic/StudentsAcademic';
@@ -55,6 +20,42 @@ import { BlueprintModule } from './academic/BlueprintModule';
 import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
+
+const TeachersModule = lazyWithRetry(() => import('./pages/TeachersModule').then((m) => ({ default: m.TeachersModule })));
+const StudentsModule = lazyWithRetry(() => import('./pages/StudentsModule').then((m) => ({ default: m.StudentsModule })));
+const NonTeachingStaffModule = lazyWithRetry(() => import('./pages/NonTeachingStaffModule').then((m) => ({ default: m.NonTeachingStaffModule })));
+const AttendanceModule = lazyWithRetry(() => import('./pages/AttendanceModule').then((m) => ({ default: m.AttendanceModule })));
+const HostelDashboard = lazyWithRetry(() => import('./pages/HostelDashboard').then((m) => ({ default: m.HostelDashboard })));
+const OutpassSystem = lazyWithRetry(() => import('./pages/OutpassSystem').then((m) => ({ default: m.OutpassSystem })));
+const ReportCardGenerator = lazyWithRetry(() => import('./pages/ReportCardGenerator').then((m) => ({ default: m.ReportCardGenerator })));
+const ReportsModule = lazyWithRetry(() => import('./pages/ReportsModule').then((m) => ({ default: m.ReportsModule })));
+const LiveClassModule = lazyWithRetry(() => import('./pages/LiveClassModule').then((m) => ({ default: m.LiveClassModule })));
+const TestsAndMarksModule = lazyWithRetry(() => import('./pages/TestsAndMarksModule').then((m) => ({ default: m.TestsAndMarksModule })));
+const ClassesPage = lazyWithRetry(() => import('./pages/ClassesPage').then((m) => ({ default: m.ClassesPage })));
+const BatchesPage = lazyWithRetry(() => import('./pages/BatchesPage').then((m) => ({ default: m.BatchesPage })));
+const TestsPage = lazyWithRetry(() => import('./pages/TestsPage').then((m) => ({ default: m.TestsPage })));
+const BoardMarksPage = lazyWithRetry(() => import('./pages/BoardMarksPage').then((m) => ({ default: m.BoardMarksPage })));
+const NoticeboardModule = lazyWithRetry(() => import('./pages/NoticeboardModule').then((m) => ({ default: m.NoticeboardModule })));
+const FeeModule = lazyWithRetry(() => import('./pages/FeeModule').then((m) => ({ default: m.FeeModule })));
+const TimetableGeneratorModule = lazyWithRetry(() => import('./pages/TimetableGeneratorModule').then((m) => ({ default: m.TimetableGeneratorModule })));
+const MyExamDutiesPage = lazyWithRetry(() => import('./pages/MyExamDutiesPage').then((m) => ({ default: m.MyExamDutiesPage })));
+const InvigilatorRequestsPage = lazyWithRetry(() => import('./pages/InvigilatorRequestsPage').then((m) => ({ default: m.InvigilatorRequestsPage })));
+const InvigilationScanPage = lazyWithRetry(() => import('./pages/InvigilationScanPage').then((m) => ({ default: m.InvigilationScanPage })));
+const ExamSeatingPage = lazyWithRetry(() => import('./pages/ExamSeatingPage').then((m) => ({ default: m.ExamSeatingPage })));
+const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const CounsellingModule = lazyWithRetry(() => import('./pages/CounsellingModule').then((m) => ({ default: m.CounsellingModule })));
+const CalendarPage = lazyWithRetry(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })));
+const FloorIssuesPage = lazyWithRetry(() => import('./pages/FloorIssuesPage').then((m) => ({ default: m.FloorIssuesPage })));
+const StudentAttendanceView = lazyWithRetry(() => import('./pages/StudentAttendanceView').then((m) => ({ default: m.StudentAttendanceView })));
+const StudentTimetableView = lazyWithRetry(() => import('./pages/StudentTimetableView').then((m) => ({ default: m.StudentTimetableView })));
+const AdminTimetableView = lazyWithRetry(() => import('./pages/AdminTimetableView').then((m) => ({ default: m.AdminTimetableView })));
+const SmsModule = lazyWithRetry(() => import('./pages/SmsModule').then((m) => ({ default: m.SmsModule })));
+const StudentTestsView = lazyWithRetry(() => import('./pages/StudentTestsView').then((m) => ({ default: m.StudentTestsView })));
+const StudentOutpassView = lazyWithRetry(() => import('./pages/StudentOutpassView').then((m) => ({ default: m.StudentOutpassView })));
+const StudentHostelView = lazyWithRetry(() => import('./pages/StudentHostelView').then((m) => ({ default: m.StudentHostelView })));
+const DisciplineRecordsPage = lazyWithRetry(() => import('./pages/DisciplineRecordsPage').then((m) => ({ default: m.DisciplineRecordsPage })));
+const MyProfilePage = lazyWithRetry(() => import('./pages/MyProfilePage').then((m) => ({ default: m.MyProfilePage })));
+const QuestionPaperSuite = lazyWithRetry(() => import('./components/question-paper/QuestionPaperSuite').then((m) => ({ default: m.QuestionPaperSuite })));
 
 const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
 
@@ -214,12 +215,13 @@ export function App() {
 
         <main key={`${activeTab}-${navNonce}`} className="mt-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-10">
           <ScreenBoundary resetKey={`${activeTab}-${navNonce}`} onHome={() => selectTab('dashboard-home')}>
+          <Suspense fallback={<AcademicLoading />}>
           {activeTab === 'dashboard-home' ? (
             <DashboardHome onNavigateTab={(tab) => selectTab(tab)} />
           ) : activeTab === 'staffs' && (leadRole || user?.role === 'EXAM_DEPARTMENT' || !!myDept) ? (
             <Suspense fallback={<AcademicLoading />}><StaffsAcademic onExit={() => setActiveTab('dashboard-home')} lockDept={myDept || undefined} /></Suspense>
           ) : activeTab === 'students' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><StudentsAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} /></Suspense>
+            <Suspense fallback={<AcademicLoading />}><StudentsAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} staffId={user?.staffId} /></Suspense>
           ) : activeTab === 'classes' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><ClassesAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'attendance' && academicRole ? (
@@ -231,7 +233,7 @@ export function App() {
           ) : activeTab === 'reports' && academicRole ? (
             <Suspense fallback={<AcademicLoading />}><ReportsAcademic onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'timetable' && academicRole ? (
-            <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} /></Suspense>
+            <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} staffId={user?.staffId} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
           ) : activeTab === 'exam-management' ? (
@@ -766,6 +768,7 @@ export function App() {
               </div>
             </div>
           )}
+          </Suspense>
           </ScreenBoundary>
         </main>
       </div>

@@ -1,26 +1,21 @@
 import { usePS } from './persist';
 import React, { useState } from 'react';
-import { SLOTS, WEEKDAYS, allSections, getStandards, getTimetables, sectionById, staffById, standardTotals } from './sampleData';
+import { SLOTS, WEEKDAYS, staffWeekLoad, allSections, getStandards, getTimetables, sectionById, staffById, standardTotals } from './sampleData';
+import { MyClassGroups } from './ClassPicker';
 import { Avatar, Chip, PageHead, PickCard, Pill, StandardIcon, SubjectIcon, Card } from './ui';
 
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string };
 
-export const TimetableAcademic: React.FC<{ onExit: () => void; only?: string[] }> = ({ onExit, only }) => {
+export const TimetableAcademic: React.FC<{ onExit: () => void; only?: string[]; staffId?: string }> = ({ onExit, only, staffId }) => {
   const [nav, setNav] = usePS<Nav>('timetable', 'nav', { v: 'home' });
 
   if (only && (nav.v === 'home' || nav.v === 'std')) {
-    const mine = allSections().filter((s) => only.includes(s.id));
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        <PageHead title="My classes' timetable" sub={`${mine.length} classes`} onBack={onExit} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mine.map((s) => { const ct = staffById(s.classTeacherId)!; return (
-            <button key={s.id} onClick={() => setNav({ v: 'sec', sec: s.id })} className="mt-tile mt-tile-card text-left rounded-2xl bg-white p-4">
-              <p className="text-sm font-bold text-slate-900 font-heading">{s.title}</p><p className="text-[11px] text-slate-500">{s.batch}</p>
-              <div className="flex items-center gap-3 mt-4"><Avatar name={ct.name} pid={ct.id} size={42} /><div className="min-w-0"><p className="text-xs font-semibold text-slate-800 truncate">{ct.name}</p><p className="text-[11px] text-slate-500">Class teacher</p></div></div>
-              <p className="mt-4 text-xs text-slate-600">Total students: <b className="text-slate-900">{s.count}</b></p>
-            </button>); })}
-        </div>
+        <PageHead title="My timetable" sub="Your periods this week, then the classes you teach" onBack={onExit} />
+        <MySlots staffId={staffId} />
+        <h3 className="text-sm font-bold font-heading text-slate-900 -mb-2">Open a class timetable</h3>
+        <MyClassGroups only={only} staffId={staffId} onPick={(id) => setNav({ v: 'sec', sec: id })} />
       </div>
     );
   }
@@ -102,6 +97,38 @@ export const SectionTimetable: React.FC<{ sectionId: string }> = ({ sectionId })
           })}
         </ul>
       )}
+    </Card>
+  );
+};
+
+// the person's own week: one row per period (with the time), one column per day, the class in each box
+export const MySlots: React.FC<{ staffId?: string }> = ({ staffId }) => {
+  const grid = staffWeekLoad(staffId || ''); const tt = getTimetables(); const today = new Date().getDay() - 1;
+  let p = -1; let total = 0;
+  grid.forEach((r) => r.forEach((c) => { if (c) total++; }));
+  return (
+    <Card title="My periods this week" right={<span className="text-xs text-slate-500">{total} periods a week</span>}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-xs border-separate border-spacing-y-1">
+          <thead><tr className="text-left text-slate-500"><th className="py-2 pr-3 w-44">Time</th>{WEEKDAYS.map((d, i) => <th key={d} className={`pr-2 ${i === today ? 'text-[#a3161b]' : ''}`}>{d}</th>)}</tr></thead>
+          <tbody>
+            {SLOTS.map((s) => {
+              if (s.kind === 'break') return <tr key={s.key}><td colSpan={WEEKDAYS.length + 1} className="text-center text-[11px] text-slate-400 bg-[#faf6ee] rounded-lg py-1">{s.label} · {s.start} to {s.end}</td></tr>;
+              p++; const pi = p;
+              return (
+                <tr key={s.key}>
+                  <td className="pr-3 py-1 align-top"><b className="text-slate-800">{s.label}</b><span className="block text-[11px] text-slate-500">{s.start} - {s.end}</span></td>
+                  {WEEKDAYS.map((d, di) => {
+                    const c = grid[di][pi];
+                    const sec = c ? sectionById(c.sectionId) : null; const cell = c ? tt.get(c.sectionId)?.[di]?.[pi] : null;
+                    return <td key={d} className="pr-2 align-top">{sec ? <div className="rounded-xl border border-[#e7d3b0] bg-[#fff7e6] px-2 py-1.5"><b className="block text-slate-900">{sec.title}</b><span className="text-[11px] text-slate-500">{cell?.subject} · {cell?.room}</span></div> : <div className="rounded-xl bg-[#f6f3ee] px-2 py-2 text-[11px] text-slate-400 text-center">Free</div>}</td>;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </Card>
   );
 };

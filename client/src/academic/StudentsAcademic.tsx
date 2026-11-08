@@ -3,11 +3,12 @@ import { doneOpen, hasReturn, peekOpen, returnBack, usePS } from './persist';
 import { Settings2 } from 'lucide-react';
 import { allSections, findStudent, getStandards, sectionById, staffById, standardTotals } from './sampleData';
 import { Avatar, Card, PageHead, PickCard, StandardIcon } from './ui';
+import { MyClassGroups } from './ClassPicker';
 import { StudentGrid, StudentProfile } from './StudentViews';
 
 type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string } | { v: 'stu'; id: string };
 
-export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => void; only?: string[] }> = ({ onExit, onManage, only }) => {
+export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => void; only?: string[]; staffId?: string }> = ({ onExit, onManage, only, staffId }) => {
   const open = peekOpen('student');
   const [nav, setNav] = usePS<Nav>('students', 'nav', { v: 'home' }, open ? { v: 'stu', id: open } : undefined);
   const [via, setVia] = usePS<boolean>('students', 'via', false, open ? true : undefined);
@@ -19,18 +20,10 @@ export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => v
   ) : null;
 
   if (only && (nav.v === 'home' || nav.v === 'std')) {
-    const mine = allSections().filter((s) => only.includes(s.id));
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        <PageHead title="My class students" sub={`${mine.length} classes you teach`} onBack={onExit} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mine.map((s) => { const ct = staffById(s.classTeacherId)!; return (
-            <button key={s.id} onClick={() => setNav({ v: 'sec', sec: s.id })} className="mt-tile mt-tile-card text-left rounded-2xl bg-white p-4">
-              <p className="text-sm font-bold text-slate-900 font-heading">{s.title}</p><p className="text-[11px] text-slate-500">{s.batch}</p>
-              <div className="flex items-center gap-3 mt-4"><Avatar name={ct.name} pid={ct.id} size={42} /><div className="min-w-0"><p className="text-xs font-semibold text-slate-800 truncate">{ct.name}</p><p className="text-[11px] text-slate-500">Class teacher</p></div></div>
-              <p className="mt-4 text-xs text-slate-600">Total students: <b className="text-slate-900">{s.count}</b></p>
-            </button>); })}
-        </div>
+        <PageHead title="My class students" sub={`${only.length} classes you teach`} onBack={onExit} />
+        <MyClassGroups only={only} staffId={staffId} onPick={(id) => setNav({ v: 'sec', sec: id })} />
       </div>
     );
   }
