@@ -702,10 +702,10 @@ main tbody tr:hover { background-size: 100% 100%; }
   0%, 100% { box-shadow: 0 12px 26px -16px rgba(140, 17, 24, .30), 0 0 0 1px rgba(217, 168, 90, .40); }
   50%      { box-shadow: 0 26px 46px -16px rgba(140, 17, 24, .52), 0 0 24px 3px rgba(217, 168, 90, .50), 0 0 0 1px rgba(217, 168, 90, .90); }
 }
+/* the sparkle dots stay where they are; only the soft shine travels across */
 @keyframes mt-glitter-drift {
   0%   { background-position: 0 0, 31px 47px, 160% 0; background-size: 54px 54px, 83px 83px, 260% 100%; }
-  50%  { background-position: 60px 40px, -20px 90px, -60% 0; background-size: 58px 58px, 78px 78px, 260% 100%; }
-  100% { background-position: 108px 80px, -62px -10px, -160% 0; background-size: 54px 54px, 83px 83px, 260% 100%; }
+  100% { background-position: 0 0, 31px 47px, -160% 0; background-size: 54px 54px, 83px 83px, 260% 100%; }
 }
 main .grid > [class*="rounded-2xl"]:not(button):not(:has(canvas)):hover,
 main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
@@ -718,3 +718,23 @@ main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
   animation: mt-shadow-pulse 2.2s ease-in-out infinite, mt-glitter-drift 5.5s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
+
+/* ---- 3D background ------------------------------------------------------------------------------------ */
+.mt-bg3d { position: absolute; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; --px: 0; --py: 0; }
+.mt-bg3d-glow { position: absolute; border-radius: 50%; filter: blur(8px); transform: translate3d(calc(var(--px) * -18px), calc(var(--py) * -14px), 0); transition: transform .5s ease-out; }
+.mt-bg3d-scene { position: absolute; inset: 0; perspective: 1000px; perspective-origin: 50% 30%; transform-style: preserve-3d; }
+.mt-bg3d-floor {
+  position: absolute; left: -30%; right: -30%; bottom: -8%; height: 62%; transform-origin: 50% 100%;
+  transform: rotateX(68deg) translate3d(calc(var(--px) * 24px), 0, 0); transition: transform .5s ease-out;
+  background-image: linear-gradient(rgba(194,133,53,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(194,133,53,.22) 1px, transparent 1px);
+  background-size: 64px 64px; animation: mt-floor-drift 9s linear infinite;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 85%); mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+}
+@keyframes mt-floor-drift { to { background-position: 0 64px; } }
+.mt-bg3d-cube { position: absolute; width: var(--s); height: var(--s); transform-style: preserve-3d; animation: mt-cube-turn linear infinite;
+  translate: calc(var(--px) * var(--z) * -0.22px) calc(var(--py) * var(--z) * -0.16px); transition: translate .5s ease-out; }
+.mt-bg3d-face { position: absolute; inset: 0; border: 1px solid rgba(194,133,53,.38); backface-visibility: visible; }
+.mt-bg3d-face.gold { background: linear-gradient(135deg, rgba(217,168,90,.16), rgba(217,168,90,.04)); }
+.mt-bg3d-face.red  { background: linear-gradient(135deg, rgba(163,22,27,.12), rgba(163,22,27,.03)); border-color: rgba(163,22,27,.28); }
+@keyframes mt-cube-turn { from { transform: rotateX(18deg) rotateY(0deg); } to { transform: rotateX(18deg) rotateY(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mt-bg3d-cube, .mt-bg3d-floor { animation: none; } }
