@@ -1,17 +1,21 @@
 import React, { useEffect, useRef } from 'react';
 
-// A quiet 3D backdrop behind the pages: a perspective floor grid, slowly turning glass cubes and soft glows.
-// It leans a little towards the pointer so the page feels like it has depth. Decoration only.
-const CUBES: { x: number; y: number; s: number; d: number; t: number; z: number; tone: 'red' | 'gold' }[] = [
-  { x: 8, y: 14, s: 74, d: 34, t: 0, z: 60, tone: 'gold' },
-  { x: 84, y: 10, s: 110, d: 46, t: -8, z: 20, tone: 'red' },
-  { x: 70, y: 52, s: 54, d: 28, t: -4, z: 120, tone: 'gold' },
-  { x: 20, y: 60, s: 96, d: 52, t: -14, z: 10, tone: 'red' },
-  { x: 48, y: 22, s: 44, d: 30, t: -2, z: 150, tone: 'gold' },
-  { x: 92, y: 70, s: 66, d: 40, t: -20, z: 80, tone: 'gold' },
-  { x: 38, y: 82, s: 58, d: 36, t: -10, z: 100, tone: 'red' },
+// A depth backdrop, like a modern landing page: layered soft light at different distances, a perspective floor
+// that runs off to a horizon, and a gentle vignette. Layers shift by different amounts with the pointer (parallax),
+// so the page feels deep without any objects in it. Decoration only.
+type Orb = { x: number; y: number; s: number; d: number; layer: 'far' | 'mid' | 'near'; tone: 'gold' | 'red' | 'cream'; delay: number };
+const ORBS: Orb[] = [
+  { x: -6, y: -8, s: 620, d: 38, layer: 'far', tone: 'gold', delay: 0 },
+  { x: 62, y: -14, s: 700, d: 46, layer: 'far', tone: 'red', delay: -12 },
+  { x: 30, y: 52, s: 560, d: 52, layer: 'far', tone: 'cream', delay: -20 },
+  { x: 78, y: 48, s: 360, d: 30, layer: 'mid', tone: 'gold', delay: -6 },
+  { x: 8, y: 58, s: 300, d: 34, layer: 'mid', tone: 'red', delay: -16 },
+  { x: 44, y: 8, s: 220, d: 28, layer: 'mid', tone: 'gold', delay: -9 },
+  { x: 90, y: 14, s: 90, d: 22, layer: 'near', tone: 'gold', delay: -3 },
+  { x: 18, y: 30, s: 70, d: 26, layer: 'near', tone: 'red', delay: -11 },
+  { x: 56, y: 74, s: 110, d: 24, layer: 'near', tone: 'gold', delay: -7 },
+  { x: 74, y: 86, s: 64, d: 20, layer: 'near', tone: 'red', delay: -15 },
 ];
-const FACES = ['rotateY(0deg)', 'rotateY(90deg)', 'rotateY(180deg)', 'rotateY(270deg)', 'rotateX(90deg)', 'rotateX(-90deg)'];
 
 export const Background3D: React.FC = () => {
   const root = useRef<HTMLDivElement>(null);
@@ -27,16 +31,18 @@ export const Background3D: React.FC = () => {
   }, []);
   return (
     <div ref={root} aria-hidden className="mt-bg3d">
-      <div className="mt-bg3d-glow" style={{ left: '6%', top: '8%', width: 420, height: 420, background: 'radial-gradient(circle, rgba(217,168,90,.28), transparent 65%)' }} />
-      <div className="mt-bg3d-glow" style={{ right: '4%', bottom: '10%', width: 520, height: 520, background: 'radial-gradient(circle, rgba(163,22,27,.16), transparent 65%)' }} />
-      <div className="mt-bg3d-scene">
-        <div className="mt-bg3d-floor" />
-        {CUBES.map((c, i) => (
-          <div key={i} className="mt-bg3d-cube" style={{ left: `${c.x}%`, top: `${c.y}%`, ['--s' as string]: `${c.s}px`, ['--z' as string]: c.z, animationDuration: `${c.d}s`, animationDelay: `${c.t}s` }}>
-            {FACES.map((f) => <i key={f} className={`mt-bg3d-face ${c.tone}`} style={{ transform: `${f} translateZ(calc(var(--s) / 2))` }} />)}
-          </div>
-        ))}
+      <div className="mt-bg3d-sky" />
+      {(['far', 'mid'] as const).map((l) => (
+        <div key={l} className={`mt-bg3d-layer ${l}`}>
+          {ORBS.filter((o) => o.layer === l).map((o, i) => <span key={i} className={`mt-bg3d-orb ${o.tone}`} style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.s, height: o.s, animationDuration: `${o.d}s`, animationDelay: `${o.delay}s` }} />)}
+        </div>
+      ))}
+      <div className="mt-bg3d-horizon" />
+      <div className="mt-bg3d-scene"><div className="mt-bg3d-floor" /></div>
+      <div className="mt-bg3d-layer near">
+        {ORBS.filter((o) => o.layer === 'near').map((o, i) => <span key={i} className={`mt-bg3d-orb ${o.tone}`} style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.s, height: o.s, animationDuration: `${o.d}s`, animationDelay: `${o.delay}s` }} />)}
       </div>
+      <div className="mt-bg3d-vignette" />
     </div>
   );
 };

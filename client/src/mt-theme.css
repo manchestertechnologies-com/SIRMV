@@ -719,22 +719,32 @@ main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
 
-/* ---- 3D background ------------------------------------------------------------------------------------ */
+/* ---- Depth background -------------------------------------------------------------------------------- */
 .mt-bg3d { position: absolute; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; --px: 0; --py: 0; }
-.mt-bg3d-glow { position: absolute; border-radius: 50%; filter: blur(8px); transform: translate3d(calc(var(--px) * -18px), calc(var(--py) * -14px), 0); transition: transform .5s ease-out; }
-.mt-bg3d-scene { position: absolute; inset: 0; perspective: 1000px; perspective-origin: 50% 30%; transform-style: preserve-3d; }
+.mt-bg3d-sky { position: absolute; inset: 0; background: linear-gradient(180deg, #f8f4ec 0%, #f2eee6 55%, #ece6da 100%); }
+/* three layers of soft light at different distances; the nearer the layer, the further it shifts with the pointer */
+.mt-bg3d-layer { position: absolute; inset: -6%; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.mt-bg3d-layer.far  { transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -8px), 0); filter: blur(46px); }
+.mt-bg3d-layer.mid  { transform: translate3d(calc(var(--px) * -26px), calc(var(--py) * -20px), 0); filter: blur(26px); }
+.mt-bg3d-layer.near { transform: translate3d(calc(var(--px) * -58px), calc(var(--py) * -44px), 0); filter: blur(5px); }
+.mt-bg3d-orb { position: absolute; border-radius: 50%; animation: mt-orb-float ease-in-out infinite alternate; }
+.mt-bg3d-orb.gold  { background: radial-gradient(circle at 35% 35%, rgba(235,190,110,.62), rgba(217,168,90,0) 68%); }
+.mt-bg3d-orb.red   { background: radial-gradient(circle at 35% 35%, rgba(190,40,48,.34), rgba(163,22,27,0) 68%); }
+.mt-bg3d-orb.cream { background: radial-gradient(circle at 40% 40%, rgba(255,255,255,.85), rgba(255,255,255,0) 68%); }
+.mt-bg3d-layer.near .mt-bg3d-orb.gold { background: radial-gradient(circle at 35% 30%, rgba(255,226,160,.95), rgba(217,168,90,.35) 55%, rgba(217,168,90,0) 72%); }
+.mt-bg3d-layer.near .mt-bg3d-orb.red  { background: radial-gradient(circle at 35% 30%, rgba(214,70,76,.55), rgba(163,22,27,.22) 55%, rgba(163,22,27,0) 72%); }
+@keyframes mt-orb-float { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(40px, -34px, 0) scale(1.08); } }
+/* a perspective floor that runs off to a glowing horizon */
+.mt-bg3d-horizon { position: absolute; left: 0; right: 0; top: 46%; height: 160px; transform: translateY(-50%); background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,246,226,.9), rgba(255,246,226,0) 70%); }
+.mt-bg3d-scene { position: absolute; left: 0; right: 0; bottom: 0; height: 56%; perspective: 520px; perspective-origin: 50% 0%; overflow: hidden; }
 .mt-bg3d-floor {
-  position: absolute; left: -30%; right: -30%; bottom: -8%; height: 62%; transform-origin: 50% 100%;
-  transform: rotateX(68deg) translate3d(calc(var(--px) * 24px), 0, 0); transition: transform .5s ease-out;
-  background-image: linear-gradient(rgba(194,133,53,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(194,133,53,.22) 1px, transparent 1px);
-  background-size: 64px 64px; animation: mt-floor-drift 9s linear infinite;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 85%); mask-image: linear-gradient(to top, #000 0%, transparent 85%);
+  position: absolute; left: -60%; right: -60%; top: 0; bottom: -40%; transform-origin: 50% 0%;
+  transform: rotateX(72deg) translate3d(calc(var(--px) * 30px), 0, 0); transition: transform .6s cubic-bezier(.2,.7,.2,1);
+  background-image: linear-gradient(rgba(163,22,27,.16) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(194,133,53,.30) 1.5px, transparent 1.5px);
+  background-size: 90px 90px; animation: mt-floor-drift 12s linear infinite;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 100%);
 }
-@keyframes mt-floor-drift { to { background-position: 0 64px; } }
-.mt-bg3d-cube { position: absolute; width: var(--s); height: var(--s); transform-style: preserve-3d; animation: mt-cube-turn linear infinite;
-  translate: calc(var(--px) * var(--z) * -0.22px) calc(var(--py) * var(--z) * -0.16px); transition: translate .5s ease-out; }
-.mt-bg3d-face { position: absolute; inset: 0; border: 1px solid rgba(194,133,53,.38); backface-visibility: visible; }
-.mt-bg3d-face.gold { background: linear-gradient(135deg, rgba(217,168,90,.16), rgba(217,168,90,.04)); }
-.mt-bg3d-face.red  { background: linear-gradient(135deg, rgba(163,22,27,.12), rgba(163,22,27,.03)); border-color: rgba(163,22,27,.28); }
-@keyframes mt-cube-turn { from { transform: rotateX(18deg) rotateY(0deg); } to { transform: rotateX(18deg) rotateY(360deg); } }
-@media (prefers-reduced-motion: reduce) { .mt-bg3d-cube, .mt-bg3d-floor { animation: none; } }
+@keyframes mt-floor-drift { to { background-position: 0 90px; } }
+/* edges fall away into shade */
+.mt-bg3d-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 75% at 50% 45%, rgba(0,0,0,0) 55%, rgba(70,40,20,.14) 100%); }
+@media (prefers-reduced-motion: reduce) { .mt-bg3d-orb, .mt-bg3d-floor { animation: none; } }
