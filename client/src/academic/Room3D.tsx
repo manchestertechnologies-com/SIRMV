@@ -7,7 +7,7 @@ const shade = (hex: string, f: number) => { const n = parseInt(hex.slice(1), 16)
 
 export const Room3D: React.FC<{ plan: RoomPlan; color: (s: Seat) => string; onSeat?: (s: Seat) => void }> = ({ plan, color, onSeat }) => {
   const { room, cols, seats } = plan;
-  const [spin, setSpin] = useState(-12);
+  const spin = -12;
   const wrap = useRef<HTMLDivElement>(null); const [width, setWidth] = useState(900);
   useEffect(() => { const fit = () => setWidth(wrap.current?.clientWidth || 900); fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }, []);
   const bw = room.perBench * SW + 8, bd = SH + 10;
@@ -18,7 +18,6 @@ export const Room3D: React.FC<{ plan: RoomPlan; color: (s: Seat) => string; onSe
   const benches = [...Array(room.benches).keys()];
   return (
     <div className="space-y-2">
-      <label className="flex items-center justify-end gap-2 text-[11px] text-slate-500">Turn<input type="range" min={-60} max={60} value={spin} onChange={(e) => setSpin(+e.target.value)} className="accent-[#a3161b]" /></label>
       <div ref={wrap} className="relative rounded-2xl border border-[#ece4da] bg-[#fbf6ee] overflow-hidden" style={{ height: stageH }}>
         <div style={{ position: 'absolute', left: '50%', top: half + 40, perspective: 1600, width: 0, height: 0 }}>
           <div style={{ position: 'absolute', left: 0, top: 0, transformStyle: 'preserve-3d', transform: `scale(${scale}) rotateX(52deg) rotateZ(${spin}deg)` }}>

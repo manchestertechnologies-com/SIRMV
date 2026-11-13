@@ -5,6 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { initUiEffects } from './utils/uiEffects';
 import { initSelectMenu } from './utils/selectMenu';
+import { initScrollReveal } from './utils/scrollReveal';
 
 // Registers our custom service worker (client/src/sw.ts) and keeps it updated.
 // Registration itself is silent/automatic — this only makes the background
@@ -36,7 +37,8 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// page content now appears all at once (no scroll reveal or count-up)
+// boxes below the fold rise into view as you scroll to them; nothing on screen is delayed
+initScrollReveal();
 initUiEffects();
 initSelectMenu();
 

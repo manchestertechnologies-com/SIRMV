@@ -18,6 +18,7 @@ import { ReportsAcademic } from './academic/ReportsAcademic';
 import { TimetableAcademic } from './academic/TimetableAcademic';
 import { BlueprintModule } from './academic/BlueprintModule';
 import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
+import { TimetableGenerator } from './academic/TimetableGenerator';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
 
@@ -37,7 +38,6 @@ const TestsPage = lazyWithRetry(() => import('./pages/TestsPage').then((m) => ({
 const BoardMarksPage = lazyWithRetry(() => import('./pages/BoardMarksPage').then((m) => ({ default: m.BoardMarksPage })));
 const NoticeboardModule = lazyWithRetry(() => import('./pages/NoticeboardModule').then((m) => ({ default: m.NoticeboardModule })));
 const FeeModule = lazyWithRetry(() => import('./pages/FeeModule').then((m) => ({ default: m.FeeModule })));
-const TimetableGeneratorModule = lazyWithRetry(() => import('./pages/TimetableGeneratorModule').then((m) => ({ default: m.TimetableGeneratorModule })));
 const MyExamDutiesPage = lazyWithRetry(() => import('./pages/MyExamDutiesPage').then((m) => ({ default: m.MyExamDutiesPage })));
 const InvigilatorRequestsPage = lazyWithRetry(() => import('./pages/InvigilatorRequestsPage').then((m) => ({ default: m.InvigilatorRequestsPage })));
 const InvigilationScanPage = lazyWithRetry(() => import('./pages/InvigilationScanPage').then((m) => ({ default: m.InvigilationScanPage })));
@@ -456,9 +456,7 @@ export function App() {
               )}
             </div>
           ) : activeTab === 'timetable-generator' ? (
-            <div className="space-y-6 max-w-7xl mx-auto">
-              <TimetableGeneratorModule />
-            </div>
+            <TimetableGenerator onBack={() => setActiveTab('dashboard-home')} />
           ) : activeTab === 'my-exam-duty' ? (
             <div className="space-y-6 max-w-7xl mx-auto">
               <MyExamDutiesPage />

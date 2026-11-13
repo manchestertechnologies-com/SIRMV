@@ -5,17 +5,18 @@ import { useAuth } from '../context/AuthContext';
 import { Staff, SubjectName, TEACHING_SUBJECTS, allSections, getStudents, pct, sectionById, staffById, staffOf } from './sampleData';
 import { floorName, loadClassrooms, totalCapacity } from './classrooms';
 import { ExamPlan, Syllabus, clearPlan, fixPlan, freeFaculty, fmtTime, loadPlan, planStart, savePlan, sectionsFor, todayIso } from './examPlan';
-import { HallModel } from './ClassModel';
 import { Room3D } from './Room3D';
+import type { FloorRoom } from '../components/ExamFloor3D';
+const ExamFloor3D = lazyWithRetry(() => import('../components/ExamFloor3D').then((m) => ({ default: m.ExamFloor3D })));
 import { DutyRequest, addNotes, loadNotes, loadRequests, markNotesRead, saveRequests } from './notify';
-import { RoomPlan, Seat, autoRooms, buildSeating, groupName, seatsFor } from './seating';
+import { PATTERNS, RoomPlan, Seat, autoRooms, buildSeating, groupName, seatsFor } from './seating';
 import { dutyPdf, studentListPdf } from './examPdf';
 import { gotoDetail, usePS } from './persist';
 import { Avatar, Card, PageHead, Pill, StatCard, TabBar } from './ui';
 
 const field = 'mt-1 w-full px-3 py-2.5 rounded-xl border border-[#ded9cf] bg-white text-sm text-slate-900 outline-none focus:border-[#c7222a]';
 const T = 'exam-management';
-const GOLD = '#c28535', RED = '#a3161b', EMPTY = '#cfc8bc', OK = '#2e9e62', ABS = '#d64545', LEAVE = '#e6b23a';
+const LT_COLOR = '#2d7d9a', GOLD = '#c28535', RED = '#a3161b', EMPTY = '#cfc8bc', OK = '#2e9e62', ABS = '#d64545', LEAVE = '#e6b23a';
 const studentsOf = (id: string) => getStudents(id);
 const fmtDay = (d: string, o: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short' }) => new Date(`${d}T00:00:00`).toLocaleDateString('en-IN', o);
 const endTime = (start: string, mins: number) => { const m = +start.slice(0, 2) * 60 + +start.slice(3) + mins; return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
@@ -79,16 +80,16 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
   const allowed = useMemo(() => sectionsFor(), []);
   const picked = allowed.filter((s) => plan.sectionIds.includes(s.id));
   const chosenRooms = rooms.filter((r) => plan.roomIds.includes(r.id));
-  const seating = useMemo(() => buildSeating(chosenRooms, picked, studentsOf, plan.syllabus), [chosenRooms, picked, plan.syllabus]);
+  const seating = useMemo(() => buildSeating(chosenRooms, picked, studentsOf, plan.syllabus, plan.pattern), [chosenRooms, picked, plan.syllabus, plan.pattern]);
   const used = seating.plans.filter((p) => p.count > 0);
   const total = Object.values(plan.demand).reduce((a, b) => a + b, 0);
   const canNext = step === 0 ? !!plan.name.trim() && !!plan.date : step === 1 ? picked.length > 0 : step === 2 ? seating.unplaced === 0 && chosenRooms.length > 0 : true;
   const hint = step === 1 && !picked.length ? 'Choose at least one class.' : step === 2 && seating.unplaced > 0 ? `${seating.unplaced} students still need a seat. Add a room.` : step === 4 && total !== used.length ? `You need ${used.length} faculty in total, you asked for ${total}.` : '';
 
   const pickSyllabus = (sy: Syllabus) => set({ syllabus: sy, roomIds: [], demand: {} });
-  const autoPick = () => set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus), demand: {} });
+  const autoPick = () => set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus, plan.pattern), demand: {} });
   const goNext = () => {
-    if (step === 1 && !plan.roomIds.length) set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus) });
+    if (step === 1 && !plan.roomIds.length) set({ roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus, plan.pattern) });
     if (step === 3 && !Object.keys(plan.demand).length) set({ demand: spreadDemand(used.length) });
     setStep(step + 1);
   };
@@ -176,8 +177,9 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
         <Card title="How students will sit">
           <div className="flex flex-wrap gap-2 mb-3">{used.map((p) => <button key={p.room.id} onClick={() => setSeatRoom(p.room.id)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${curPlan.room.id === p.room.id ? 'bg-[#8c1118] text-white border-[#8c1118]' : 'bg-white text-slate-600 border-[#ded9cf]'}`}>{p.room.name} · {p.count}</button>)}</div>
           <p className="text-xs text-slate-500 mb-3">{curPlan.room.name} · {curPlan.count} students on {curPlan.room.benches} benches. Roll numbers are shown on the seats. Tap a seat to see the student.</p>
-          <Room3D plan={curPlan} color={(s: Seat) => (s.student ? (s.group === '1st' ? GOLD : RED) : EMPTY)} onSeat={(s) => gotoDetail('student', s.student!.id)} />
-          <p className="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-x-5 gap-y-1"><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: GOLD }} />{groupName('1st')} ({curPlan.seats.filter((s) => s.group === '1st').length})</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: RED }} />{groupName('2nd')} ({curPlan.seats.filter((s) => s.group === '2nd').length})</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: EMPTY }} />empty seat</span></p>
+          <div className="flex flex-wrap gap-2 mb-3">{PATTERNS.map(([v, t, d]) => <button key={v} title={d} onClick={() => set({ pattern: v, roomIds: autoRooms(rooms, picked, studentsOf, plan.syllabus, v) })} className={`px-3.5 py-2 rounded-xl border text-left ${plan.pattern === v ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white text-slate-700 border-[#ded9cf]'}`}><b className="block text-xs">{t}</b><span className={`text-[10px] ${plan.pattern === v ? 'text-white/80' : 'text-slate-500'}`}>{d}</span></button>)}</div>
+          <Room3D plan={curPlan} color={(s: Seat) => (s.student ? (s.lt ? LT_COLOR : s.group === '1st' ? GOLD : RED) : EMPTY)} onSeat={(s) => gotoDetail('student', s.student!.id)} />
+          <p className="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-x-5 gap-y-1"><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: GOLD }} />{groupName('1st')} ({curPlan.seats.filter((s) => s.group === '1st' && !s.lt).length})</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: RED }} />{groupName('2nd')} ({curPlan.seats.filter((s) => s.group === '2nd' && !s.lt).length})</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: LT_COLOR }} />LT students ({curPlan.seats.filter((s) => s.lt).length})</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: EMPTY }} />empty seat</span></p>
         </Card>
       )}
 
@@ -210,15 +212,52 @@ const Setup: React.FC<{ onSaved: () => void; onOpenBlueprint?: () => void }> = (
 // ---------- halls tab ----------
 const Halls: React.FC<{ onOpenBlueprint?: () => void }> = ({ onOpenBlueprint }) => {
   const rooms = useMemo(() => loadClassrooms(), []); const plan = loadPlan();
+  const [openId, setOpenId] = usePS<string>(T, 'hall-room', '');
   const secs = plan ? allSections().filter((s) => plan.sectionIds.includes(s.id)) : allSections();
   const strength = secs.reduce((a, s) => a + s.count, 0); const cap = totalCapacity(rooms);
+  const examSecs = useMemo(() => (plan ? allSections().filter((s) => plan.sectionIds.includes(s.id)) : sectionsFor().filter((s) => s.std !== '11' && s.stream === 'PCMB')), [plan]);
+  // seating for this exam (or a sample exam when none is saved) so a room shows who sits where
+  const seating = useMemo(() => {
+    const inExam = plan ? rooms.filter((r) => plan.roomIds.includes(r.id)) : rooms.slice(0, 4);
+    return buildSeating(inExam, examSecs, studentsOf, plan?.syllabus || '2nd', plan?.pattern || 'zigzag');
+  }, [rooms, plan, examSecs]);
+  const roomsByFloor = useMemo(() => {
+    const out: Record<number, FloorRoom[]> = {};
+    rooms.forEach((r, i) => {
+      const rp = seating.plans.find((p) => p.room.id === r.id); const assigned = rp?.count || 0; const cp = r.benches * r.perBench;
+      const fr: FloorRoom = { roomId: r.id, roomNumber: r.name.replace(/^\D+/, '') || r.name, floor: r.floor, benches: r.benches, seatsPerBench: r.perBench, capacity: cp, studentsAssigned: assigned,
+        status: plan?.roomIds.includes(r.id) ? (assigned >= cp ? 'FULL' : 'PARTIALLY_ALLOCATED') : 'AVAILABLE', homeClassLabel: allSections()[i % allSections().length].title };
+      (out[r.floor] = out[r.floor] || []).push(fr);
+    });
+    return out;
+  }, [rooms, seating, plan]);
+  const room = rooms.find((r) => r.id === openId);
+  if (room) {
+    const rp = seating.plans.find((p) => p.room.id === room.id) || buildSeating([room], examSecs, studentsOf, plan?.syllabus || '2nd', plan?.pattern || 'zigzag').plans[0];
+    const classesHere = Array.from(new Set(rp.seats.filter((s) => s.student).map((s) => sectionById(s.student!.sectionId)?.title))).filter(Boolean);
+    return (
+      <div className="space-y-5">
+        <button onClick={() => setOpenId('')} className="text-xs font-semibold text-[#a3161b] hover:underline">← All halls</button>
+        <div><h3 className="text-lg font-bold font-heading text-slate-900">{room.name} · {floorName(room.floor)}</h3><p className="text-xs text-slate-500">{room.benches} benches · {room.benches * room.perBench} seats · {rp.count} students seated{plan ? '' : ' (sample exam)'}</p></div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Benches" value={room.benches} tone="slate" /><StatCard label="Seats" value={room.benches * room.perBench} tone="green" /><StatCard label="Students seated" value={rp.count} /><StatCard label="Seats free" value={room.benches * room.perBench - rp.count} tone="gold" />
+        </div>
+        <Card title="Seating plan">
+          <Room3D plan={rp} color={(s: Seat) => (s.student ? (s.lt ? LT_COLOR : s.group === '1st' ? GOLD : RED) : EMPTY)} onSeat={(s) => gotoDetail('student', s.student!.id)} />
+          <p className="mt-3 text-[11px] text-slate-500 flex flex-wrap gap-x-5 gap-y-1"><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: GOLD }} />{groupName('1st')}</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: RED }} />{groupName('2nd')}</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: LT_COLOR }} />LT</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: EMPTY }} />empty seat</span></p>
+          {classesHere.length > 0 && <p className="mt-2 text-xs text-slate-600">Classes in this room: {classesHere.join(', ')}</p>}
+        </Card>
+      </div>
+    );
+  }
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Classrooms" value={rooms.length} tone="slate" /><StatCard label="Seats in college" value={cap} tone="green" />
         <StatCard label={plan ? 'Students in this exam' : 'Total students'} value={strength} /><StatCard label="Rooms for this exam" value={plan?.roomIds.length || 0} tone="gold" />
       </div>
-      <HallModel rooms={rooms} used={Object.fromEntries((plan?.roomIds || []).map((id) => [id, 'exam']))} />
+      <p className="text-xs text-slate-500">Click a room to open it. Use + and - to zoom.</p>
+      <Suspense fallback={<p className="py-16 text-center text-sm text-slate-500">Loading the 3D model…</p>}><ExamFloor3D roomsByFloor={roomsByFloor} selectedRoomId={null} onSelectRoom={(id) => id && setOpenId(id)} /></Suspense>
       <p className="text-xs text-slate-500">This model is your Blueprint. {onOpenBlueprint && <button onClick={onOpenBlueprint} className="font-semibold text-[#a3161b] hover:underline">Edit it in Blueprint</button>}</p>
     </div>
   );
@@ -247,7 +286,7 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
   const [now, setNow] = useState(new Date());
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
   const secs = useMemo(() => allSections().filter((s) => plan.sectionIds.includes(s.id)), [plan]);
-  const seating = useMemo(() => buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus), [rooms, plan, secs]);
+  const seating = useMemo(() => buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus, plan.pattern), [rooms, plan, secs]);
   const used = seating.plans.filter((p) => p.count > 0);
   const inv = useMemo(() => invigilators(plan, !!saved), [plan, saved]);
   const start = planStart(plan); const endMs = +start + plan.durationMin * 60000;
@@ -360,7 +399,7 @@ const Notifications: React.FC<{ role: string; me?: string }> = ({ role, me }) =>
   const pdf = async (staffId: string, roomId: string) => {
     const plan = loadPlan(); const st = staffById(staffId); if (!plan || !st) return;
     const rooms = loadClassrooms(); const secs = allSections().filter((s) => plan.sectionIds.includes(s.id));
-    const rp = buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus).plans.find((p) => p.room.id === roomId); if (!rp) return;
+    const rp = buildSeating(rooms.filter((r) => plan.roomIds.includes(r.id)), secs, studentsOf, plan.syllabus, plan.pattern).plans.find((p) => p.room.id === roomId); if (!rp) return;
     await dutyPdf(plan, rp, floorName(rp.room.floor), st, (id) => sectionById(id)?.title || id);
   };
   return (

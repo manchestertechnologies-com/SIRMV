@@ -4,7 +4,7 @@ import { SLOTS, Staff, WEEKDAYS, allSections, getStaff, getTimetables } from './
 export type Syllabus = '1st' | '2nd'; // the paper LT (repeater) classes write; 11th and 12th follow their own class
 export interface ExamPlan {
   name: string; date: string; start: string; durationMin: number;
-  syllabus: Syllabus; /* LT paper */ sectionIds: string[]; roomIds: string[]; demand: Record<string, number>; // demand = faculty wanted from each department
+  syllabus: Syllabus; /* LT paper */ pattern?: 'zigzag' | 'ushape'; sectionIds: string[]; roomIds: string[]; demand: Record<string, number>; // demand = faculty wanted from each department
 }
 export const sectionsFor = () => allSections();
 const KEY = 'mt-exam-plan';
@@ -13,7 +13,7 @@ export const fixPlan = (p: any): ExamPlan => ({
   name: typeof p?.name === 'string' ? p.name : 'Exam', date: typeof p?.date === 'string' ? p.date : todayIso(),
   start: typeof p?.start === 'string' ? p.start : '09:00', durationMin: Number(p?.durationMin) || 180,
   syllabus: p?.syllabus === '1st' ? '1st' : '2nd',
-  sectionIds: Array.isArray(p?.sectionIds) ? p.sectionIds : [], roomIds: Array.isArray(p?.roomIds) ? p.roomIds : [],
+  pattern: p?.pattern === 'ushape' ? 'ushape' : 'zigzag', sectionIds: Array.isArray(p?.sectionIds) ? p.sectionIds : [], roomIds: Array.isArray(p?.roomIds) ? p.roomIds : [],
   demand: p?.demand && typeof p.demand === 'object' ? p.demand : {},
 });
 export const loadPlan = (): ExamPlan | null => { try { const v = localStorage.getItem(KEY); return v ? fixPlan(JSON.parse(v)) : null; } catch { return null; } };

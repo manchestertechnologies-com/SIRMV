@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Award, ClipboardCheck, Crosshair, Download, FileText, Pencil, Phone, XCircle } from 'lucide-react';
 import {
-  Student, SubjectName, TestResult, chapterReport, chapterRanks, chapterTests, leaderboard, ordinal, pct, sectionById, sectionResults, studentTests, getStudents, staffById,
+  Student, SubjectName, TestResult, QResult, chapterReport, chapterRanks, chapterTests, leaderboard, ordinal, pct, sectionById, sectionResults, studentTests, getStudents, staffById,
 } from './sampleData';
 import { Avatar, ChapterIcon, SubjectIcon, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, GREY, AMBER, RED, Legend, LineChart, Pill, StatCard, Stacked, TabBar } from './ui';
 
@@ -329,10 +329,51 @@ const ChapterAnalysis: React.FC<{ student: Student; subject: SubjectName; chapte
   );
 };
 
+
+// ---------- question paper content (sample): one question, four options, key and a worked solution ----------
+const optionsFor = (q: { n: number; chapter: string; key: string }) => {
+  const base = (q.n * 7 + q.chapter.length * 3) % 9 + 2;
+  return 'ABCD'.split('').map((l, i) => ({ l, text: `${base * (i + 1) + (i === 2 ? 1 : 0)} ${['units', 'units', 'units', 'units'][i]}` }));
+};
+const paperQ = (q: QResult) => {
+  const opts = optionsFor(q);
+  return {
+    text: `A problem on ${q.chapter} (${q.subject}): find the required quantity using the standard result and the data given in the question.`,
+    opts,
+    solution: `Step 1: Identify the concept from ${q.chapter}. Step 2: Write the relevant formula and substitute the data. Step 3: Simplify to get option ${q.key} (${opts.find((o) => o.l === q.key)?.text}). Options that miss a factor or use the wrong sign are the common traps here.`,
+  };
+};
+const QCard: React.FC<{ q: QResult; show: { opts?: boolean; key?: boolean; yours?: boolean; solution?: boolean } }> = ({ q, show }) => {
+  const p = paperQ(q);
+  const tone = q.status === 'correct' ? 'green' : q.status === 'wrong' ? 'red' : 'amber';
+  return (
+    <div className="rounded-2xl border border-[#ece4da] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm text-slate-800"><b className="mr-1">Q{q.n}.</b>{p.text}</p>
+        {show.yours && <Pill tone={tone}>{q.status === 'correct' ? 'Correct' : q.status === 'wrong' ? 'Incorrect' : 'Skipped'}</Pill>}
+      </div>
+      <p className="text-[11px] text-slate-400 mt-1">{q.subject} · {q.chapter}</p>
+      {show.opts && (
+        <div className="grid sm:grid-cols-2 gap-2 mt-3">
+          {p.opts.map((o) => {
+            const isKey = show.key && o.l === q.key; const isMine = show.yours && o.l === q.marked && q.status === 'wrong';
+            return <div key={o.l} className={`rounded-xl border px-3 py-2 text-xs ${isKey ? 'border-emerald-400 bg-emerald-50 text-emerald-800 font-semibold' : isMine ? 'border-red-300 bg-red-50 text-red-700' : 'border-[#ece4da] text-slate-700'}`}>({o.l}) {o.text}{isKey ? '  ✓' : isMine ? '  ✗ your answer' : ''}</div>;
+          })}
+        </div>
+      )}
+      {(show.yours || show.key) && !show.opts && (
+        <p className="text-xs text-slate-600 mt-2">{show.yours && <>Your answer <b className={q.status === 'correct' ? 'text-emerald-700' : q.status === 'wrong' ? 'text-red-600' : 'text-amber-600'}>{q.marked === '-' ? 'not attempted' : q.marked}</b> · </>}{show.key && <>Correct answer <b className="text-emerald-700">{q.key}</b></>}</p>
+      )}
+      {show.solution && <p className="mt-3 rounded-xl bg-[#fff8f4] border border-[#f0dcd0] p-3 text-xs text-slate-700"><b>Solution.</b> {p.solution}</p>}
+    </div>
+  );
+};
+
 // ---------- test level (NEET-prep style) ----------
 const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => void }> = ({ student, testId, onBack }) => {
   const test = studentTests(student).find((t) => t.id === testId) as TestResult;
   const [pickQ, setPickQ] = useState<number | null>(null);
+  const [ttab, setTtab] = useState('Overview');
   const [subj, setSubj] = useState<'All' | SubjectName>('All');
   const res = sectionResults(student.sectionId);
   const idx = studentTests(student).findIndex((t) => t.id === testId);
@@ -350,6 +391,18 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
       <button onClick={onBack} className="block text-xs font-semibold text-[#a3161b] hover:underline">← Back</button>
       <div className="flex flex-wrap items-baseline gap-3"><h3 className="text-base font-bold font-heading text-slate-900">{test.name}</h3><span className="text-xs text-slate-500">{test.date} · {test.kind} test</span></div>
 
+      <TabBar items={['Overview', 'Question paper', 'Key answer', 'Solution', `Correct (${test.correct})`, `Incorrect (${test.wrong})`, `Skipped (${test.skipped})`]} value={ttab} onChange={setTtab} />
+      {ttab !== 'Overview' && (() => {
+        const list = ttab === 'Question paper' || ttab === 'Key answer' || ttab === 'Solution' ? test.questions : test.questions.filter((x) => (ttab.startsWith('Correct') ? x.status === 'correct' : ttab.startsWith('Incorrect') ? x.status === 'wrong' : x.status === 'skipped'));
+        const show = ttab === 'Question paper' ? { opts: true } : ttab === 'Key answer' ? { opts: true, key: true } : ttab === 'Solution' ? { opts: true, key: true, solution: true } : { opts: true, key: true, yours: true, solution: ttab.startsWith('Incorrect') };
+        return (
+          <div className="space-y-3">
+            {ttab === 'Key answer' && <Card title="Answer key"><div className="flex flex-wrap gap-2">{test.questions.map((x) => <span key={x.n} className="px-2.5 py-1 rounded-lg bg-[#faf6ee] border border-[#ece4da] text-xs"><b>{x.n}</b> · <b className="text-emerald-700">{x.key}</b></span>)}</div></Card>}
+            {list.length === 0 ? <Card><p className="text-center text-sm text-slate-500 py-6">No questions here.</p></Card> : list.map((x) => <QCard key={x.n} q={x} show={show} />)}
+          </div>
+        );
+      })()}
+      {ttab === 'Overview' && <>
       <div className="rounded-3xl bg-white border border-[#ece4da] p-5 grid sm:grid-cols-[auto_1fr] gap-6 items-center">
         <div className="text-center sm:text-left">
           <p className="text-xs text-slate-500">Your score</p>
@@ -421,6 +474,7 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
           ))}
         </div>
       </Card>
+      </>}
     </div>
   );
 };

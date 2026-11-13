@@ -1,10 +1,11 @@
 import { usePS } from './persist';
 import React, { useState } from 'react';
 import { SLOTS, WEEKDAYS, staffWeekLoad, allSections, getStandards, getTimetables, sectionById, staffById, standardTotals } from './sampleData';
+import { TimetableGenerator } from './TimetableGenerator';
 import { MyClassGroups } from './ClassPicker';
 import { Avatar, Chip, PageHead, PickCard, Pill, StandardIcon, SubjectIcon, Card } from './ui';
 
-type Nav = { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string };
+type Nav = { v: 'gen' } | { v: 'home' } | { v: 'std'; std: string } | { v: 'sec'; sec: string };
 
 export const TimetableAcademic: React.FC<{ onExit: () => void; only?: string[]; staffId?: string }> = ({ onExit, only, staffId }) => {
   const [nav, setNav] = usePS<Nav>('timetable', 'nav', { v: 'home' });
@@ -20,10 +21,11 @@ export const TimetableAcademic: React.FC<{ onExit: () => void; only?: string[]; 
     );
   }
   const standards = getStandards();
+  if (nav.v === 'gen') return <TimetableGenerator onBack={() => setNav({ v: 'home' })} />;
   if (nav.v === 'home') {
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        <PageHead title="Timetable" sub={`SIR MV PU College · ${allSections().length} sections`} onBack={onExit} />
+        <PageHead title="Timetable" sub={`SIR MV PU College · ${allSections().length} sections`} onBack={onExit} right={<button onClick={() => setNav({ v: 'gen' })} className="px-4 py-2 rounded-xl bg-[#a3161b] text-white text-xs font-semibold">Timetable generator</button>} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {standards.map((s) => { const t = standardTotals(s); return <PickCard key={s.id} icon={<StandardIcon id={s.id} />} title={s.full} lines={[`${t.classes} Classes`, `${t.students} Students`]} onClick={() => setNav({ v: 'std', std: s.id })} />; })}
         </div>
