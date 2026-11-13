@@ -704,47 +704,14 @@ main tbody tr:hover { background-size: 100% 100%; }
 }
 /* the sparkle dots stay where they are; only the soft shine travels across */
 @keyframes mt-glitter-drift {
-  0%   { background-position: 0 0, 31px 47px, 160% 0; background-size: 54px 54px, 83px 83px, 260% 100%; }
-  100% { background-position: 0 0, 31px 47px, -160% 0; background-size: 54px 54px, 83px 83px, 260% 100%; }
+  0%   { background-position: 160% 0; background-size: 260% 100%; }
+  100% { background-position: -160% 0; background-size: 260% 100%; }
 }
 main .grid > [class*="rounded-2xl"]:not(button):not(:has(canvas)):hover,
 main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
 .mt-tile-card:hover, .mt-glow:hover {
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, .95) 0 1.1px, transparent 1.9px),
-    radial-gradient(circle, rgba(217, 168, 90, .85) 0 1.2px, transparent 2px),
-    linear-gradient(110deg, transparent 35%, rgba(240, 205, 140, .22) 50%, transparent 65%);
-  background-repeat: repeat, repeat, no-repeat;
+  background-image: linear-gradient(110deg, transparent 35%, rgba(240, 205, 140, .22) 50%, transparent 65%);
+  background-repeat: no-repeat;
   animation: mt-shadow-pulse 2.2s ease-in-out infinite, mt-glitter-drift 5.5s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
-
-/* ---- Depth background -------------------------------------------------------------------------------- */
-.mt-bg3d { position: absolute; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; --px: 0; --py: 0; }
-.mt-bg3d-sky { position: absolute; inset: 0; background: linear-gradient(180deg, #f8f4ec 0%, #f2eee6 55%, #ece6da 100%); }
-/* three layers of soft light at different distances; the nearer the layer, the further it shifts with the pointer */
-.mt-bg3d-layer { position: absolute; inset: -6%; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
-.mt-bg3d-layer.far  { transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -8px), 0); filter: blur(46px); }
-.mt-bg3d-layer.mid  { transform: translate3d(calc(var(--px) * -26px), calc(var(--py) * -20px), 0); filter: blur(26px); }
-.mt-bg3d-layer.near { transform: translate3d(calc(var(--px) * -58px), calc(var(--py) * -44px), 0); filter: blur(5px); }
-.mt-bg3d-orb { position: absolute; border-radius: 50%; animation: mt-orb-float ease-in-out infinite alternate; }
-.mt-bg3d-orb.gold  { background: radial-gradient(circle at 35% 35%, rgba(235,190,110,.62), rgba(217,168,90,0) 68%); }
-.mt-bg3d-orb.red   { background: radial-gradient(circle at 35% 35%, rgba(190,40,48,.34), rgba(163,22,27,0) 68%); }
-.mt-bg3d-orb.cream { background: radial-gradient(circle at 40% 40%, rgba(255,255,255,.85), rgba(255,255,255,0) 68%); }
-.mt-bg3d-layer.near .mt-bg3d-orb.gold { background: radial-gradient(circle at 35% 30%, rgba(255,226,160,.95), rgba(217,168,90,.35) 55%, rgba(217,168,90,0) 72%); }
-.mt-bg3d-layer.near .mt-bg3d-orb.red  { background: radial-gradient(circle at 35% 30%, rgba(214,70,76,.55), rgba(163,22,27,.22) 55%, rgba(163,22,27,0) 72%); }
-@keyframes mt-orb-float { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(40px, -34px, 0) scale(1.08); } }
-/* a perspective floor that runs off to a glowing horizon */
-.mt-bg3d-horizon { position: absolute; left: 0; right: 0; top: 46%; height: 160px; transform: translateY(-50%); background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,246,226,.9), rgba(255,246,226,0) 70%); }
-.mt-bg3d-scene { position: absolute; left: 0; right: 0; bottom: 0; height: 56%; perspective: 520px; perspective-origin: 50% 0%; overflow: hidden; }
-.mt-bg3d-floor {
-  position: absolute; left: -60%; right: -60%; top: 0; bottom: -40%; transform-origin: 50% 0%;
-  transform: rotateX(72deg) translate3d(calc(var(--px) * 30px), 0, 0); transition: transform .6s cubic-bezier(.2,.7,.2,1);
-  background-image: linear-gradient(rgba(163,22,27,.16) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(194,133,53,.30) 1.5px, transparent 1.5px);
-  background-size: 90px 90px; animation: mt-floor-drift 12s linear infinite;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 100%);
-}
-@keyframes mt-floor-drift { to { background-position: 0 90px; } }
-/* edges fall away into shade */
-.mt-bg3d-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 75% at 50% 45%, rgba(0,0,0,0) 55%, rgba(70,40,20,.14) 100%); }
-@media (prefers-reduced-motion: reduce) { .mt-bg3d-orb, .mt-bg3d-floor { animation: none; } }
