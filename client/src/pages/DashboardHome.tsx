@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
 import { ArrowRight } from 'lucide-react';
 import { ModuleIcon } from '../components/ModuleIcon';
-import { Overview } from '../components/Overview';
 
 interface DashboardHomeProps {
   onNavigateTab: (tab: string) => void;
@@ -63,8 +62,6 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
           </div>
         </div>
       </div>
-
-      <Overview />
 
       {/* Role-Assigned Workspace Tiles Grid */}
       <div className="space-y-2">

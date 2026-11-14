@@ -6,7 +6,6 @@ import { AuthProvider } from './context/AuthContext';
 import { initUiEffects } from './utils/uiEffects';
 import { initSelectMenu } from './utils/selectMenu';
 import { initScrollReveal } from './utils/scrollReveal';
-import { initCardTilt } from './utils/cardTilt';
 
 // Registers our custom service worker (client/src/sw.ts) and keeps it updated.
 // Registration itself is silent/automatic — this only makes the background
@@ -40,7 +39,6 @@ if ('serviceWorker' in navigator) {
 
 // boxes below the fold rise into view as you scroll to them; nothing on screen is delayed
 initScrollReveal();
-initCardTilt();
 initUiEffects();
 initSelectMenu();
 
