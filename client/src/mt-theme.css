@@ -715,3 +715,31 @@ main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
   animation: mt-shadow-pulse 2.2s ease-in-out infinite, mt-glitter-drift 5.5s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
+
+/* ==========================================================================
+   Step 1 of the premium upgrade: glass navigation, card tilt, loader, page change
+   ========================================================================== */
+/* Glass: the bars keep the college red but let a little light through */
+.mt-navbar { background: linear-gradient(180deg, rgba(176, 28, 34, .94), rgba(155, 20, 26, .90)) !important; -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.20), 0 10px 28px -14px rgba(74, 7, 9, .55); }
+.mt-sidebar { background: linear-gradient(180deg, rgba(150, 18, 25, .96), rgba(126, 14, 20, .94)) !important; -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); box-shadow: inset -1px 0 0 rgba(255,255,255,.08); }
+.mt-glass-card { background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,250,240,.78)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 10px 26px -18px rgba(74, 7, 9, .35), inset 0 1px 0 rgba(255,255,255,.9); }
+.mt-palette, .mt-dropdown, [role="menu"] { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); }
+
+/* Cards lean towards the pointer (see utils/cardTilt.ts) and catch a soft highlight */
+.mt-tile-card, main .grid > [class*="rounded-2xl"], main .grid > [class*="rounded-3xl"], .mt-glass-card { --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 0%; }
+main .grid > [class*="rounded-2xl"]:hover, main .grid > [class*="rounded-3xl"]:hover, .mt-tile-card:hover, .mt-glass-card:hover {
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-4px);
+}
+.mt-tilting { transition: transform .12s ease-out, box-shadow .35s ease !important; }
+.mt-tile-card.mt-tilting, .mt-glass-card.mt-tilting { background-image: radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.55), transparent 55%); }
+
+/* Branded loader */
+.mt-loader { position: relative; width: 76px; height: 76px; display: flex; align-items: center; justify-content: center; }
+.mt-loader span { position: absolute; inset: 0; border-radius: 50%; border: 3px solid rgba(194,133,53,.22); border-top-color: #c28535; border-right-color: #a3161b; animation: mt-spin 1.1s cubic-bezier(.5,.2,.5,.8) infinite; }
+.mt-loader b { font: 800 11px/1 'Poppins', sans-serif; color: #8c1118; letter-spacing: .02em; }
+@keyframes mt-spin { to { transform: rotate(360deg); } }
+
+/* Screen change: the whole page eases in as one piece (no per-item delays) */
+@keyframes mt-page-in { from { opacity: 0; } to { opacity: 1; } }
+main.mt-scroll { animation: mt-page-in .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { main.mt-scroll, .mt-loader span { animation: none; } }

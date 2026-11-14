@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
+import { Loader } from './components/Loader';
 import { ToastContainer } from './components/ToastContainer';
 import { CommandPalette } from './components/CommandPalette';
 import { LoginPage } from './pages/LoginPage';
@@ -57,7 +58,7 @@ const DisciplineRecordsPage = lazyWithRetry(() => import('./pages/DisciplineReco
 const MyProfilePage = lazyWithRetry(() => import('./pages/MyProfilePage').then((m) => ({ default: m.MyProfilePage })));
 const QuestionPaperSuite = lazyWithRetry(() => import('./components/question-paper/QuestionPaperSuite').then((m) => ({ default: m.QuestionPaperSuite })));
 
-const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
+const AcademicLoading = () => <Loader />;
 
 export function App() {
   // the open screen survives a refresh (kept per logged-in user for this browser tab)
@@ -194,7 +195,7 @@ export function App() {
   }
   // signing the saved session back in on refresh: wait for the user before drawing any screen
   if (!user) {
-    return <div className="h-[100dvh] flex items-center justify-center text-sm text-slate-500 bg-[#f6f2ec]">Opening your workspace…</div>;
+    return <Loader full label="Opening your workspace" />;
   }
 
   return (
