@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Pencil } from 'lucide-react';
 import { compressImage, getEdits, getPhoto, saveEdits, savePhoto } from './store';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, X } from 'lucide-react';
 import type { SubjectName } from './sampleData';
 
 export const GREEN = '#2e9e62';
@@ -87,13 +87,58 @@ export const Card: React.FC<{ className?: string; children: React.ReactNode; tit
   </div>
 );
 
-export const StatCard: React.FC<{ label: string; value: string | number; suffix?: string; sub?: string; tone?: 'red' | 'gold' | 'green' | 'slate' }> = ({ label, value, suffix, sub, tone = 'red' }) => {
+export const StatCard: React.FC<{ label: string; value: string | number; suffix?: string; sub?: string; tone?: 'red' | 'gold' | 'green' | 'slate'; onClick?: () => void }> = ({ label, value, suffix, sub, tone = 'red', onClick }) => {
   const colour = { red: 'text-[#a3161b]', gold: 'text-[#b27a2c]', green: 'text-[#1f8a52]', slate: 'text-slate-900' }[tone];
-  return (
-    <div className="rounded-2xl border border-[#ece4da] bg-white p-4">
+  const body = (
+    <>
       <p className="text-[11px] text-slate-500 font-medium">{label}</p>
       <p className={`mt-1 text-2xl font-semibold font-heading ${colour}`}>{value}</p>
       {(suffix || sub) && <p className="text-[11px] text-slate-400 mt-0.5">{suffix || sub}</p>}
+      {onClick && <p className="text-[10px] text-[#a3161b] font-semibold mt-1">View list</p>}
+    </>
+  );
+  return onClick
+    ? <button type="button" onClick={onClick} className="mt-tile-card text-left rounded-2xl border border-[#ece4da] bg-white p-4 w-full hover:border-[#d9a85a]">{body}</button>
+    : <div className="rounded-2xl border border-[#ece4da] bg-white p-4">{body}</div>;
+};
+
+export interface PersonRow { id: string; name: string; sub?: string; status?: 'P' | 'A' | 'L' | 'H'; note?: string }
+const ST_STYLE = { P: ['Present', 'bg-emerald-50 text-emerald-700'], A: ['Absent', 'bg-red-50 text-red-700'], L: ['Leave', 'bg-amber-50 text-amber-700'], H: ['Holiday', 'bg-slate-100 text-slate-600'] } as const;
+
+// pop-up list of people (e.g. everyone present / absent today), filterable by status
+export const PeopleModal: React.FC<{ title: string; rows: PersonRow[]; initial?: 'P' | 'A' | 'L' | 'all'; onClose: () => void; onOpen?: (id: string) => void }> = ({ title, rows, initial = 'all', onClose, onOpen }) => {
+  const [f, setF] = useState<'P' | 'A' | 'L' | 'all'>(initial);
+  const [q, setQ] = useState('');
+  const count = (k: 'P' | 'A' | 'L') => rows.filter((r) => r.status === k).length;
+  const shown = rows.filter((r) => (f === 'all' || r.status === f) && (!q || r.name.toLowerCase().includes(q.toLowerCase())));
+  React.useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/45 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div role="dialog" aria-label={title} className="bg-white w-full sm:max-w-lg max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <h3 className="font-bold text-slate-900 font-heading text-base">{title}</h3>
+          <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-4 h-4 text-slate-500" /></button>
+        </div>
+        <div className="px-5 flex flex-wrap gap-2 items-center">
+          {([['all', `All ${rows.length}`], ['P', `Present ${count('P')}`], ['A', `Absent ${count('A')}`], ['L', `Leave ${count('L')}`]] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setF(k)} className={`px-3 py-1 rounded-full text-[11px] font-bold border ${f === k ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white text-slate-600 border-[#e5dccf]'}`}>{l}</button>
+          ))}
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name" className="ml-auto w-32 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none" />
+        </div>
+        <ul className="overflow-y-auto px-3 py-2 mt-1 divide-y divide-[#f3ede6]">
+          {shown.map((r) => (
+            <li key={r.id}>
+              <button disabled={!onOpen} onClick={() => onOpen?.(r.id)} className="w-full flex items-center gap-3 py-2 px-2 text-left rounded-xl enabled:hover:bg-[#fff8f4]">
+                <Avatar name={r.name} pid={r.id} size={34} />
+                <span className="min-w-0 flex-1"><b className="block text-[13px] text-slate-900 truncate">{r.name}</b>{r.sub && <span className="text-[11px] text-slate-500 truncate block">{r.sub}</span>}</span>
+                {r.note && <span className="text-[11px] text-slate-500">{r.note}</span>}
+                {r.status && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ST_STYLE[r.status][1]}`}>{ST_STYLE[r.status][0]}</span>}
+              </button>
+            </li>
+          ))}
+          {shown.length === 0 && <li className="py-8 text-center text-xs text-slate-400">Nobody in this list.</li>}
+        </ul>
+      </div>
     </div>
   );
 };
@@ -155,14 +200,14 @@ export const BarChart: React.FC<{ data: BarDatum[]; max?: number; height?: numbe
   );
 };
 
-export const Donut: React.FC<{ parts: { label: string; v: number; color: string }[]; size?: number; centre?: string; centreSub?: string }> = ({ parts, size = 150, centre, centreSub }) => {
+export const Donut: React.FC<{ parts: { label: string; v: number; color: string; onClick?: () => void }[]; size?: number; centre?: string; centreSub?: string }> = ({ parts, size = 150, centre, centreSub }) => {
   const total = parts.reduce((a, p) => a + p.v, 0) || 1; const r = size / 2 - 12; const c = 2 * Math.PI * r; let off = 0;
   return (
     <div className="flex flex-wrap items-center gap-5">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f1f4" strokeWidth={18} />
         {parts.map((p, i) => {
-          const len = (p.v / total) * c; const el = <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.color} strokeWidth={18} strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-off} />; off += len; return el;
+          const len = (p.v / total) * c; const el = <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.color} strokeWidth={18} strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-off} onClick={p.onClick} style={p.onClick ? { cursor: 'pointer' } : undefined}><title>{`${p.label}: ${p.v}`}</title></circle>; off += len; return el;
         })}
         {centre && (
           <g className="rotate-90" style={{ transformOrigin: 'center' }}>
@@ -173,7 +218,9 @@ export const Donut: React.FC<{ parts: { label: string; v: number; color: string 
       </svg>
       <ul className="space-y-1.5 text-xs">
         {parts.map((p) => (
-          <li key={p.label} className="flex items-center gap-2 text-slate-700"><i className="w-2.5 h-2.5 rounded-sm" style={{ background: p.color }} />{p.label}<b className="ml-1 text-slate-900">{p.v}</b></li>
+          <li key={p.label}>
+            <button type="button" disabled={!p.onClick} onClick={p.onClick} className={`flex items-center gap-2 text-slate-700 rounded-lg px-1.5 py-0.5 -mx-1.5 ${p.onClick ? 'hover:bg-[#fff6f4] cursor-pointer' : 'cursor-default'}`}><i className="w-2.5 h-2.5 rounded-sm" style={{ background: p.color }} />{p.label}<b className="ml-1 text-slate-900">{p.v}</b>{p.onClick && <span className="text-[10px] text-[#a3161b] font-semibold">View</span>}</button>
+          </li>
         ))}
       </ul>
     </div>

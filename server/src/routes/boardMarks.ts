@@ -57,6 +57,32 @@ boardMarksRouter.post('/cycles', authenticate, requireRoles('TEACHER', 'HOD', 'A
   return res.status(201).json({ success: true, id, message: 'Board exam cycle created successfully.' });
 });
 
+// 2b. Edit a cycle's name, academic year and dates
+boardMarksRouter.put('/cycles/:examId', authenticate, requireRoles('TEACHER', 'HOD', 'ADMIN', 'PRINCIPAL'), async (req: AuthRequest, res: Response) => {
+  const { name, academic_year, start_date, end_date } = req.body;
+  if (!name || !String(name).trim() || !start_date || !end_date) {
+    return res.status(400).json({ error: 'name, start_date and end_date are required.' });
+  }
+  if (String(end_date) < String(start_date)) return res.status(400).json({ error: 'End date cannot be before the start date.' });
+  await execute(
+    `UPDATE exams SET name = $1, academic_year = COALESCE($2, academic_year), start_date = $3, end_date = $4 WHERE id = $5 AND exam_type = $6`,
+    [String(name).trim(), academic_year || null, start_date, end_date, req.params.examId, EXAM_TYPE]
+  );
+  await logAudit(req, 'BOARD_CYCLE_UPDATED', 'exams', req.params.examId, { name, start_date, end_date });
+  return res.json({ success: true });
+});
+
+// 4b. Edit a cycle-subject's exam date and marks
+boardMarksRouter.put('/cycles/:examId/subjects/:id', authenticate, requireRoles('TEACHER', 'HOD', 'ADMIN'), async (req: AuthRequest, res: Response) => {
+  const { max_marks, passing_marks, exam_date } = req.body;
+  await execute(
+    `UPDATE exam_subjects SET max_marks = COALESCE($1, max_marks), passing_marks = COALESCE($2, passing_marks), exam_date = $3 WHERE id = $4 AND exam_id = $5`,
+    [max_marks || null, passing_marks || null, exam_date || null, req.params.id, req.params.examId]
+  );
+  await logAudit(req, 'BOARD_CYCLE_SUBJECT_UPDATED', 'exam_subjects', req.params.id, { exam_date, max_marks });
+  return res.json({ success: true });
+});
+
 // 3. List subjects configured for a cycle (PCMB / CS / Electronics), with max/passing marks
 boardMarksRouter.get('/cycles/:examId/subjects', authenticate, async (req: AuthRequest, res: Response) => {
   const { examId } = req.params;

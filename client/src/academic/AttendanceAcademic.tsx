@@ -1,10 +1,10 @@
-import { usePS } from './persist';
+import { gotoDetail, usePS } from './persist';
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import {
   ALL_DEPTS, SectionDef, Status, Student, TEACHING_SUBJECTS, allSections, fmtDate, getStandards, getStaff, getStudents, pct, sectionById, staffStatus, standardTotals, studentDayStatus, studentMonthPct, SubjectName,
 } from './sampleData';
-import { Avatar, Bar, Card, Chip, Donut, GREEN, AMBER, RED, PageHead, PickCard, StandardIcon, StatCard, SubjectIcon, GroupIcon } from './ui';
+import { Avatar, Bar, Card, Chip, Donut, GREEN, AMBER, RED, PageHead, PeopleModal, PersonRow, PickCard, StandardIcon, StatCard, SubjectIcon, GroupIcon } from './ui';
 import { DeptAttendance } from './StaffsAcademic';
 
 type Nav = { v: 'home' } | { v: 'students' } | { v: 'std'; std: string } | { v: 'sec'; sec: string } | { v: 'teachers'; group: 'Teaching' | 'Non-Teaching' } | { v: 'dept'; dept: SubjectName; group: 'Teaching' | 'Non-Teaching' };
@@ -12,23 +12,29 @@ type Nav = { v: 'home' } | { v: 'students' } | { v: 'std'; std: string } | { v: 
 const dayCounts = (list: Student[], d: Date) => { let p = 0, a = 0, l = 0; list.forEach((s) => { const x = studentDayStatus(s.id, d); if (x === 'P') p++; else if (x === 'A') a++; else if (x === 'L') l++; }); return { p, a, l, pct: pct(p, p + a + l) }; };
 const prevWorkday = () => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() - 1); return d; };
 
+const studentRows = (list: Student[], d: Date): PersonRow[] => list.map((s) => { const x = studentDayStatus(s.id, d); return { id: s.id, name: s.name, sub: `${sectionById(s.sectionId)?.title ?? ''} · Roll ${s.roll}`, status: x === 'H' ? undefined : x }; });
+
 export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const [nav, setNav] = usePS<Nav>('attendance', 'nav', { v: 'home' });
   const standards = getStandards();
   const everyone = useMemo(() => allSections().flatMap((s) => getStudents(s.id).filter((x) => x.active)), []);
   const staff = getStaff();
+  const [pop, setPop] = useState<{ title: string; rows: PersonRow[]; initial: 'P' | 'A' | 'L' | 'all'; kind: 'student' | 'staff' } | null>(null);
+  const popup = pop && <PeopleModal title={pop.title} rows={pop.rows} initial={pop.initial} onClose={() => setPop(null)} onOpen={(id) => { setPop(null); gotoDetail(pop.kind, id); }} />;
+  const showStudents = (title: string, list: Student[], d: Date, initial: 'P' | 'A' | 'L' | 'all') => setPop({ title, rows: studentRows(list, d), initial, kind: 'student' });
 
   if (nav.v === 'home') {
     const today = dayCounts(everyone, prevWorkday());
     const st = staff.filter((s) => staffStatus(s.id, new Date()) === 'P').length;
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
+        {popup}
         <PageHead title="Attendance" sub="SIR MV PU College · students, staff and classrooms" onBack={onExit} />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Students present" value={today.p} suffix={`${today.pct}% of ${everyone.length}`} tone="green" />
-          <StatCard label="Students absent" value={today.a} />
-          <StatCard label="Students on leave" value={today.l} tone="gold" />
-          <StatCard label="Staff present today" value={st} suffix={`of ${staff.length}`} tone="slate" />
+          <StatCard label="Students present" value={today.p} suffix={`${today.pct}% of ${everyone.length}`} tone="green" onClick={() => showStudents('Students present', everyone, prevWorkday(), 'P')} />
+          <StatCard label="Students absent" value={today.a} onClick={() => showStudents('Students absent', everyone, prevWorkday(), 'A')} />
+          <StatCard label="Students on leave" value={today.l} tone="gold" onClick={() => showStudents('Students on leave', everyone, prevWorkday(), 'L')} />
+          <StatCard label="Staff present today" value={st} suffix={`of ${staff.length}`} tone="slate" onClick={() => { const dd = new Date(); setPop({ title: 'Staff today', initial: 'P', kind: 'staff', rows: staff.map((s) => { const x = staffStatus(s.id, dd); return { id: s.id, name: s.name, sub: s.subject, status: x === 'H' ? undefined : x }; }) }); }} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <PickCard icon={<GroupIcon kind="section" />} title="Students" lines={['College overall', 'Class, section and P / A / L']} onClick={() => setNav({ v: 'students' })} />
@@ -43,8 +49,9 @@ export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit })
     const d = prevWorkday(); const t = dayCounts(everyone, d);
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
+        {popup}
         <PageHead title="Students attendance" sub={`College overall · ${fmtDate(d)}`} onBack={home} crumbs={[{ label: 'Attendance', onClick: home }, { label: 'Students' }]} />
-        <Card><Donut centre={`${t.pct}%`} centreSub="present" parts={[{ label: 'Present', v: t.p, color: GREEN }, { label: 'Leave', v: t.l, color: AMBER }, { label: 'Absent', v: t.a, color: RED }]} /></Card>
+        <Card><Donut centre={`${t.pct}%`} centreSub="present" parts={[{ label: 'Present', v: t.p, color: GREEN, onClick: () => showStudents('Students present', everyone, d, 'P') }, { label: 'Leave', v: t.l, color: AMBER, onClick: () => showStudents('Students on leave', everyone, d, 'L') }, { label: 'Absent', v: t.a, color: RED, onClick: () => showStudents('Students absent', everyone, d, 'A') }]} /></Card>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {standards.map((s) => { const list = allSections().filter((x) => x.std === s.id).flatMap((x) => getStudents(x.id).filter((y) => y.active)); const c = dayCounts(list, d); const tt = standardTotals(s); return (
             <PickCard key={s.id} icon={<StandardIcon id={s.id} />} title={s.full} lines={[`${tt.classes} sections · ${tt.students} students`, `Present ${c.pct}% (${c.p}/${c.p + c.a + c.l})`]} onClick={() => setNav({ v: 'std', std: s.id })} />); })}
@@ -106,11 +113,13 @@ const SectionList: React.FC<{ sec: SectionDef; onBack: (s: SectionDef) => void; 
   const counts = studs.reduce((a, s) => { const x = status(s); if (x === 'P') a.p++; else if (x === 'A') a.a++; else if (x === 'L') a.l++; return a; }, { p: 0, a: 0, l: 0 });
   const move = (n: number) => { const d = new Date(date); d.setDate(d.getDate() + n); if (d.getDay() === 0) d.setDate(d.getDate() + n); if (d <= new Date()) setDate(d); };
   const set = (s: Student, v: Status) => setOver({ ...over, [s.id + date.toDateString()]: v });
+  const [pop, setPop] = useState<'P' | 'A' | 'L' | null>(null);
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
+      {pop && <PeopleModal title={`${sec.title} · ${pop === 'P' ? 'Present' : pop === 'A' ? 'Absent' : 'On leave'} · ${fmtDate(date)}`} initial={pop} rows={studs.map((s) => { const x = status(s); return { id: s.id, name: s.name, sub: `Roll ${s.roll}`, status: x === 'H' ? undefined : x }; })} onClose={() => setPop(null)} onOpen={(id) => { setPop(null); gotoDetail('student', id); }} />}
       <PageHead title={sec.title} sub={`${sec.batch} · ${studs.length} students`} onBack={() => onBack(sec)} crumbs={[{ label: 'Attendance', onClick: onHome }, { label: 'Students', onClick: () => onBack(sec) }, { label: sec.title }]}
         right={<div className="flex items-center gap-1 bg-white border border-[#ded9cf] rounded-xl px-1 py-1"><button onClick={() => move(-1)} className="p-1.5 rounded-lg hover:bg-[#fff6f4]"><ChevronLeft className="w-4 h-4" /></button><span className="text-xs font-semibold px-2 min-w-[96px] text-center">{fmtDate(date)}</span><button onClick={() => move(1)} className="p-1.5 rounded-lg hover:bg-[#fff6f4]"><ChevronRight className="w-4 h-4" /></button></div>} />
-      <div className="grid grid-cols-3 gap-3"><StatCard label="Present (P)" value={counts.p} tone="green" /><StatCard label="Absent (A)" value={counts.a} /><StatCard label="Leave (L)" value={counts.l} tone="gold" /></div>
+      <div className="grid grid-cols-3 gap-3"><StatCard label="Present (P)" value={counts.p} tone="green" onClick={() => setPop('P')} /><StatCard label="Absent (A)" value={counts.a} onClick={() => setPop('A')} /><StatCard label="Leave (L)" value={counts.l} tone="gold" onClick={() => setPop('L')} /></div>
       <Card title="Student list" right={<span className="text-[11px] text-slate-400">tap P / A / L to correct a mark</span>}>
         <ul className="divide-y divide-[#f3ede6]">
           {studs.map((s) => { const x = status(s); return (

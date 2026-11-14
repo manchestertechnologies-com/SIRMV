@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { doneOpen, hasReturn, peekOpen, returnBack, usePS } from './persist';
+import { doneOpen, gotoDetail, hasReturn, peekOpen, returnBack, usePS } from './persist';
 import { Eye } from 'lucide-react';
 import {
   ALL_DEPTS, Period, SLOTS, Staff, Status, SubjectName, WEEKDAYS, attendanceSeries, checkIn, dayName, getStaff, pct, sectionById, staffPeriodStats, staffStatus, staffOf, staffWeekLoad,
 } from './sampleData';
-import { Avatar, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, AMBER, RED, Legend, Pill, PageHead, StatCard, SubjectIcon, TabBar, GREY } from './ui';
+import { Avatar, EditableCard, PhotoBox, Bar, BarChart, Card, Chip, Donut, GREEN, AMBER, RED, Legend, Pill, PageHead, PeopleModal, PersonRow, StatCard, SubjectIcon, TabBar, GREY } from './ui';
 
 type Nav = { v: 'home' } | { v: 'dept'; dept: SubjectName; tab?: string } | { v: 'staff'; id: string; tab?: string };
 const PERIODS: { key: Period; label: string }[] = [{ key: 'day', label: 'Day' }, { key: 'week', label: 'Week' }, { key: 'month', label: 'Month' }, { key: 'year', label: 'Year' }];
+
+const staffRows = (list: Staff[]): PersonRow[] => { const d = new Date(); return list.map((s) => { const st = staffStatus(s.id, d); return { id: s.id, name: s.name, sub: `${s.role === 'Non-Teaching' ? s.designation : s.subject + ' · ' + s.role}`, status: st === 'H' ? undefined : st, note: st === 'P' ? checkIn(s.id) : undefined }; }); };
 
 const todayCounts = (list: Staff[]) => {
   const d = new Date(); let p = 0, a = 0, l = 0;
@@ -26,16 +28,20 @@ export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => voi
   const manage = null;
   void onManage;
 
+  const [pop, setPop] = useState<{ title: string; rows: PersonRow[]; initial: 'P' | 'A' | 'L' | 'all' } | null>(null);
+
   if (nav.v === 'home') {
     const all = getStaff(); const t = todayCounts(all);
+    const show = (title: string, initial: 'P' | 'A' | 'L' | 'all') => setPop({ title, rows: staffRows(all), initial });
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
+        {pop && <PeopleModal title={pop.title} rows={pop.rows} initial={pop.initial} onClose={() => setPop(null)} onOpen={(id) => { setPop(null); setNav({ v: 'staff', id }); }} />}
         <PageHead title="Staffs" sub={`SIR MV PU College · ${all.length} staff across ${ALL_DEPTS.length} departments`} onBack={onExit} right={manage} />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Total staff" value={all.length} tone="slate" />
-          <StatCard label="Present today" value={t.p} suffix={`${t.pct}% of staff`} tone="green" />
-          <StatCard label="On leave" value={t.l} tone="gold" />
-          <StatCard label="Absent" value={t.a} />
+          <StatCard label="Total staff" value={all.length} tone="slate" onClick={() => show('All staff · today', 'all')} />
+          <StatCard label="Present today" value={t.p} suffix={`${t.pct}% of staff`} tone="green" onClick={() => show('Present today', 'P')} />
+          <StatCard label="On leave" value={t.l} tone="gold" onClick={() => show('On leave today', 'L')} />
+          <StatCard label="Absent" value={t.a} onClick={() => show('Absent today', 'A')} />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {ALL_DEPTS.map((d) => {
@@ -130,17 +136,20 @@ export const DeptAttendance: React.FC<{ list: Staff[]; onOpen?: (id: string) => 
   const sum = series.reduce((a, b) => ({ p: a.p + b.present, a: a.a + b.absent, l: a.l + b.leave }), { p: 0, a: 0, l: 0 });
   const today = todayCounts(list);
   const rows = list.map((s) => ({ s, st: staffPeriodStats(s, period) }));
+  const [pop, setPop] = useState<'P' | 'A' | 'L' | 'all' | null>(null);
+  const popRows: PersonRow[] = pop ? (period === 'day' ? staffRows(list) : rows.map(({ s, st }) => ({ id: s.id, name: s.name, sub: s.role === 'Non-Teaching' ? s.designation : s.subject, status: pop === 'all' ? undefined : pop, note: pop === 'all' ? `${st.percent}%` : `${pop === 'P' ? st.present : pop === 'A' ? st.absent : st.leave} days` })).filter((r) => pop === 'all' || parseInt(r.note || '0', 10) > 0)) : [];
   return (
     <div className="space-y-5">
+      {pop && <PeopleModal title={`${pop === 'P' ? 'Present' : pop === 'A' ? 'Absent' : pop === 'L' ? 'On leave' : 'All staff'} · ${period === 'day' ? 'today' : 'this ' + period}`} rows={popRows} initial={period === 'day' ? pop : 'all'} onClose={() => setPop(null)} onOpen={onOpen ? (id) => { setPop(null); onOpen(id); } : (id) => { setPop(null); gotoDetail('staff', id); }} />}
       <PeriodSwitch value={period} onChange={setPeriod} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={period === 'day' ? 'Present today' : 'Average attendance'} value={period === 'day' ? today.pct : pct(sum.p, sum.p + sum.a + sum.l)} suffix="% present" tone="green" />
-        <StatCard label="Present" value={period === 'day' ? today.p : sum.p} suffix={period === 'day' ? 'staff today' : 'staff-days'} tone="slate" />
-        <StatCard label="Leave" value={period === 'day' ? today.l : sum.l} tone="gold" />
-        <StatCard label="Absent" value={period === 'day' ? today.a : sum.a} />
+        <StatCard label={period === 'day' ? 'Present today' : 'Average attendance'} value={period === 'day' ? today.pct : pct(sum.p, sum.p + sum.a + sum.l)} suffix="% present" tone="green" onClick={() => setPop('all')} />
+        <StatCard label="Present" value={period === 'day' ? today.p : sum.p} suffix={period === 'day' ? 'staff today' : 'staff-days'} tone="slate" onClick={() => setPop('P')} />
+        <StatCard label="Leave" value={period === 'day' ? today.l : sum.l} tone="gold" onClick={() => setPop('L')} />
+        <StatCard label="Absent" value={period === 'day' ? today.a : sum.a} onClick={() => setPop('A')} />
       </div>
       {period === 'day' ? (
-        <Card title="Today"><Donut centre={`${today.pct}%`} centreSub="present" parts={[{ label: 'Present', v: today.p, color: GREEN }, { label: 'Leave', v: today.l, color: AMBER }, { label: 'Absent', v: today.a, color: RED }]} /></Card>
+        <Card title="Today"><Donut centre={`${today.pct}%`} centreSub="present" parts={[{ label: 'Present', v: today.p, color: GREEN, onClick: () => setPop('P') }, { label: 'Leave', v: today.l, color: AMBER, onClick: () => setPop('L') }, { label: 'Absent', v: today.a, color: RED, onClick: () => setPop('A') }]} /></Card>
       ) : (
         <Card title={period === 'week' ? 'Last 7 days' : period === 'month' ? 'Last 30 days' : 'Last 12 months'} right={<Legend items={[{ label: 'Present', color: GREEN }, { label: 'Leave', color: AMBER }, { label: 'Absent', color: RED }]} />}>
           <BarChart data={series.map((b) => ({ label: b.label, title: `${b.label}: ${b.present} present, ${b.leave} leave, ${b.absent} absent`, parts: [{ v: b.present, color: GREEN }, { v: b.leave, color: AMBER }, { v: b.absent, color: RED }] }))} />

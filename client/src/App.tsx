@@ -19,6 +19,7 @@ import { TimetableAcademic } from './academic/TimetableAcademic';
 import { BlueprintModule } from './academic/BlueprintModule';
 import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
 import { TimetableGenerator } from './academic/TimetableGenerator';
+import { LeaderboardAcademic } from './academic/LeaderboardAcademic';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
 
@@ -79,6 +80,18 @@ export function App() {
   // a sidebar tap starts that module from its first page
   const selectTab = (tab: string) => { clearTabState(tab); try { sessionStorage.removeItem('mt-return'); } catch { /* ignore */ } setActiveTab(tab); setNavNonce((n) => n + 1); };
   activeUid.current = user?.id;
+
+  // Browser back: from any screen go to the dashboard first; one more back leaves the app.
+  useEffect(() => {
+    const inner = !!(window.history.state && window.history.state.mtInner);
+    if (activeTab !== 'dashboard-home' && !inner) window.history.pushState({ ...(window.history.state || {}), mtInner: true }, '');
+    else if (activeTab === 'dashboard-home' && inner) window.history.back();
+  }, [activeTab]);
+  useEffect(() => {
+    const onPop = () => { if (activeTabRef.current !== 'dashboard-home') { setActiveTab('dashboard-home'); setNavNonce((n) => n + 1); } };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // detail pages (faculty / student) opened from another screen, with a way back to the exact spot
   useEffect(() => {
@@ -236,6 +249,8 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} staffId={user?.staffId} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'leaderboard' && academicRole ? (
+            <LeaderboardAcademic onExit={() => selectTab('dashboard-home')} only={myClasses} />
           ) : activeTab === 'exam-management' ? (
             <Suspense fallback={<AcademicLoading />}><ExamAcademic onExit={() => setActiveTab('dashboard-home')} onOpenBlueprint={() => selectTab('blueprint')} /></Suspense>
           ) : activeTab === 'my-exam-duty' && academicRole ? (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, ArrowLeft, BookOpen, Upload, Eye, Save } from 'lucide-react';
+import { Plus, X, ArrowLeft, BookOpen, Upload, Eye, Save, Pencil } from 'lucide-react';
 
 export const BoardMarksPage: React.FC = () => {
   const { currentBranch } = useAuth();
@@ -10,15 +10,21 @@ export const BoardMarksPage: React.FC = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
 
+  const [editing, setEditing] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
   const branchId = currentBranch?.id || '';
 
   const load = async () => {
+    setFailed(false);
     try {
       const res = await apiFetch<any>(`/board-marks/cycles?branch_id=${branchId}`);
       setCycles(res.cycles || []);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error(err); setFailed(true); }
+    setLoading(false);
   };
-  useEffect(() => { if (branchId) load(); }, [branchId]);
+  useEffect(() => { load(); }, [branchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (selectedCycleId) {
     return <CycleDetail cycleId={selectedCycleId} branchId={branchId} onBack={() => setSelectedCycleId(null)} />;
@@ -34,31 +40,36 @@ export const BoardMarksPage: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cycles.map((c) => (
-          <button key={c.id} onClick={() => setSelectedCycleId(c.id)} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition text-left space-y-2">
+          <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCycleId(c.id)} onKeyDown={(e) => { if (e.key === 'Enter') setSelectedCycleId(c.id); }} className="cursor-pointer bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition text-left space-y-2">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-indigo-500" />
-              <h3 className="font-bold text-slate-900 text-sm">{c.name}</h3>
+              <h3 className="font-bold text-slate-900 text-sm flex-1">{c.name}</h3>
+              <button onClick={(e) => { e.stopPropagation(); setEditing(c); }} title="Edit cycle name and dates" className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"><Pencil className="w-3.5 h-3.5" /></button>
             </div>
             <p className="text-[11px] text-slate-500">{c.academic_year} • {c.start_date} to {c.end_date}</p>
-          </button>
+          </div>
         ))}
-        {cycles.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No board exam cycles yet. Add Cycle 1 / 2 / 3 to get started.</p>}
+        {loading && <p className="text-sm text-slate-400 col-span-full text-center py-10">Loading cycles…</p>}
+        {failed && !loading && <p className="text-sm text-rose-600 col-span-full text-center py-10">Could not load cycles. <button onClick={load} className="underline font-semibold">Retry</button></p>}
+        {!loading && !failed && cycles.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No board exam cycles yet. Add Cycle 1 / 2 / 3 to get started.</p>}
       </div>
 
       {showAdd && <AddCycleModal branchId={branchId} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load(); }} />}
+      {editing && <AddCycleModal branchId={branchId} cycle={editing} onClose={() => setEditing(null)} onCreated={() => { setEditing(null); load(); }} />}
     </div>
   );
 };
 
-const AddCycleModal: React.FC<{ branchId: string; onClose: () => void; onCreated: () => void }> = ({ branchId, onClose, onCreated }) => {
-  const [form, setForm] = useState<any>({ academic_year: '2026-27' });
+const AddCycleModal: React.FC<{ branchId: string; cycle?: any; onClose: () => void; onCreated: () => void }> = ({ branchId, cycle, onClose, onCreated }) => {
+  const [form, setForm] = useState<any>(cycle ? { name: cycle.name, academic_year: cycle.academic_year, start_date: String(cycle.start_date || '').slice(0, 10), end_date: String(cycle.end_date || '').slice(0, 10) } : { academic_year: '2026-27' });
   const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      await apiFetch(`/board-marks/cycles`, { method: 'POST', body: JSON.stringify({ ...form, branch_id: branchId }) });
+      if (cycle) await apiFetch(`/board-marks/cycles/${cycle.id}`, { method: 'PUT', body: JSON.stringify(form) });
+      else await apiFetch(`/board-marks/cycles`, { method: 'POST', body: JSON.stringify({ ...form, branch_id: branchId }) });
       onCreated();
     } catch (err: any) { setError(err.message); }
   };
@@ -67,21 +78,19 @@ const AddCycleModal: React.FC<{ branchId: string; onClose: () => void; onCreated
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-slate-900">Add Board Exam Cycle</h3>
+          <h3 className="font-bold text-slate-900">{cycle ? 'Edit Board Exam Cycle' : 'Add Board Exam Cycle'}</h3>
           <button onClick={onClose}><X className="w-4 h-4 text-slate-400" /></button>
         </div>
         {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
         <form onSubmit={submit} className="space-y-3">
-          <select required value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input">
-            <option value="">Select Cycle</option>
-            <option value="Cycle 1">Cycle 1</option><option value="Cycle 2">Cycle 2</option><option value="Cycle 3">Cycle 3</option>
-          </select>
+          <input required list="cycle-names" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Cycle name e.g. Cycle 1" className="input" />
+          <datalist id="cycle-names"><option value="Cycle 1" /><option value="Cycle 2" /><option value="Cycle 3" /></datalist>
           <input value={form.academic_year} onChange={(e) => setForm({ ...form, academic_year: e.target.value })} placeholder="Academic Year" className="input" />
           <div className="grid grid-cols-2 gap-2">
-            <input required type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="input" />
-            <input required type="date" value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="input" />
+            <label className="text-[10px] font-semibold text-slate-500">Starts<input required type="date" value={form.start_date || ''} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="input mt-1" /></label>
+            <label className="text-[10px] font-semibold text-slate-500">Ends<input required type="date" min={form.start_date || undefined} value={form.end_date || ''} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="input mt-1" /></label>
           </div>
-          <button className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">Save Cycle</button>
+          <button className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">{cycle ? 'Save changes' : 'Save Cycle'}</button>
         </form>
       </div>
       <style>{`.input { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.55rem 0.75rem; font-size: 0.8rem; outline: none; }`}</style>
@@ -95,6 +104,15 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [subjectForm, setSubjectForm] = useState<any>({ max_marks: 100, passing_marks: 35 });
   const [selectedExamSubjectId, setSelectedExamSubjectId] = useState<string | null>(null);
+  const [editSub, setEditSub] = useState<any | null>(null);
+
+  const saveSub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiFetch(`/board-marks/cycles/${cycleId}/subjects/${editSub.id}`, { method: 'PUT', body: JSON.stringify({ exam_date: editSub.exam_date || null, max_marks: Number(editSub.max_marks), passing_marks: Number(editSub.passing_marks) }) });
+      setEditSub(null); loadSubjects(); showToast('Subject timing saved', 'success');
+    } catch (err: any) { showToast(err.message, 'error'); }
+  };
 
   const loadSubjects = async () => {
     const res = await apiFetch<any>(`/board-marks/cycles/${cycleId}/subjects`);
@@ -139,7 +157,7 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
                 <td className="p-3 font-semibold">{s.subject_name}</td>
                 <td className="p-3">{s.class_name}</td>
                 <td className="p-3">{s.max_marks}</td>
-                <td className="p-3">{s.exam_date || '—'}</td>
+                <td className="p-3">{s.exam_date ? String(s.exam_date).slice(0, 10) : '—'} <button onClick={() => setEditSub({ ...s, exam_date: s.exam_date ? String(s.exam_date).slice(0, 10) : '' })} title="Edit date and marks" className="ml-1 p-1 rounded text-slate-400 hover:text-indigo-600"><Pencil className="w-3 h-3 inline" /></button></td>
                 <td className="p-3">
                   <button onClick={() => setSelectedExamSubjectId(s.id)} className="text-indigo-600 font-bold">Enter Marks →</button>
                 </td>
@@ -151,6 +169,19 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
         </div>
       </div>
 
+      {editSub && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <form onSubmit={saveSub} className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3">
+            <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">Edit {editSub.subject_name}</h3><button type="button" onClick={() => setEditSub(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <label className="block text-[10px] font-semibold text-slate-500">Exam date<input type="date" value={editSub.exam_date || ''} onChange={(e) => setEditSub({ ...editSub, exam_date: e.target.value })} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" /></label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[10px] font-semibold text-slate-500">Max marks<input type="number" min={1} value={editSub.max_marks} onChange={(e) => setEditSub({ ...editSub, max_marks: e.target.value })} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" /></label>
+              <label className="block text-[10px] font-semibold text-slate-500">Passing marks<input type="number" min={0} value={editSub.passing_marks} onChange={(e) => setEditSub({ ...editSub, passing_marks: e.target.value })} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" /></label>
+            </div>
+            <button className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">Save changes</button>
+          </form>
+        </div>
+      )}
       {showAddSubject && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">

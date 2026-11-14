@@ -8,7 +8,10 @@ const CUSTOM_OPTION = '__CUSTOM__';
 
 export const BatchesPage: React.FC = () => {
   const { currentBranch } = useAuth();
-  const [batches, setBatches] = useState<any[]>([]);
+  const cacheKey = 'mt-batches-cache';
+  const [batches, setBatches] = useState<any[]>(() => { try { return JSON.parse(sessionStorage.getItem(cacheKey) || '[]'); } catch { return []; } });
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [namePresets, setNamePresets] = useState<{ name: string; code: string }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [choice, setChoice] = useState('');
@@ -20,18 +23,24 @@ export const BatchesPage: React.FC = () => {
   const branchId = currentBranch?.id || '';
 
   const load = async () => {
-    try {
-      const [batchesRes, presetsRes] = await Promise.all([
-        apiFetch<any>(`/batches?branch_id=${branchId}`),
-        apiFetch<any>(`/batches/name-presets?branch_id=${branchId}`).catch(() => ({ presets: [] }))
-      ]);
-      setBatches(batchesRes.batches || []);
-      setNamePresets(presetsRes.presets || []);
-    } catch (err) {
-      console.error(err);
+    setFailed(false);
+    // the list paints at once; presets (only needed for the Add dialog) load separately
+    apiFetch<any>(`/batches/name-presets?branch_id=${branchId}`).then((r) => setNamePresets(r.presets || [])).catch(() => {});
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await apiFetch<any>(`/batches?branch_id=${branchId}`);
+        const list = res.batches || [];
+        setBatches(list); setLoading(false);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(list)); } catch { /* ignore */ }
+        return;
+      } catch (err) {
+        console.error(err);
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 600));
+      }
     }
+    setFailed(true); setLoading(false);
   };
-  useEffect(() => { if (branchId) load(); }, [branchId]);
+  useEffect(() => { load(); }, [branchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createBatch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +98,9 @@ export const BatchesPage: React.FC = () => {
             </button>
           </div>
         ))}
-        {batches.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No batches yet. Add one to get started.</p>}
+        {loading && batches.length === 0 && Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-[108px] rounded-2xl bg-slate-100 animate-pulse" />)}
+        {failed && batches.length === 0 && <p className="text-sm text-rose-600 col-span-full text-center py-10">Could not load batches. <button onClick={load} className="underline font-semibold">Retry</button></p>}
+        {!loading && !failed && batches.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No batches yet. Add one to get started.</p>}
       </div>
 
       {showAdd && (

@@ -715,3 +715,8 @@ main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
   animation: mt-shadow-pulse 2.2s ease-in-out infinite, mt-glitter-drift 5.5s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
+
+/* whole screen glides down into place in one go (no per-box delays) */
+@keyframes mt-drop { from { opacity: 0; transform: translate3d(0, -14px, 0); } to { opacity: 1; transform: none; } }
+main.mt-scroll { animation: mt-drop .3s cubic-bezier(.2, .7, .2, 1); }
+@media (prefers-reduced-motion: reduce) { main.mt-scroll { animation: none; } }
