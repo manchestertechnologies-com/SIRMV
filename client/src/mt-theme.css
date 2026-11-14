@@ -716,7 +716,16 @@ main .grid > [class*="rounded-3xl"]:not(button):not(:has(canvas)):hover,
 }
 @media (prefers-reduced-motion: reduce) { main .grid > [class*="rounded-2xl"]:hover, .mt-tile-card:hover { animation: none; } }
 
-/* whole screen glides down into place in one go (no per-box delays) */
-@keyframes mt-drop { from { opacity: 0; transform: translate3d(0, -14px, 0); } to { opacity: 1; transform: none; } }
-main.mt-scroll { animation: mt-drop .3s cubic-bezier(.2, .7, .2, 1); }
-@media (prefers-reduced-motion: reduce) { main.mt-scroll { animation: none; } }
+/* the whole screen rises gently into place and fades in together (like the reference clip) */
+@keyframes mt-rise { from { opacity: 0; transform: translate3d(0, 18px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+main.mt-scroll { animation: mt-rise .7s cubic-bezier(.22, 1, .36, 1) both; will-change: transform, opacity; backface-visibility: hidden; }
+@keyframes mt-rise-done { to { will-change: auto; } }
+
+/* three-bar loader */
+.mt-bars { display: flex; align-items: center; justify-content: center; gap: 6px; height: 46vh; min-height: 220px; }
+.mt-bars i { width: 8px; height: 34px; border-radius: 4px; transform-origin: 50% 100%; animation: mt-bar 1s cubic-bezier(.4, 0, .2, 1) infinite; }
+.mt-bars i:nth-child(1) { background: #a3161b; }
+.mt-bars i:nth-child(2) { background: #c28535; animation-delay: .15s; }
+.mt-bars i:nth-child(3) { background: #8f1218; animation-delay: .3s; }
+@keyframes mt-bar { 0%, 100% { transform: scaleY(.45); opacity: .55; } 50% { transform: scaleY(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { main.mt-scroll { animation: none; } .mt-bars i { animation-duration: 2s; } }

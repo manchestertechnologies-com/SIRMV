@@ -58,7 +58,7 @@ const DisciplineRecordsPage = lazyWithRetry(() => import('./pages/DisciplineReco
 const MyProfilePage = lazyWithRetry(() => import('./pages/MyProfilePage').then((m) => ({ default: m.MyProfilePage })));
 const QuestionPaperSuite = lazyWithRetry(() => import('./components/question-paper/QuestionPaperSuite').then((m) => ({ default: m.QuestionPaperSuite })));
 
-const AcademicLoading = () => <div className="py-24 text-center text-sm text-slate-500">Loading…</div>;
+const AcademicLoading = () => <div className="mt-bars" role="status" aria-label="Loading"><i /><i /><i /></div>;
 
 export function App() {
   // the open screen survives a refresh (kept per logged-in user for this browser tab)
