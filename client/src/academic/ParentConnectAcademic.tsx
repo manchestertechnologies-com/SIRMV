@@ -16,6 +16,17 @@ const ADMINS = ['ADMIN', 'PRINCIPAL', 'WARDEN', 'HEAD_WARDEN'];
 const studentSpec = (c: PcContact): PortraitSpec => ({ seed: c.studentUserId, gender: /^f/i.test(c.studentGender || '') ? 'Female' : 'Male', age: c.dob ? Math.max(15, new Date().getFullYear() - Number(c.dob.slice(0, 4))) : 17, role: 'student' });
 const parentSpec = (c: PcContact): PortraitSpec => ({ seed: c.parentUserId, gender: /^(mrs|ms|smt|miss)\b/i.test(c.parentName.trim()) ? 'Female' : 'Male', age: 46, role: 'parent' });
 
+const isAuthErr = (e: any) => /token|expired|unauthori[sz]ed/i.test(e?.message || '');
+const SessionNotice: React.FC = () => {
+  const { logout } = useAuth();
+  return (
+    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="flex-1"><b>Please sign in again to use Parent Connect.</b><span className="block text-xs mt-0.5">Your sign-in is offline or has expired, so calls and hostel controls cannot reach the server yet.</span></div>
+      <button onClick={logout} className="px-4 py-2 rounded-xl bg-[#a3161b] text-white text-xs font-bold hover:bg-[#8f1218]">Sign in again</button>
+    </div>
+  );
+};
+
 const when = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
 const statusPill = (h: PcHistory) => h.status === 'ended' ? <Pill tone="green">Completed</Pill> : h.status === 'missed' ? <Pill tone="amber">Missed</Pill> : h.status === 'rejected' ? <Pill tone="red">Declined</Pill> : <Pill tone="grey">{h.status}</Pill>;
 
@@ -54,7 +65,8 @@ const FamilyView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const [busy, setBusy] = useState('');
   const isStudent = user?.role === 'STUDENT';
 
-  const load = useCallback(() => { pcApi.availability().then(setAv).catch(() => {}); pcApi.history().then(setHistory).catch(() => {}); }, []);
+  const [authErr, setAuthErr] = useState(false);
+  const load = useCallback(() => { pcApi.availability().then(setAv).catch((e) => { if (isAuthErr(e)) setAuthErr(true); }); pcApi.history().then(setHistory).catch(() => {}); }, []);
   useEffect(() => { load(); refreshContacts(); const t = setInterval(load, 20000); return () => clearInterval(t); }, [load, refreshContacts]);
   useEffect(() => { if (!call) load(); }, [call, load]);
 
@@ -68,6 +80,7 @@ const FamilyView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   return (
     <div className="space-y-5 max-w-5xl mx-auto">
       <PageHead title="Parent Connect" sub="Private voice calls between students and their parents over the internet. No phone number or SIM needed." onBack={onExit} right={<WindowBadge av={av} />} />
+      {authErr && <SessionNotice />}
       {err && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">{err}</div>}
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="Calls so far" value={history.length} tone="slate" />
@@ -143,7 +156,7 @@ const AdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
 
   const load = useCallback(() => {
     pcApi.availability().then(setAv).catch(() => {});
-    pcApi.live().then((r) => { setLive(r.live); setStats(r.stats); }).catch((e) => setErr(e.message));
+    pcApi.live().then((r) => { setLive(r.live); setStats(r.stats); setErr(''); }).catch((e) => setErr(e.message));
     pcApi.history().then(setHistory).catch(() => {});
   }, []);
   useEffect(() => { load(); pcApi.contacts().then(setFamilies).catch(() => {}); const t = setInterval(load, 5000); return () => clearInterval(t); }, [load]);
@@ -155,7 +168,7 @@ const AdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   return (
     <div className="space-y-5 max-w-6xl mx-auto">
       <PageHead title="Parent Connect" sub="Hostel control for student and parent voice calls" onBack={onExit} right={<WindowBadge av={av} />} />
-      {err && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">{err}</div>}
+      {err && (isAuthErr({ message: err }) ? <SessionNotice /> : <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">{err}</div>)}
       <TabBar items={['Overview', 'Families', 'Calling hours', 'Call log']} value={tab} onChange={setTab} />
       {tab === 'Overview' && (
         <>

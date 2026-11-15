@@ -12,6 +12,20 @@ const FEATURES = [
   { icon: FileBarChart2, title: 'Live Reports', text: 'Insights for every role, in real time' }
 ];
 
+import { portraitUrl, type PortraitSpec } from '../utils/portrait';
+
+const PRESET_FACE: Record<string, PortraitSpec> = {
+  'admin.demo@college.test': { seed: 'login-admin', gender: 'Male', age: 52, role: 'admin' },
+  'principal.demo@college.test': { seed: 'login-principal', gender: 'Female', age: 54, role: 'admin' },
+  'hod.demo@college.test': { seed: 'login-hod', gender: 'Male', age: 49, role: 'hod' },
+  'teacher.demo@college.test': { seed: 'login-teacher', gender: 'Female', age: 33, role: 'teacher' },
+  'floor.demo@college.test': { seed: 'login-floor', gender: 'Male', age: 36, role: 'staff' },
+  'staff.demo@college.test': { seed: 'login-staff', gender: 'Female', age: 39, role: 'staff' },
+  'warden.demo@college.test': { seed: 'login-warden', gender: 'Male', age: 45, role: 'staff' },
+  'student.demo@college.test': { seed: 'login-student', gender: 'Female', age: 17, role: 'student' },
+  'parent.demo@college.test': { seed: 'login-parent', gender: 'Male', age: 47, role: 'parent' },
+};
+
 const PRESETS = [
   { id: 'admin.demo@college.test', label: 'Administrator' },
   { id: 'principal.demo@college.test', label: 'Principal' },
@@ -237,9 +251,10 @@ export const LoginPage: React.FC = () => {
                         setIdentifier(p.id);
                         setPassword('Demo@12345');
                       }}
-                      className="mt-preset mt-pop px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 cursor-pointer"
+                      className="mt-preset mt-pop px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 cursor-pointer flex flex-col items-center gap-1"
                       style={{ ['--i' as any]: i + 7 }}
                     >
+                      <img src={portraitUrl(PRESET_FACE[p.id])} alt="" className="w-11 h-11 rounded-full object-cover" />
                       {p.label}
                     </button>
                   ))}

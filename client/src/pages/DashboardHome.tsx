@@ -1,4 +1,5 @@
 import React from 'react';
+import { accountPortraitUrl, honorificless } from '../utils/userPortrait';
 import { useAuth } from '../context/AuthContext';
 import { getRoleNavigation } from '../utils/rbac';
 import { ArrowRight } from 'lucide-react';
@@ -17,7 +18,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const firstName = (user?.name || 'there').split(' ')[0];
+  const firstName = honorificless(user?.name || 'there').split(' ')[0] || 'there';
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2 select-none">
@@ -48,9 +49,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
           </div>
 
           <div className="flex items-center gap-3 shrink-0 bg-white/10 backdrop-blur px-4 py-2.5 rounded-xl border border-white/20">
-            <div className="w-9 h-9 rounded-xl bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-sm">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </div>
+            {user ? <img src={accountPortraitUrl(user)} alt="" className="w-11 h-11 rounded-full object-cover ring-2 ring-[#d9a85a]/80 shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-sm">U</div>}
             <div className="text-left">
               <div className="text-xs font-bold text-white truncate max-w-[150px]">
                 {user?.name || 'Authorized User'}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/api';
+import { accountPortraitUrl } from '../utils/userPortrait';
 import {
   Building2,
   ChevronDown,
@@ -249,9 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
               title="Switch role" className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 transition"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-xs shrink-0">
-                {user?.role?.[0] || 'U'}
-              </div>
+              {user ? <img src={accountPortraitUrl(user)} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-[#d9a85a]/70 shrink-0" /> : <div className="w-7 h-7 rounded-lg bg-[#d9a85a] flex items-center justify-center font-bold text-[#4a0709] text-xs shrink-0">U</div>}
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-bold text-white leading-tight">
                   {user?.name || 'Administrator'}

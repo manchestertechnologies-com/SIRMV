@@ -20,7 +20,6 @@ import { BlueprintModule } from './academic/BlueprintModule';
 import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
 import { TimetableGenerator } from './academic/TimetableGenerator';
 import { LeaderboardAcademic } from './academic/LeaderboardAcademic';
-import { ParentConnectAcademic } from './academic/ParentConnectAcademic';
 import { CallOverlay } from './components/CallOverlay';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
@@ -47,6 +46,8 @@ const InvigilationScanPage = lazyWithRetry(() => import('./pages/InvigilationSca
 const ExamSeatingPage = lazyWithRetry(() => import('./pages/ExamSeatingPage').then((m) => ({ default: m.ExamSeatingPage })));
 const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const CounsellingModule = lazyWithRetry(() => import('./pages/CounsellingModule').then((m) => ({ default: m.CounsellingModule })));
+const ParentConnectAcademic = lazyWithRetry(() => import('./academic/ParentConnectAcademic').then((m) => ({ default: m.ParentConnectAcademic })));
+const AdmissionAcademic = lazyWithRetry(() => import('./academic/AdmissionAcademic').then((m) => ({ default: m.AdmissionAcademic })));
 const CalendarPage = lazyWithRetry(() => import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })));
 const FloorIssuesPage = lazyWithRetry(() => import('./pages/FloorIssuesPage').then((m) => ({ default: m.FloorIssuesPage })));
 const StudentAttendanceView = lazyWithRetry(() => import('./pages/StudentAttendanceView').then((m) => ({ default: m.StudentAttendanceView })));
@@ -253,6 +254,8 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} staffId={user?.staffId} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'admission' ? (
+            <AdmissionAcademic onExit={() => selectTab('dashboard-home')} />
           ) : activeTab === 'parent-connect' ? (
             <ParentConnectAcademic onExit={() => selectTab('dashboard-home')} />
           ) : activeTab === 'leaderboard' && academicRole ? (

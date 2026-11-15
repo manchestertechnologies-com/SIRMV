@@ -146,12 +146,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (identifier: string, password: string = '123456', silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const res = await apiFetch<{ token: string; user: User }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: identifier, username: identifier, password })
-      });
+      // demo accounts use "123456" on the sign-in page but "Demo@12345" on the server: try both, so the
+      // person gets a real session (calls, notifications, saved data) instead of the offline demo one
+      let res: { token: string; user: User } | null = null;
+      let lastErr: unknown = null;
+      for (const pw of password === '123456' ? ['123456', 'Demo@12345'] : [password]) {
+        try {
+          res = await apiFetch<{ token: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ email: identifier, username: identifier, password: pw }) });
+          break;
+        } catch (e) { lastErr = e; }
+      }
+      if (!res) throw lastErr;
       setAuthToken(res.token);
       setUser(res.user);
+      try { localStorage.removeItem('mt-demo-user'); } catch { /* ignore */ }
     } catch (err) {
       // Fallback demo login if network/backend is waking up
       const roleMap: Record<string, { role: UserRole; name: string }> = {
