@@ -82,7 +82,7 @@ export const SettingsPage: React.FC = () => {
 
         {status?.supportState === 'unsupported' && (
           <div className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-600">
-            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-slate-400" />
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-slate-500" />
             <span>
               Your browser doesn't support push notifications. On iPhone/iPad: open this site in Safari, tap Share, then
               "Add to Home Screen" — after that, open it from the Home Screen icon and try again here.

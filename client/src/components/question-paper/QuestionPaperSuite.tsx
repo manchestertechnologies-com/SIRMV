@@ -1076,7 +1076,7 @@ export const QuestionPaperSuite: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-black text-indigo-700 font-mono">
-                      {evalResult.netScore} <span className="text-xs font-bold text-slate-400">/ {evalResult.maxScore}</span>
+                      {evalResult.netScore} <span className="text-xs font-bold text-slate-500">/ {evalResult.maxScore}</span>
                     </div>
                     <div className="text-[11px] font-bold text-emerald-600">{evalResult.percentage}% Net Score</div>
                   </div>
@@ -1125,7 +1125,7 @@ export const QuestionPaperSuite: React.FC = () => {
                                 {q.studentAnswer}
                               </span>
                             ) : (
-                              <span className="text-slate-400 italic">Unattempted</span>
+                              <span className="text-slate-500 italic">Unattempted</span>
                             )}
                           </td>
                           <td className="p-2 font-bold text-slate-800">({q.correctAnswer})</td>
@@ -1139,7 +1139,7 @@ export const QuestionPaperSuite: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
                 Enter student responses or quick optical string on the left to compute net scores.
               </div>
             )}
@@ -1161,7 +1161,7 @@ export const QuestionPaperSuite: React.FC = () => {
                 <div key={p.examId} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-400 transition space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-indigo-700">{p.examId}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(p.createdAt).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</span>
                   </div>
                   <h4 className="font-bold text-xs text-slate-900">{p.title}</h4>
                   <div className="flex items-center gap-3 text-[11px] text-slate-600">

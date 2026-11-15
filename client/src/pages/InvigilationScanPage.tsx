@@ -74,7 +74,7 @@ export const InvigilationScanPage: React.FC = () => {
             <Camera className="w-5 h-5" />
             Scan QR Code
           </button>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-500">
             Each QR code only works during that exam's time window and can only be used once.
           </p>
         </div>

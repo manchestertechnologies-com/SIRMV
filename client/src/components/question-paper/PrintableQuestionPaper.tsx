@@ -255,7 +255,7 @@ export const PrintableQuestionPaper: React.FC<PrintableQuestionPaperProps> = ({
 
         {/* Space for Rough Work Page */}
         <div className="force-page-break border-2 border-dashed border-slate-300 rounded p-4 text-center mt-8 min-h-[300px]">
-          <span className="font-sans font-bold text-xs uppercase tracking-widest text-slate-400">
+          <span className="font-sans font-bold text-xs uppercase tracking-widest text-slate-500">
             SPACE FOR ROUGH WORK / CALCULATIONS
           </span>
         </div>

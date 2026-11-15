@@ -108,7 +108,7 @@ export const ExamStudentProfileModal: React.FC<{ studentId: string; onClose: () 
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
           </div>
         ) : !profile ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Student profile not found.</div>
+          <div className="p-8 text-center text-slate-500 text-sm">Student profile not found.</div>
         ) : (
           <div className="p-5 space-y-5">
             {/* Basic Info */}
@@ -130,7 +130,7 @@ export const ExamStudentProfileModal: React.FC<{ studentId: string; onClose: () 
                 <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Overall Attendance</div>
                 <div className="text-lg font-bold text-slate-900">
                   {attendance?.overallPercentage ?? 0}%
-                  <span className="text-xs font-semibold text-slate-400 ml-2">
+                  <span className="text-xs font-semibold text-slate-500 ml-2">
                     ({attendance?.overallAttended ?? 0}/{attendance?.overallTotal ?? 0} periods)
                   </span>
                 </div>
@@ -144,7 +144,7 @@ export const ExamStudentProfileModal: React.FC<{ studentId: string; onClose: () 
                 <h3 className="font-bold text-slate-900 text-sm">Previous Marks</h3>
               </div>
               {theory.length === 0 && competitive.length === 0 && board.length === 0 ? (
-                <div className="text-xs text-slate-400 flex items-center gap-1.5">
+                <div className="text-xs text-slate-500 flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5" /> No exam results recorded yet.
                 </div>
               ) : (

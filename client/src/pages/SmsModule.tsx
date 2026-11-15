@@ -190,7 +190,7 @@ export const SmsModule: React.FC = () => {
               <div key={w.trigger_key} className="p-4 flex items-center justify-between gap-4">
                 <div>
                   <div className="font-bold text-slate-900 text-sm">{w.label}</div>
-                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">{w.trigger_key}</div>
+                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">{w.trigger_key}</div>
                 </div>
                 <button
                   onClick={() => toggleWorkflow(w.trigger_key, !w.is_enabled)}
@@ -306,7 +306,7 @@ export const SmsModule: React.FC = () => {
             </h3>
           </div>
           {logs.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-xs">No SMS have been sent yet.</div>
+            <div className="p-8 text-center text-slate-500 text-xs">No SMS have been sent yet.</div>
           ) : (
             <div className="divide-y divide-slate-100 max-h-[32rem] overflow-y-auto">
               {logs.map((log) => (
@@ -319,13 +319,13 @@ export const SmsModule: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <span className="font-bold text-slate-900">{log.recipient_name || log.recipient_phone}</span>
-                      <span className="text-slate-400">{log.recipient_phone}</span>
+                      <span className="text-slate-500">{log.recipient_phone}</span>
                       <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">
                         {TRIGGER_LABELS[log.trigger_type] || log.trigger_type}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-1">{log.message}</p>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-1">
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
                       <User className="w-3 h-3" />
                       {log.sent_by_name || 'Automated Workflow'} • {new Date(log.sent_at).toLocaleString('en-IN')}
                     </div>

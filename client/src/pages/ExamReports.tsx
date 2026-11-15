@@ -66,7 +66,7 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
     });
   }, [seatingRows]);
 
-  if (!exam) return <div className="p-6 text-center text-slate-400 text-xs">Loading reports...</div>;
+  if (!exam) return <div className="p-6 text-center text-slate-500 text-xs">Loading reports...</div>;
 
   return (
     <div className="space-y-4">
@@ -162,11 +162,11 @@ export const ExamReports: React.FC<{ examId: string }> = ({ examId }) => {
             {roomChartGroups.map((g, gi) => (
               <div key={gi} className={gi > 0 ? 'page-break pt-6' : ''}>
                 <div className="text-center font-bold text-slate-900 mb-1">ROOM {g.roomNumber} — FLOOR {g.floor}</div>
-                <div className="text-center text-[10px] text-slate-400 mb-3 border-b border-slate-300 pb-2">BOARD</div>
+                <div className="text-center text-[10px] text-slate-500 mb-3 border-b border-slate-300 pb-2">BOARD</div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {g.benches.map((b) => (
                     <div key={b.bench} className="border border-slate-300 rounded-lg p-2">
-                      <div className="text-[10px] font-bold text-slate-400 mb-1">Bench {b.bench}</div>
+                      <div className="text-[10px] font-bold text-slate-500 mb-1">Bench {b.bench}</div>
                       <div className="flex gap-1 flex-wrap">
                         {b.seats.map((s) => (
                           <div key={s.seat_number} className="border border-slate-200 rounded px-1.5 py-1 text-[10px]">

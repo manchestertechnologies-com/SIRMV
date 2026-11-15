@@ -186,7 +186,7 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs">
-            <Calendar className="w-4 h-4 text-slate-400" />
+            <Calendar className="w-4 h-4 text-slate-500" />
             <input
               type="date"
               value={date}
@@ -200,19 +200,19 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
       {/* Real-time Status KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs text-slate-400 font-medium">Scheduled Classes</div>
+          <div className="text-xs text-slate-500 font-medium">Scheduled Classes</div>
           <div className="text-2xl font-bold text-slate-900 mt-1">{stats.totalClasses || 0}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs text-slate-400 font-medium">Classes In Session</div>
+          <div className="text-xs text-slate-500 font-medium">Classes In Session</div>
           <div className="text-2xl font-bold text-emerald-600 mt-1">{stats.classesStarted || 0}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs text-slate-400 font-medium">Teachers Absent</div>
+          <div className="text-xs text-slate-500 font-medium">Teachers Absent</div>
           <div className="text-2xl font-bold text-rose-600 mt-1">{stats.teachersAbsent || 0}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs text-slate-400 font-medium">Attendance Pending</div>
+          <div className="text-xs text-slate-500 font-medium">Attendance Pending</div>
           <div className="text-2xl font-bold text-amber-600 mt-1">{stats.attendancePending || 0}</div>
         </div>
       </div>
@@ -223,12 +223,12 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
           <h3 className="font-bold text-slate-900 text-sm">
             Floor {floor} Classrooms & Lecture Status ({dashboardData?.dayOfWeek}, {date})
           </h3>
-          <span className="text-xs text-slate-400">Click any classroom to record activity or capture photo</span>
+          <span className="text-xs text-slate-500">Click any classroom to record activity or capture photo</span>
         </div>
 
         <div className="divide-y divide-slate-100">
           {lectures.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-sm">
+            <div className="p-12 text-center text-slate-500 text-sm">
               No scheduled classes found on Floor {floor} for {dashboardData?.dayOfWeek}.
             </div>
           ) : (
@@ -349,11 +349,11 @@ export const FloorAttenderDashboard: React.FC<FloorAttenderDashboardProps> = ({
                 <h3 className="font-bold text-base">
                   Record Classroom Activity • Room {selectedLecture.timetableEntry.room_number}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {selectedLecture.timetableEntry.subject_name} • {selectedLecture.timetableEntry.class_name} {selectedLecture.timetableEntry.section_name} ({selectedLecture.timetableEntry.batch_name})
                 </p>
               </div>
-              <button onClick={() => setSelectedLecture(null)} className="text-slate-400 hover:text-white">✕</button>
+              <button onClick={() => setSelectedLecture(null)} className="text-slate-500 hover:text-white">✕</button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">

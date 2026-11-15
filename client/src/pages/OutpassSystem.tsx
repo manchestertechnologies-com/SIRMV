@@ -458,7 +458,7 @@ export const OutpassSystem: React.FC = () => {
                         <img src={pickupPhotoUrl} alt="Pickup Person" className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-20 h-20 rounded-xl bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-400">
+                      <div className="w-20 h-20 rounded-xl bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500">
                         <Camera className="w-6 h-6 opacity-60" />
                       </div>
                     )}
@@ -511,7 +511,7 @@ export const OutpassSystem: React.FC = () => {
                   <p className="text-[11px] text-indigo-700 mt-0.5">Mobile: {parentPhone}</p>
                   {simulatedOtp && (
                     <div className="mt-2 p-2 bg-white rounded-lg border border-indigo-200 font-mono text-center">
-                      <span className="text-[10px] text-slate-400 block">Simulated SMS Code (Dev Mode)</span>
+                      <span className="text-[10px] text-slate-500 block">Simulated SMS Code (Dev Mode)</span>
                       <strong className="text-lg text-indigo-600 tracking-widest">{simulatedOtp}</strong>
                     </div>
                   )}
@@ -544,7 +544,7 @@ export const OutpassSystem: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="p-8 text-center text-slate-400 text-xs">
+              <div className="p-8 text-center text-slate-500 text-xs">
                 Complete student and pickup details on the left and click "Generate Outpass" to dispatch parent verification OTP.
               </div>
             )}
@@ -569,7 +569,7 @@ export const OutpassSystem: React.FC = () => {
 
           <div className="divide-y divide-slate-100">
             {pendingOutpasses.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div className="p-12 text-center text-slate-500 text-sm">
                 <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
                 No pending outpasses in the queue.
               </div>
@@ -582,7 +582,7 @@ export const OutpassSystem: React.FC = () => {
                       {op.pickup_photo_url ? (
                         <img src={op.pickup_photo_url} alt="Pickup" className="w-full h-full object-cover" />
                       ) : (
-                        <User className="w-8 h-8 text-slate-400" />
+                        <User className="w-8 h-8 text-slate-500" />
                       )}
                     </div>
 
@@ -611,7 +611,7 @@ export const OutpassSystem: React.FC = () => {
                         }`}>
                           {op.parent_otp_verified === 1 ? 'PARENT OTP VERIFIED' : 'OTP PENDING'}
                         </span>
-                        <span className="text-slate-400 font-mono text-[11px]">Req: {op.requested_at}</span>
+                        <span className="text-slate-500 font-mono text-[11px]">Req: {op.requested_at}</span>
                       </div>
                     </div>
                   </div>
@@ -703,7 +703,7 @@ export const OutpassSystem: React.FC = () => {
                     <img src={verifiedOutpass.student_photo || '/avatars/student_rahul.png'} alt="Student" className="w-full h-full object-cover" />
                   </div>
                   <div className="font-bold text-slate-900 text-xs">{verifiedOutpass.student_name}</div>
-                  <div className="font-mono text-[10px] text-slate-400">{verifiedOutpass.register_number}</div>
+                  <div className="font-mono text-[10px] text-slate-500">{verifiedOutpass.register_number}</div>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center space-y-2">
@@ -712,7 +712,7 @@ export const OutpassSystem: React.FC = () => {
                     {verifiedOutpass.pickup_photo_url ? (
                       <img src={verifiedOutpass.pickup_photo_url} alt="Pickup Person" className="w-full h-full object-cover" />
                     ) : (
-                      <User className="w-10 h-10 mx-auto mt-6 text-slate-400" />
+                      <User className="w-10 h-10 mx-auto mt-6 text-slate-500" />
                     )}
                   </div>
                   <div className="font-bold text-slate-900 text-xs">{verifiedOutpass.pickup_person_name}</div>
@@ -760,23 +760,23 @@ export const OutpassSystem: React.FC = () => {
           {registerData?.counts && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block font-medium">Total Passes</span>
+                <span className="text-xs text-slate-500 block font-medium">Total Passes</span>
                 <span className="text-xl font-bold text-slate-900">{registerData.counts.total}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block font-medium">Currently OUT</span>
+                <span className="text-xs text-slate-500 block font-medium">Currently OUT</span>
                 <span className="text-xl font-bold text-amber-600">{registerData.counts.out}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block font-medium">Safely Returned</span>
+                <span className="text-xs text-slate-500 block font-medium">Safely Returned</span>
                 <span className="text-xl font-bold text-emerald-600">{registerData.counts.returned}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block font-medium">Approved / Pending Exit</span>
+                <span className="text-xs text-slate-500 block font-medium">Approved / Pending Exit</span>
                 <span className="text-xl font-bold text-indigo-600">{registerData.counts.approved}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block font-medium">Pending Approval</span>
+                <span className="text-xs text-slate-500 block font-medium">Pending Approval</span>
                 <span className="text-xl font-bold text-purple-600">{registerData.counts.pending}</span>
               </div>
             </div>
@@ -785,7 +785,7 @@ export const OutpassSystem: React.FC = () => {
           {/* Filter Bar */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by student, reg number, or outpass #..."
@@ -831,12 +831,12 @@ export const OutpassSystem: React.FC = () => {
                       <td className="py-3 px-4 font-mono font-bold text-indigo-900">{op.outpass_number}</td>
                       <td className="py-3 px-4 font-bold text-slate-900">
                         {op.student_name}
-                        <span className="block font-mono text-[10px] text-slate-400 font-normal">{op.register_number}</span>
+                        <span className="block font-mono text-[10px] text-slate-500 font-normal">{op.register_number}</span>
                       </td>
                       <td className="py-3 px-4 text-slate-600">{op.class_name} {op.section_name}</td>
                       <td className="py-3 px-4">
                         <span className="font-semibold text-slate-800">{op.pickup_person_name}</span>
-                        <span className="text-[10px] text-slate-400 block">({op.relationship})</span>
+                        <span className="text-[10px] text-slate-500 block">({op.relationship})</span>
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-indigo-600">{op.verification_code || '----'}</td>
                       <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
@@ -907,19 +907,19 @@ export const OutpassSystem: React.FC = () => {
             {/* Pass Metadata Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
               <div>
-                <span className="text-slate-400 block">Outpass Number</span>
+                <span className="text-slate-500 block">Outpass Number</span>
                 <span className="font-mono font-bold text-slate-900 text-sm">{printableData.outpass_number}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Date Issued</span>
+                <span className="text-slate-500 block">Date Issued</span>
                 <span className="font-bold text-slate-900 text-sm">{printableData.requested_at?.slice(0, 10)}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">4-Digit Gate Code</span>
+                <span className="text-slate-500 block">4-Digit Gate Code</span>
                 <span className="font-mono font-black text-indigo-700 text-lg">{printableData.verification_code}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Parent Verification</span>
+                <span className="text-slate-500 block">Parent Verification</span>
                 <span className="font-bold text-emerald-700">OTP VERIFIED</span>
               </div>
             </div>
@@ -931,11 +931,11 @@ export const OutpassSystem: React.FC = () => {
                 <div className="font-bold text-slate-900 text-sm border-b border-slate-100 pb-2">
                   Student Information
                 </div>
-                <div><span className="text-slate-400">Name:</span> <strong className="text-slate-900">{printableData.student_name}</strong></div>
-                <div><span className="text-slate-400">Register Number:</span> <span className="font-mono font-bold">{printableData.register_number}</span></div>
-                <div><span className="text-slate-400">Class & Section:</span> <span>{printableData.class_name} {printableData.section_name}</span></div>
-                <div><span className="text-slate-400">Competitive Batch:</span> <span className="font-semibold text-indigo-700">{printableData.batch_name}</span></div>
-                <div><span className="text-slate-400">Reason:</span> <span className="italic">{printableData.reason}</span></div>
+                <div><span className="text-slate-500">Name:</span> <strong className="text-slate-900">{printableData.student_name}</strong></div>
+                <div><span className="text-slate-500">Register Number:</span> <span className="font-mono font-bold">{printableData.register_number}</span></div>
+                <div><span className="text-slate-500">Class & Section:</span> <span>{printableData.class_name} {printableData.section_name}</span></div>
+                <div><span className="text-slate-500">Competitive Batch:</span> <span className="font-semibold text-indigo-700">{printableData.batch_name}</span></div>
+                <div><span className="text-slate-500">Reason:</span> <span className="italic">{printableData.reason}</span></div>
               </div>
 
               {/* Pickup Person */}
@@ -949,13 +949,13 @@ export const OutpassSystem: React.FC = () => {
                     {printableData.pickup_photo_url ? (
                       <img src={printableData.pickup_photo_url} alt="Pickup" className="w-full h-full object-cover" />
                     ) : (
-                      <User className="w-8 h-8 mx-auto mt-5 text-slate-400" />
+                      <User className="w-8 h-8 mx-auto mt-5 text-slate-500" />
                     )}
                   </div>
                   <div className="space-y-1">
-                    <div><span className="text-slate-400">Name:</span> <strong>{printableData.pickup_person_name}</strong></div>
-                    <div><span className="text-slate-400">Mobile:</span> <span className="font-mono">{printableData.pickup_person_phone}</span></div>
-                    <div><span className="text-slate-400">Govt ID:</span> <span>{printableData.id_type || 'Aadhaar'}</span></div>
+                    <div><span className="text-slate-500">Name:</span> <strong>{printableData.pickup_person_name}</strong></div>
+                    <div><span className="text-slate-500">Mobile:</span> <span className="font-mono">{printableData.pickup_person_phone}</span></div>
+                    <div><span className="text-slate-500">Govt ID:</span> <span>{printableData.id_type || 'Aadhaar'}</span></div>
                   </div>
                 </div>
               </div>
@@ -965,11 +965,11 @@ export const OutpassSystem: React.FC = () => {
             <div className="pt-6 border-t border-slate-200 text-xs space-y-8">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Gate Exit Recorded</span>
+                  <span className="text-slate-500 block text-[10px]">Gate Exit Recorded</span>
                   <span className="font-mono font-bold text-slate-800">{printableData.exit_time || 'Awaiting Gate Exit'}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">Gate Return Recorded</span>
+                  <span className="text-slate-500 block text-[10px]">Gate Return Recorded</span>
                   <span className="font-mono font-bold text-slate-800">{printableData.return_time || 'Awaiting Gate Return'}</span>
                 </div>
               </div>

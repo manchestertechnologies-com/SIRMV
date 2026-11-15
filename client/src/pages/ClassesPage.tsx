@@ -144,7 +144,7 @@ export const ClassesPage: React.FC = () => {
                       Sec {s.name} ({s.studentCount})
                     </div>
                     <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
-                      <DoorOpen className="w-3 h-3 text-slate-400 shrink-0" />
+                      <DoorOpen className="w-3 h-3 text-slate-500 shrink-0" />
                       <select
                         value={s.room_id || ''}
                         onChange={(e) => assignRoom(s.id, e.target.value)}
@@ -198,20 +198,20 @@ export const ClassesPage: React.FC = () => {
                   <button onClick={() => addSection(c.id)} className="text-[11px] font-bold text-indigo-600">Add</button>
                   <button
                     onClick={() => { setAddingSectionFor(null); setNewSectionName(''); setNewSectionRoomId(''); }}
-                    className="text-[11px] font-bold text-slate-400"
+                    className="text-[11px] font-bold text-slate-500"
                   >
                     Cancel
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setAddingSectionFor(c.id)} className="self-start px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] text-slate-400 hover:text-indigo-600 hover:border-indigo-300">
+                <button onClick={() => setAddingSectionFor(c.id)} className="self-start px-2.5 py-1 border border-dashed border-slate-300 rounded-lg text-[11px] text-slate-500 hover:text-indigo-600 hover:border-indigo-300">
                   + Section
                 </button>
               )}
             </div>
           </div>
         ))}
-        {classes.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No classes yet. Add one to get started.</p>}
+        {classes.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-10">No classes yet. Add one to get started.</p>}
       </div>
 
       {showAddClass && (
@@ -219,7 +219,7 @@ export const ClassesPage: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Add Class</h3>
-              <button onClick={() => setShowAddClass(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAddClass(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
             <form onSubmit={createClass} className="space-y-3">

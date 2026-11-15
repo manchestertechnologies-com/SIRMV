@@ -119,7 +119,7 @@ export const StudentTestsView: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : sortedTests.length === 0 ? (
-        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
           No tests have been assigned to your class yet.
         </div>
       ) : (
@@ -320,7 +320,7 @@ const AttemptTestModal: React.FC<{
                 <div key={q.id} className="p-4 rounded-2xl border border-[#ded9cf] bg-[#fdfcfb] space-y-2.5">
                   <p className="text-xs font-bold text-slate-800">
                     {i + 1}. {q.question_text}{' '}
-                    <span className="text-slate-400 font-medium">({q.marks} mk)</span>
+                    <span className="text-slate-500 font-medium">({q.marks} mk)</span>
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(['A', 'B', 'C', 'D'] as const).map((opt) => {
@@ -345,7 +345,7 @@ const AttemptTestModal: React.FC<{
                 </div>
               ))}
             {questions.length === 0 && (
-              <p className="text-center text-slate-400 text-xs py-8">No questions found for this test.</p>
+              <p className="text-center text-slate-500 text-xs py-8">No questions found for this test.</p>
             )}
           </div>
         )}
@@ -433,7 +433,7 @@ const ResultsModal: React.FC<{ testId: string; submission: Submission | null; on
               .map((q, i) => (
                 <div key={q.id} className="p-4 rounded-2xl border border-[#ded9cf] bg-[#fdfcfb] space-y-1.5 text-xs">
                   <p className="font-bold text-slate-800">
-                    {i + 1}. {q.question_text} <span className="text-slate-400 font-medium">({q.marks} mk)</span>
+                    {i + 1}. {q.question_text} <span className="text-slate-500 font-medium">({q.marks} mk)</span>
                   </p>
                   <p className="text-slate-500">
                     A) {q.option_a} &nbsp; B) {q.option_b} &nbsp; C) {q.option_c} &nbsp; D) {q.option_d}
@@ -442,7 +442,7 @@ const ResultsModal: React.FC<{ testId: string; submission: Submission | null; on
                 </div>
               ))}
             {questions.length === 0 && (
-              <p className="text-center text-slate-400 text-xs py-8">No questions found for this test.</p>
+              <p className="text-center text-slate-500 text-xs py-8">No questions found for this test.</p>
             )}
           </div>
         )}

@@ -110,7 +110,7 @@ const Menu: React.FC<{ icon: React.ReactNode; title: string; children: (close: (
     </div>
   );
 };
-const MenuHead: React.FC<{ children: React.ReactNode }> = ({ children }) => <p className="px-4 pt-2 pb-1 text-[10px] font-bold tracking-wide text-slate-400 uppercase">{children}</p>;
+const MenuHead: React.FC<{ children: React.ReactNode }> = ({ children }) => <p className="px-4 pt-2 pb-1 text-[10px] font-bold tracking-wide text-slate-500 uppercase">{children}</p>;
 const subjIcon = (n: string) => (n === 'Botany' || n === 'Zoology' ? 'Biology' : n);
 const MenuItem: React.FC<{ active?: boolean; color?: string; subject?: string; onClick: () => void; children: React.ReactNode }> = ({ active, color = '#a3161b', subject, onClick, children }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-1.5 text-sm text-left hover:bg-[#fff6f4] ${active ? 'bg-[#fff1ee] font-semibold text-[#8c1118]' : 'text-slate-700'}`}>
@@ -184,7 +184,7 @@ const ReportTable: React.FC<{ report: Report; onEdit: () => void }> = ({ report,
           <tbody>
             {showAvg && [['Highest', true], ['Average', false]].map(([label, hi]) => (
               <tr key={label as string} className="border-b border-[#f3ede6]">
-                <td colSpan={6} className="px-3 py-1.5 text-right text-[10px] text-slate-400">{label as string}</td>
+                <td colSpan={6} className="px-3 py-1.5 text-right text-[10px] text-slate-500">{label as string}</td>
                 {showTests && showSubj && tCols.map((c) => { const s = stat((r) => r.tests[c.i]); return <td key={c.n} className={`${cell} font-semibold`}>{hi ? s.hi : s.avg}</td>; })}
                 {showTests && showTotal && <td className={`${cell} font-bold`}>{(() => { const s = stat((r) => tCols.reduce((a, c) => a + r.tests[c.i], 0)); return hi ? s.hi : s.avg; })()}</td>}
                 {showTests && showSubj && thCols.map((c) => { const s = stat((r) => r.theory[c.i]); return <td key={c.n} className={`${cell} font-semibold`}>{hi ? s.hi : s.avg}</td>; })}

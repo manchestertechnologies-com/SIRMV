@@ -78,7 +78,7 @@ export const InvigilatorRequestsPage: React.FC = () => {
           </tr></thead>
           <tbody className="divide-y divide-slate-100">
             {requests.length === 0 ? (
-              <tr><td colSpan={6} className="py-8 text-center text-slate-400">No requests right now.</td></tr>
+              <tr><td colSpan={6} className="py-8 text-center text-slate-500">No requests right now.</td></tr>
             ) : requests.map((r) => (
               <tr key={r.id}>
                 <td className="py-2 px-4 font-bold text-slate-900">{r.exam_name} — {r.subject_name}</td>

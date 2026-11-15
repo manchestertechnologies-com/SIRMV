@@ -59,7 +59,7 @@ export const AuditLogsPage: React.FC = () => {
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <form onSubmit={handleSearch} className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Search audit actions, user names, or details..."
@@ -123,7 +123,7 @@ export const AuditLogsPage: React.FC = () => {
                   <td className="py-3 px-4 text-[11px] text-slate-700 max-w-md break-all">
                     {log.details_json}
                   </td>
-                  <td className="py-3 px-4 text-slate-400 text-[10px]">{log.ip_address}</td>
+                  <td className="py-3 px-4 text-slate-500 text-[10px]">{log.ip_address}</td>
                 </tr>
               ))}
             </tbody>

@@ -44,14 +44,14 @@ export const BoardMarksPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-indigo-500" />
               <h3 className="font-bold text-slate-900 text-sm flex-1">{c.name}</h3>
-              <button onClick={(e) => { e.stopPropagation(); setEditing(c); }} title="Edit cycle name and dates" className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"><Pencil className="w-3.5 h-3.5" /></button>
+              <button onClick={(e) => { e.stopPropagation(); setEditing(c); }} title="Edit cycle name and dates" className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><Pencil className="w-3.5 h-3.5" /></button>
             </div>
             <p className="text-[11px] text-slate-500">{c.academic_year} • {c.start_date} to {c.end_date}</p>
           </div>
         ))}
-        {loading && <p className="text-sm text-slate-400 col-span-full text-center py-10">Loading cycles…</p>}
+        {loading && <p className="text-sm text-slate-500 col-span-full text-center py-10">Loading cycles…</p>}
         {failed && !loading && <p className="text-sm text-rose-600 col-span-full text-center py-10">Could not load cycles. <button onClick={load} className="underline font-semibold">Retry</button></p>}
-        {!loading && !failed && cycles.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No board exam cycles yet. Add Cycle 1 / 2 / 3 to get started.</p>}
+        {!loading && !failed && cycles.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-10">No board exam cycles yet. Add Cycle 1 / 2 / 3 to get started.</p>}
       </div>
 
       {showAdd && <AddCycleModal branchId={branchId} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load(); }} />}
@@ -79,7 +79,7 @@ const AddCycleModal: React.FC<{ branchId: string; cycle?: any; onClose: () => vo
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-slate-900">{cycle ? 'Edit Board Exam Cycle' : 'Add Board Exam Cycle'}</h3>
-          <button onClick={onClose}><X className="w-4 h-4 text-slate-400" /></button>
+          <button onClick={onClose}><X className="w-4 h-4 text-slate-500" /></button>
         </div>
         {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
         <form onSubmit={submit} className="space-y-3">
@@ -157,13 +157,13 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
                 <td className="p-3 font-semibold">{s.subject_name}</td>
                 <td className="p-3">{s.class_name}</td>
                 <td className="p-3">{s.max_marks}</td>
-                <td className="p-3">{s.exam_date ? String(s.exam_date).slice(0, 10) : '—'} <button onClick={() => setEditSub({ ...s, exam_date: s.exam_date ? String(s.exam_date).slice(0, 10) : '' })} title="Edit date and marks" className="ml-1 p-1 rounded text-slate-400 hover:text-indigo-600"><Pencil className="w-3 h-3 inline" /></button></td>
+                <td className="p-3">{s.exam_date ? String(s.exam_date).slice(0, 10) : '—'} <button onClick={() => setEditSub({ ...s, exam_date: s.exam_date ? String(s.exam_date).slice(0, 10) : '' })} title="Edit date and marks" className="ml-1 p-1 rounded text-slate-500 hover:text-indigo-600"><Pencil className="w-3 h-3 inline" /></button></td>
                 <td className="p-3">
                   <button onClick={() => setSelectedExamSubjectId(s.id)} className="text-indigo-600 font-bold">Enter Marks →</button>
                 </td>
               </tr>
             ))}
-            {subjects.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-400">No subjects added to this cycle yet.</td></tr>}
+            {subjects.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-500">No subjects added to this cycle yet.</td></tr>}
           </tbody>
         </table>
         </div>
@@ -172,7 +172,7 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
       {editSub && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <form onSubmit={saveSub} className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3">
-            <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">Edit {editSub.subject_name}</h3><button type="button" onClick={() => setEditSub(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">Edit {editSub.subject_name}</h3><button type="button" onClick={() => setEditSub(null)}><X className="w-4 h-4 text-slate-500" /></button></div>
             <label className="block text-[10px] font-semibold text-slate-500">Exam date<input type="date" value={editSub.exam_date || ''} onChange={(e) => setEditSub({ ...editSub, exam_date: e.target.value })} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" /></label>
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-[10px] font-semibold text-slate-500">Max marks<input type="number" min={1} value={editSub.max_marks} onChange={(e) => setEditSub({ ...editSub, max_marks: e.target.value })} className="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" /></label>
@@ -187,7 +187,7 @@ const CycleDetail: React.FC<{ cycleId: string; branchId: string; onBack: () => v
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Add Subject to Cycle</h3>
-              <button onClick={() => setShowAddSubject(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAddSubject(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             <form onSubmit={addSubject} className="space-y-3">
               <select required value={subjectForm.subject_id || ''} onChange={(e) => setSubjectForm({ ...subjectForm, subject_id: e.target.value })} className="input">
@@ -245,7 +245,7 @@ const MarksEntry: React.FC<{ examSubjectId: string; onBack: () => void }> = ({ e
     } catch (err: any) { showToast(err.message, 'error'); } finally { setUploadingFor(null); }
   };
 
-  if (!examSubject) return <div className="text-sm text-slate-400 text-center py-16">Loading...</div>;
+  if (!examSubject) return <div className="text-sm text-slate-500 text-center py-16">Loading...</div>;
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
@@ -292,7 +292,7 @@ const MarksEntry: React.FC<{ examSubjectId: string; onBack: () => void }> = ({ e
                 </td>
               </tr>
             ))}
-            {students.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-400">No students in this class.</td></tr>}
+            {students.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-slate-500">No students in this class.</td></tr>}
           </tbody>
         </table>
         </div>

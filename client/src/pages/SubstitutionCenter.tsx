@@ -137,7 +137,7 @@ export const SubstitutionCenter: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs">
-            <Calendar className="w-4 h-4 text-slate-400" />
+            <Calendar className="w-4 h-4 text-slate-500" />
             <input
               type="date"
               value={date}
@@ -178,7 +178,7 @@ export const SubstitutionCenter: React.FC = () => {
         </div>
 
         {requirements.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-sm">
+          <div className="p-12 text-center text-slate-500 text-sm">
             <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
             No absent teachers or affected periods for {date}. All regular faculty are in session.
           </div>
@@ -201,7 +201,7 @@ export const SubstitutionCenter: React.FC = () => {
                         <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
                           {entry.class_name} • {entry.section_name} ({entry.batch_name})
                         </span>
-                        <span className="text-xs text-slate-400 font-mono">
+                        <span className="text-xs text-slate-500 font-mono">
                           {entry.start_time} - {entry.end_time}
                         </span>
                       </div>
@@ -261,7 +261,7 @@ export const SubstitutionCenter: React.FC = () => {
                 <UserX className="w-5 h-5 text-rose-400" />
                 Mark Faculty Member Absent
               </h3>
-              <button onClick={() => setShowMarkAbsentModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              <button onClick={() => setShowMarkAbsentModal(false)} className="text-slate-500 hover:text-white">✕</button>
             </div>
 
             <form onSubmit={handleMarkTeacherAbsent} className="p-6 space-y-4">
@@ -330,11 +330,11 @@ export const SubstitutionCenter: React.FC = () => {
             <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-base">Select Substitute Teacher</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Period {selectedReq.timetableEntry.period_number} ({selectedReq.timetableEntry.start_time} - {selectedReq.timetableEntry.end_time}) • {selectedReq.timetableEntry.subject_name} • Room {selectedReq.timetableEntry.room_number}
                 </p>
               </div>
-              <button onClick={() => setSelectedReq(null)} className="text-slate-400 hover:text-white">✕</button>
+              <button onClick={() => setSelectedReq(null)} className="text-slate-500 hover:text-white">✕</button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">

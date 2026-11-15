@@ -92,7 +92,7 @@ export const AttendanceAcademic: React.FC<{ onExit: () => void }> = ({ onExit })
               <div><div className="flex justify-between text-[10px] text-slate-500 mb-1"><span>Attendance</span><b className="text-slate-800">{pc}%</b></div><Bar value={pc} color={pc >= 90 ? GREEN : pc >= 75 ? AMBER : RED} h="h-1.5" /></div>
             </div>); })}
         </div>
-        <p className="text-[11px] text-slate-400">{p} of {groupStaff.length} present today.</p>
+        <p className="text-[11px] text-slate-500">{p} of {groupStaff.length} present today.</p>
       </div>
     );
   }
@@ -120,11 +120,11 @@ const SectionList: React.FC<{ sec: SectionDef; onBack: (s: SectionDef) => void; 
       <PageHead title={sec.title} sub={`${sec.batch} · ${studs.length} students`} onBack={() => onBack(sec)} crumbs={[{ label: 'Attendance', onClick: onHome }, { label: 'Students', onClick: () => onBack(sec) }, { label: sec.title }]}
         right={<div className="flex items-center gap-1 bg-white border border-[#ded9cf] rounded-xl px-1 py-1"><button onClick={() => move(-1)} className="p-1.5 rounded-lg hover:bg-[#fff6f4]"><ChevronLeft className="w-4 h-4" /></button><span className="text-xs font-semibold px-2 min-w-[96px] text-center">{fmtDate(date)}</span><button onClick={() => move(1)} className="p-1.5 rounded-lg hover:bg-[#fff6f4]"><ChevronRight className="w-4 h-4" /></button></div>} />
       <div className="grid grid-cols-3 gap-3"><StatCard label="Present (P)" value={counts.p} tone="green" onClick={() => setPop('P')} /><StatCard label="Absent (A)" value={counts.a} onClick={() => setPop('A')} /><StatCard label="Leave (L)" value={counts.l} tone="gold" onClick={() => setPop('L')} /></div>
-      <Card title="Student list" right={<span className="text-[11px] text-slate-400">tap P / A / L to correct a mark</span>}>
+      <Card title="Student list" right={<span className="text-[11px] text-slate-500">tap P / A / L to correct a mark</span>}>
         <ul className="divide-y divide-[#f3ede6]">
           {studs.map((s) => { const x = status(s); return (
             <li key={s.id} className="py-2.5 flex items-center gap-3">
-              <span className="w-6 text-xs text-slate-400 text-right">{s.no}</span><Avatar name={s.name} pid={s.id} size={38} square />
+              <span className="w-6 text-xs text-slate-500 text-right">{s.no}</span><Avatar name={s.name} pid={s.id} size={38} square />
               <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{s.name}</b><span className="text-[11px] text-slate-500">Roll {s.roll} · 30-day {studentMonthPct(s.id)}%</span></span>
               <span className="inline-flex gap-1">{(['P', 'A', 'L'] as const).map((k) => <button key={k} onClick={() => set(s, k)} className={`w-8 h-8 rounded-lg text-xs font-bold transition ${x === k ? (k === 'P' ? 'bg-emerald-500 text-white' : k === 'A' ? 'bg-red-500 text-white' : 'bg-amber-400 text-white') : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{k}</button>)}</span>
             </li>); })}

@@ -31,7 +31,7 @@ export const ClassroomBlueprint: React.FC<{ initial?: Classroom[]; onChange?: (l
                   <div key={r.id} className="rounded-lg border-2 border-[#c28535]/70 bg-white p-2.5">
                     <div className="flex items-center gap-2">
                       <input value={r.name} onChange={(e) => patch(r.id, { name: e.target.value })} className="flex-1 min-w-0 text-sm font-bold text-[#4a0709] bg-transparent outline-none border-b border-transparent focus:border-[#c7222a]" />
-                      <button onClick={() => update(rooms.filter((x) => x.id !== r.id))} title="Delete room" className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => update(rooms.filter((x) => x.id !== r.id))} title="Delete room" className="p-1 text-slate-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-[3px] min-h-[26px]">
                       {Array.from({ length: Math.min(r.benches, 30) }).map((_, i) => <i key={i} className="w-4 h-2.5 rounded-[2px] bg-[#c28535]/80" />)}

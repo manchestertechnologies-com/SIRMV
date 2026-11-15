@@ -69,7 +69,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigateTab }) =
             Your workspace
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#fbf6ec] text-[#8a561f] border border-[#f5e8cc]">{mainTiles.length} modules</span>
           </h2>
-          <span className="hidden sm:inline text-[11px] text-slate-400 font-medium">
+          <span className="hidden sm:inline text-[11px] text-slate-500 font-medium">
             Press <kbd className="font-semibold border border-slate-200 rounded px-1">Ctrl K</kbd> to jump anywhere
           </span>
         </div>

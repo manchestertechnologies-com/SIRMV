@@ -323,9 +323,9 @@ export const TimetableGeneratorModule: React.FC = () => {
 
         <div className={`${cardCls} overflow-hidden`}>
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-slate-400">Loading configurations…</div>
+            <div className="p-8 text-center text-xs text-slate-500">Loading configurations…</div>
           ) : configs.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-400">No timetable configurations yet. Create one to get started.</div>
+            <div className="p-8 text-center text-xs text-slate-500">No timetable configurations yet. Create one to get started.</div>
           ) : (
             <div className="divide-y divide-slate-100">
               {configs.map((c) => (
@@ -336,7 +336,7 @@ export const TimetableGeneratorModule: React.FC = () => {
                       {c.academic_year_name || 'No academic year'} • {c.college_start_time}–{c.college_end_time} • {c.period_duration_minutes}min periods
                     </div>
                   </button>
-                  <button onClick={() => deleteConfig(c.id)} className="p-2 text-slate-400 hover:text-red-600 transition">
+                  <button onClick={() => deleteConfig(c.id)} className="p-2 text-slate-500 hover:text-red-600 transition">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -479,7 +479,7 @@ export const TimetableGeneratorModule: React.FC = () => {
                     <td className="py-1.5 pr-2 text-center">
                       <input type="checkbox" checked={!!r.avoid_repeat_same_day} onChange={(e) => { const next = [...requirements]; next[i] = { ...r, avoid_repeat_same_day: e.target.checked }; setRequirements(next); }} />
                     </td>
-                    <td><button onClick={() => setRequirements(requirements.filter((_, idx) => idx !== i))} className="p-1.5 text-slate-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td><button onClick={() => setRequirements(requirements.filter((_, idx) => idx !== i))} className="p-1.5 text-slate-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -675,7 +675,7 @@ const DraftEntriesTable: React.FC<{ entries: any[]; groupBy: 'day' | 'class' | '
   entries.forEach((e) => { groups.set(groupKey(e), [...(groups.get(groupKey(e)) || []), e]); });
 
   if (entries.length === 0) {
-    return <div className="text-xs text-slate-400 py-6 text-center">No periods yet — generate the timetable above.</div>;
+    return <div className="text-xs text-slate-500 py-6 text-center">No periods yet — generate the timetable above.</div>;
   }
 
   return (
@@ -698,7 +698,7 @@ const DraftEntriesTable: React.FC<{ entries: any[]; groupBy: 'day' | 'class' | '
                     <td className="py-1.5 pr-2">{e.subject_name}</td>
                     <td className="py-1.5 pr-2">{e.teacher_name}</td>
                     <td className="py-1.5 pr-2">{e.room_number || '—'}</td>
-                    <td><button onClick={() => onDelete(e.id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button></td>
+                    <td><button onClick={() => onDelete(e.id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button></td>
                   </tr>
                 ))}
               </tbody>

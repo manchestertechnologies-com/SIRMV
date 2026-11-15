@@ -14,7 +14,7 @@ export class ScreenBoundary extends React.Component<Props, { error: boolean; msg
       <div className="py-20 text-center space-y-4">
         <p className="text-base font-semibold text-slate-800">This screen could not open.</p>
         <p className="text-sm text-slate-500">Your saved place may be out of date. Go to the dashboard to start fresh.</p>
-        {this.state.msg && <p className="text-[11px] text-slate-400">{this.state.msg}</p>}
+        {this.state.msg && <p className="text-[11px] text-slate-500">{this.state.msg}</p>}
         <button onClick={() => { clearAllState(); this.setState({ error: false, msg: '' }); this.props.onHome(); }} className="px-5 py-2.5 rounded-xl bg-[#a3161b] text-white text-sm font-semibold">Go to dashboard</button>
       </div>
     );

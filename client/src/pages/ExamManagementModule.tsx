@@ -259,7 +259,7 @@ const ExamListView: React.FC<{
           { label: 'Room Utilization', value: `${stats.roomUtilizationPercent}%` }
         ].map((k) => (
           <div key={k.label} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-            <span className="text-[10px] text-slate-400 block font-medium leading-tight">{k.label}</span>
+            <span className="text-[10px] text-slate-500 block font-medium leading-tight">{k.label}</span>
             <span className={`text-lg font-bold mt-1 block ${k.danger ? 'text-rose-600' : 'text-slate-900'}`}>{k.value}</span>
           </div>
         ))}
@@ -293,9 +293,9 @@ const ExamListView: React.FC<{
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
-              <tr><td colSpan={7} className="py-8 text-center text-slate-400">Loading exams...</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-slate-500">Loading exams...</td></tr>
             ) : exams.length === 0 ? (
-              <tr><td colSpan={7} className="py-8 text-center text-slate-400">No exams yet. Create one to get started.</td></tr>
+              <tr><td colSpan={7} className="py-8 text-center text-slate-500">No exams yet. Create one to get started.</td></tr>
             ) : (
               exams.map((e) => (
                 <tr key={e.id} className="hover:bg-slate-50/70 transition cursor-pointer" onClick={() => onOpen(e.id)}>
@@ -440,7 +440,7 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
                 placeholder="e.g. 103" className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
             </label>
             <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
-              Floor <span className="font-normal normal-case text-slate-400">(0 = ground)</span>
+              Floor <span className="font-normal normal-case text-slate-500">(0 = ground)</span>
               <input type="number" min={0} value={newRoom.floor} onChange={(e) => setNewRoom((p) => ({ ...p, floor: Number(e.target.value) || 0 }))}
                 className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
             </label>
@@ -502,7 +502,7 @@ const RoomsConfigView: React.FC<{ onBack: () => void; flash: (t: 'success' | 'er
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
-                <tr><td colSpan={8} className="py-8 text-center text-slate-400">Loading rooms...</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-slate-500">Loading rooms...</td></tr>
               ) : rooms.map((r) => {
                 const selectedClass = classes.find((c) => c.id === r.assigned_class_id);
                 return (
@@ -819,7 +819,7 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
     }
   };
 
-  if (!exam) return <div className="p-8 text-center text-slate-400 text-sm">Loading exam...</div>;
+  if (!exam) return <div className="p-8 text-center text-slate-500 text-sm">Loading exam...</div>;
 
   return (
     <div className="space-y-4">
@@ -868,10 +868,10 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
 
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-400 block font-medium">PU Level</span><span className="text-xl font-bold text-slate-900 mt-1 block">{exam.pu_level}</span></div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-400 block font-medium">Total Students</span><span className="text-xl font-bold text-violet-700 mt-1 block">{totalStudents}</span></div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-400 block font-medium">Batches</span><span className="text-xl font-bold text-slate-900 mt-1 block">{batches.length}</span></div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-400 block font-medium">Sessions</span><span className="text-xl font-bold text-slate-900 mt-1 block">{sessions.length}</span></div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-500 block font-medium">PU Level</span><span className="text-xl font-bold text-slate-900 mt-1 block">{exam.pu_level}</span></div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-500 block font-medium">Total Students</span><span className="text-xl font-bold text-violet-700 mt-1 block">{totalStudents}</span></div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-500 block font-medium">Batches</span><span className="text-xl font-bold text-slate-900 mt-1 block">{batches.length}</span></div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs"><span className="text-xs text-slate-500 block font-medium">Sessions</span><span className="text-xl font-bold text-slate-900 mt-1 block">{sessions.length}</span></div>
       </div>
 
       {/* Batches */}
@@ -922,7 +922,7 @@ const ExamDetailView: React.FC<{ examId: string; onBack: () => void; flash: (t: 
           done for every session, so the flow only reveals this final step
           once it's actually reachable rather than showing it from the start. */}
       {STATUS_STEPS.indexOf(exam.status) < STATUS_STEPS.indexOf('INVIGILATORS_ALLOCATED') ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 text-center text-[11px] text-slate-400">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 text-center text-[11px] text-slate-500">
           Complete room, seat and invigilator allocation for every session above to unlock publishing.
         </div>
       ) : (
@@ -987,9 +987,9 @@ const ExamSeatingHistoryView: React.FC<{ examId: string }> = ({ examId }) => {
     })();
   }, [examId]);
 
-  if (isLoading) return <div className="text-center text-slate-400 text-xs py-6">Loading seating visualization...</div>;
+  if (isLoading) return <div className="text-center text-slate-500 text-xs py-6">Loading seating visualization...</div>;
   if (!data || data.sessions.length === 0) {
-    return <div className="text-center text-slate-400 text-xs py-6">Rooms haven't been allocated for any session yet.</div>;
+    return <div className="text-center text-slate-500 text-xs py-6">Rooms haven't been allocated for any session yet.</div>;
   }
 
   const session = data.sessions.find((s: any) => s.session_id === activeSessionId) || data.sessions[0];
@@ -1046,7 +1046,7 @@ const ExamSeatingHistoryView: React.FC<{ examId: string }> = ({ examId }) => {
       </div>
 
       {(!session.rooms || session.rooms.length === 0) ? (
-        <div className="text-center text-slate-400 text-xs py-6">No rooms allocated for this session yet.</div>
+        <div className="text-center text-slate-500 text-xs py-6">No rooms allocated for this session yet.</div>
       ) : (
         <>
           <div className="flex gap-2 overflow-x-auto pb-1">
@@ -1227,7 +1227,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
     }
   };
 
-  if (!roomOptions) return <div className="p-6 text-center text-slate-400 text-xs">Loading session...</div>;
+  if (!roomOptions) return <div className="p-6 text-center text-slate-500 text-xs">Loading session...</div>;
 
   const allRoomOpts = [...roomOptions.priorityRooms, ...roomOptions.otherRooms];
   const floorRooms: FloorRoom[] = allRoomOpts.map((r) => {
@@ -1282,7 +1282,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
         <button onClick={applyManualRooms} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700">
           <DoorOpen className="w-3.5 h-3.5" /> Apply Manual Room Selection ({selectedRoomIds.size})
         </button>
-        <span className="text-[11px] text-slate-400 ml-auto">Required seats: {roomOptions.requiredSeats}</span>
+        <span className="text-[11px] text-slate-500 ml-auto">Required seats: {roomOptions.requiredSeats}</span>
       </div>
 
       {/* Step 2: one big, unmissable action — this is the step that actually
@@ -1300,11 +1300,11 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
           without scrolling further. */}
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-400">Students</div><div className="font-bold text-slate-900">{summary.totalStudents}</div></div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-400">Allocated</div><div className="font-bold text-emerald-600">{summary.allocated}</div></div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-400">Unallocated</div><div className="font-bold text-rose-600">{summary.unallocated}</div></div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-400">Rooms Used</div><div className="font-bold text-slate-900">{summary.roomsUsed}</div></div>
-          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-400">Conflicts</div><div className={`font-bold ${summary.conflicts.length ? 'text-rose-600' : 'text-emerald-600'}`}>{summary.conflicts.length}</div></div>
+          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-500">Students</div><div className="font-bold text-slate-900">{summary.totalStudents}</div></div>
+          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-500">Allocated</div><div className="font-bold text-emerald-600">{summary.allocated}</div></div>
+          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-500">Unallocated</div><div className="font-bold text-rose-600">{summary.unallocated}</div></div>
+          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-500">Rooms Used</div><div className="font-bold text-slate-900">{summary.roomsUsed}</div></div>
+          <div className="bg-slate-50 rounded-xl p-3 text-center"><div className="text-[11px] text-slate-500">Conflicts</div><div className={`font-bold ${summary.conflicts.length ? 'text-rose-600' : 'text-emerald-600'}`}>{summary.conflicts.length}</div></div>
         </div>
       )}
 
@@ -1312,14 +1312,14 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
           session, so the workflow reveals one step at a time rather than
           showing every stage at once. */}
       {(summary?.roomsUsed ?? 0) === 0 ? (
-        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-400">
+        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-500">
           Allocate rooms above to unlock seating.
         </div>
       ) : (
         <div className="bg-slate-50 rounded-xl p-3">
           <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5"><ArrowLeftRight className="w-3.5 h-3.5" /> Seating — click two students to swap their seats</div>
           {seating.length === 0 ? (
-            <div className="text-[11px] text-slate-400 py-2">Click "Allocate Seats" above to seat students in the allocated rooms.</div>
+            <div className="text-[11px] text-slate-500 py-2">Click "Allocate Seats" above to seat students in the allocated rooms.</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto">
               {seating.map((s) => (
@@ -1329,7 +1329,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
                   className={`text-left p-2 rounded-lg border text-[11px] transition ${swapA === s.student_id ? 'bg-violet-100 border-violet-400' : 'bg-white border-slate-200 hover:border-violet-300'}`}
                 >
                   <div className="font-bold text-slate-900">{s.student_name}</div>
-                  <div className="text-slate-400">{s.register_number} · {s.class_name} {s.section_name}</div>
+                  <div className="text-slate-500">{s.register_number} · {s.class_name} {s.section_name}</div>
                   <div className="text-violet-700 font-semibold mt-0.5">Room {s.room_number} · Bench {s.bench_number} · Seat {s.seat_number}</div>
                 </button>
               ))}
@@ -1341,7 +1341,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
       {/* Step 3: invigilators — unlocked once at least one student has been
           seated for this session. */}
       {(summary?.allocated ?? 0) === 0 ? (
-        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-400">
+        <div className="bg-slate-50 rounded-xl p-4 text-center text-[11px] text-slate-500">
           Allocate seats above to unlock invigilator assignment.
         </div>
       ) : invigilatorOptions && (
@@ -1354,7 +1354,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
                 : 'No HOD-approved lecturers yet — send a request below first'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 -mt-2">
+          <p className="text-[11px] text-slate-500 -mt-2">
             Only an HOD can choose <em>which</em> lecturer invigilates (via the request below). The Exam Department only allocates
             which <em>room</em> an already-approved lecturer covers — automatically for the whole session, or one room at a time.
           </p>
@@ -1396,7 +1396,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
             <button
               onClick={autoAllocateInvigilators}
               disabled={(invigilatorOptions.poolSize ?? 0) === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400 text-white transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-500 text-white transition"
             >
               <Wand2 className="w-3.5 h-3.5" /> Auto-Assign Rooms to Approved Lecturers
             </button>
@@ -1407,7 +1407,7 @@ const SessionAllocationPanel: React.FC<{ sessionId: string; onChanged: () => voi
               {invigilators.map((i) => (
                 <div key={i.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs flex items-center justify-between">
                   <span><span className="font-bold text-slate-900">{i.teacher_name}</span> — Room {i.room_number}, Floor {i.floor}</span>
-                  <span className="text-[10px] font-bold text-slate-400">{i.assigned_via}</span>
+                  <span className="text-[10px] font-bold text-slate-500">{i.assigned_via}</span>
                 </div>
               ))}
             </div>

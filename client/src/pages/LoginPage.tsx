@@ -80,13 +80,13 @@ export const LoginPage: React.FC = () => {
           />
           <div>
             <div className="font-heading font-black tracking-tight text-lg leading-none">SIR MV PU COLLEGE</div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">SIRMV Campus</div>
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#e6c28f] mt-1">SIRMV Campus</div>
           </div>
         </div>
 
         <div className="relative z-10 max-w-xl">
           <div
-            className="mt-reveal inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold tracking-wider uppercase text-[#e6c28f]"
+            className="mt-reveal inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-bold tracking-wider uppercase text-[#e6c28f]"
             style={{ ['--i' as any]: 1 }}
           >
             <Sparkles className="w-3 h-3" /> Integrated Campus ERP
@@ -112,14 +112,14 @@ export const LoginPage: React.FC = () => {
                     <Icon className="w-4.5 h-4.5 text-[#4a0709]" />
                   </div>
                   <div className="font-heading font-bold text-sm mt-3">{f.title}</div>
-                  <div className="text-[11px] text-white/60 mt-0.5 leading-snug">{f.text}</div>
+                  <div className="text-xs text-white/60 mt-0.5 leading-snug">{f.text}</div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <p className="relative z-10 text-[11px] text-white/45">
+        <p className="relative z-10 text-xs text-white/45">
           &copy; 2026-2027 SIR MV PU College · SIRMV Campus. All rights reserved.
         </p>
       </aside>
@@ -147,7 +147,7 @@ export const LoginPage: React.FC = () => {
 
             <div className="p-7 sm:p-9 space-y-6">
               <div className="mt-reveal" style={{ ['--i' as any]: 2 }}>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fdf0f0] text-[11px] font-bold text-[#b3191f] tracking-wider uppercase border border-[#f1cfd1]">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fdf0f0] text-xs font-bold text-[#b3191f] tracking-wider uppercase border border-[#f1cfd1]">
                   <Shield className="w-3 h-3" />
                   <span>SIRMV Campus</span>
                 </div>
@@ -167,7 +167,7 @@ export const LoginPage: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="mt-reveal" style={{ ['--i' as any]: 3 }}>
                   <div className="mt-field">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-4 z-10" />
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-4 z-10" />
                     <input
                       id="identifier"
                       type="text"
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
 
                 <div className="mt-reveal" style={{ ['--i' as any]: 4 }}>
                   <div className="mt-field">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-4 z-10" />
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-4 z-10" />
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -198,14 +198,14 @@ export const LoginPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-slate-400 hover:text-[#b3191f] transition z-10"
+                      className="absolute right-2 top-2 p-2 rounded-lg text-slate-500 hover:text-[#b3191f] transition z-10"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                     <span className="mt-underline" />
                   </div>
-                  <div className="text-[11px] font-mono text-slate-500 mt-1.5 text-right">
+                  <div className="text-xs font-mono text-slate-500 mt-1.5 text-right">
                     Default: <strong className="text-[#b3191f] font-bold">123456</strong>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export const LoginPage: React.FC = () => {
                     />
                     <span className="text-xs text-slate-600 font-medium">Remember on this device</span>
                   </label>
-                  <span className="text-xs text-slate-400 font-medium hover:text-[#b3191f] cursor-pointer transition">
+                  <span className="text-xs text-slate-500 font-medium hover:text-[#b3191f] cursor-pointer transition">
                     Help / Support
                   </span>
                 </div>
@@ -238,7 +238,7 @@ export const LoginPage: React.FC = () => {
               </form>
 
               <div className="pt-5 border-t border-slate-100">
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Quick Role Presets
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -251,7 +251,7 @@ export const LoginPage: React.FC = () => {
                         setIdentifier(p.id);
                         setPassword('Demo@12345');
                       }}
-                      className="mt-preset mt-pop px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 cursor-pointer flex flex-col items-center gap-1"
+                      className="mt-preset mt-pop px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer flex flex-col items-center gap-1"
                       style={{ ['--i' as any]: i + 7 }}
                     >
                       <img src={portraitUrl(PRESET_FACE[p.id])} alt="" className="w-11 h-11 rounded-full object-cover" />
@@ -259,17 +259,17 @@ export const LoginPage: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">
+                <p className="text-xs text-slate-500 mt-2">
                   Password for every preset: <span className="font-mono font-semibold text-slate-500">Demo@12345</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-slate-400 mt-5 lg:hidden">
+          <p className="text-center text-xs text-slate-500 mt-5 lg:hidden">
             &copy; 2026-2027 SIR MV PU College · SIRMV Campus.
           </p>
-          <p className="text-center text-[11px] text-slate-400 mt-5 hidden lg:block">
+          <p className="text-center text-xs text-slate-500 mt-5 hidden lg:block">
             Secured Institutional ERP &bull; Authorized Access Only
           </p>
         </div>

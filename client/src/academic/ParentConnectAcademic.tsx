@@ -96,7 +96,7 @@ const FamilyView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                 <div className="min-w-0 flex-1">
                   <b className="block text-[15px] text-slate-900 truncate">{c.name}</b>
                   <span className="text-[11px] text-slate-500 block">{c.relationship}{!isStudent && c.classLabel ? ` · ${c.classLabel}` : ''}</span>
-                  {!isStudent && <span className="text-[11px] text-slate-400">Reg. {c.registerNumber}</span>}
+                  {!isStudent && <span className="text-[11px] text-slate-500">Reg. {c.registerNumber}</span>}
                   {c.blocked && <span className="mt-1 inline-block"><Pill tone="amber">Calls switched off by hostel</Pill></span>}
                 </div>
                 <button disabled={!!call || !!busy || c.blocked || (av ? !av.isAllowed : false)} onClick={() => dial(c)}
@@ -220,7 +220,7 @@ const Dossier: React.FC<{ s: PcStudent; onClose: () => void; onChanged: () => vo
                   <li key={c.id} className="flex items-center gap-3 py-2.5">
                     <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${miss ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{miss ? <PhoneMissed className="w-4 h-4" /> : c.direction === 'outgoing' ? <PhoneOutgoing className="w-4 h-4" /> : <PhoneIncoming className="w-4 h-4" />}</span>
                     <div className="min-w-0 flex-1">
-                      <b className="block text-[13px] text-slate-900 truncate"><span className="text-[10px] text-slate-400 uppercase mr-1.5">{c.direction}</span>{c.name || 'Parent'} <span className="text-slate-400 font-normal">({c.relationship})</span></b>
+                      <b className="block text-[13px] text-slate-900 truncate"><span className="text-[10px] text-slate-500 uppercase mr-1.5">{c.direction}</span>{c.name || 'Parent'} <span className="text-slate-500 font-normal">({c.relationship})</span></b>
                       <span className="text-[11px] text-slate-500">{c.phone ? `${c.phone} · ` : ''}{clock(c.at)}</span>
                     </div>
                     {c.seconds > 0 && <span className="text-xs tabular-nums text-slate-600">{fmtDuration(c.seconds)}</span>}
@@ -315,7 +315,7 @@ const AdminView: React.FC<{ onExit: () => void }> = ({ onExit }) => {
           <Card title="Student Register" right={
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex bg-slate-100 rounded-xl p-0.5">{(['ALL', 'I PU', 'II PU'] as const).map((l) => <button key={l} onClick={() => setLevel(l)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold ${level === l ? 'bg-white text-[#a3161b] shadow-sm' : 'text-slate-500'}`}>{l}</button>)}</div>
-              <label className="relative"><Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by student, roll no or tab" className="pl-7 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl w-60 outline-none" /></label>
+              <label className="relative"><Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by student, roll no or tab" className="pl-7 pr-2 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl w-60 outline-none" /></label>
             </div>}>
             {!students ? <Empty text="Loading the register…" /> : shown.length === 0 ? <Empty text="No student matches this filter." /> : (
               <div className="overflow-x-auto">

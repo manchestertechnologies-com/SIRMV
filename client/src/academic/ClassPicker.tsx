@@ -20,8 +20,8 @@ export const MyClassGroups: React.FC<{ only: string[]; staffId?: string; onPick:
   );
   return (
     <div className="space-y-6">
-      {own.length > 0 && <div><h3 className="text-sm font-bold font-heading text-slate-900 mb-2">Class you are class teacher of <span className="text-slate-400 font-medium">({own.length})</span></h3><Grid list={own} badge="Class teacher" /></div>}
-      {other.length > 0 && <div><h3 className="text-sm font-bold font-heading text-slate-900 mb-2">Other classes you teach <span className="text-slate-400 font-medium">({other.length})</span></h3><Grid list={other} /></div>}
+      {own.length > 0 && <div><h3 className="text-sm font-bold font-heading text-slate-900 mb-2">Class you are class teacher of <span className="text-slate-500 font-medium">({own.length})</span></h3><Grid list={own} badge="Class teacher" /></div>}
+      {other.length > 0 && <div><h3 className="text-sm font-bold font-heading text-slate-900 mb-2">Other classes you teach <span className="text-slate-500 font-medium">({other.length})</span></h3><Grid list={other} /></div>}
     </div>
   );
 };

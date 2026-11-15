@@ -71,7 +71,7 @@ export const FloorIssuesPage: React.FC = () => {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100">
         {issues.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-10">No issues reported yet.</p>
+          <p className="text-sm text-slate-500 text-center py-10">No issues reported yet.</p>
         )}
         {issues.map((i) => (
           <div key={i.id} className="p-4 space-y-1.5">
@@ -79,14 +79,14 @@ export const FloorIssuesPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Wrench className="w-4 h-4 text-amber-500 shrink-0" />
                 <h3 className="font-bold text-slate-900 text-sm">{i.category}</h3>
-                {i.floor != null && <span className="text-[11px] text-slate-400">Floor {i.floor}{i.room_number ? ` • Room ${i.room_number}` : ''}</span>}
+                {i.floor != null && <span className="text-[11px] text-slate-500">Floor {i.floor}{i.room_number ? ` • Room ${i.room_number}` : ''}</span>}
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_STYLES[i.status] || STATUS_STYLES.OPEN}`}>
                 {i.status.replace('_', ' ')}
               </span>
             </div>
             <p className="text-xs text-slate-700">{i.description}</p>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1">
+            <p className="text-[11px] text-slate-500 flex items-center gap-1">
               <Clock className="w-3 h-3" /> Reported by {i.reported_by_name || 'N/A'} on {new Date(i.created_at).toLocaleDateString()}
             </p>
             {canResolve && i.status !== 'RESOLVED' && (
@@ -110,7 +110,7 @@ export const FloorIssuesPage: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Report an Issue</h3>
-              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
             <form onSubmit={reportIssue} className="space-y-3">

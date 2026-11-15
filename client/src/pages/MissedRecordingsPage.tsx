@@ -62,10 +62,10 @@ export const MissedRecordingsPage: React.FC = () => {
       {/* Missed Lectures List */}
       <div className="space-y-4">
         {missedClasses.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400">
+          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500">
             <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
             <p className="text-sm font-semibold text-slate-700">No missed lectures recorded.</p>
-            <p className="text-xs text-slate-400 mt-0.5">Your attendance is up to date.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Your attendance is up to date.</p>
           </div>
         ) : (
           missedClasses.map((item, idx) => (
@@ -79,18 +79,18 @@ export const MissedRecordingsPage: React.FC = () => {
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
                     ATTENDANCE: {item.attendance_status}
                   </span>
-                  <span className="text-xs text-slate-400 font-mono">
+                  <span className="text-xs text-slate-500 font-mono">
                     Session ID: {item.lecture_session_id}
                   </span>
                 </div>
 
                 <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-5 gap-y-1">
                   <span className="flex items-center gap-1 font-semibold text-slate-800">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
                     {item.date}
                   </span>
                   <span className="flex items-center gap-1 text-slate-500">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
                     {item.scheduled_start} - {item.scheduled_end}
                   </span>
                   <span>Faculty: <strong>{item.teacher_name}</strong></span>
@@ -122,7 +122,7 @@ export const MissedRecordingsPage: React.FC = () => {
                     WATCH CLASS RECORDING
                   </button>
                 ) : (
-                  <div className="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl text-xs font-semibold border border-slate-200">
+                  <div className="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold border border-slate-200">
                     CLASS RECORDING NOT AVAILABLE
                   </div>
                 )}
@@ -143,7 +143,7 @@ export const MissedRecordingsPage: React.FC = () => {
               </div>
               <button
                 onClick={() => setActiveVideoUrl(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-500 hover:text-white p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -158,7 +158,7 @@ export const MissedRecordingsPage: React.FC = () => {
               />
             </div>
 
-            <div className="p-4 bg-slate-950 flex items-center justify-between text-xs text-slate-400">
+            <div className="p-4 bg-slate-950 flex items-center justify-between text-xs text-slate-500">
               <span>SIR MV PU College Lecture Stream</span>
               <a
                 href={activeVideoUrl}

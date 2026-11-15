@@ -54,7 +54,7 @@ export const TestsPage: React.FC = () => {
               <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${t.mode === 'ONLINE' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'}`}>
                 {t.mode === 'ONLINE' ? <Monitor className="w-3 h-3" /> : <FileText className="w-3 h-3" />} {t.mode}
               </span>
-              <span className="text-[10px] text-slate-400">{t.scheduled_date}</span>
+              <span className="text-[10px] text-slate-500">{t.scheduled_date}</span>
             </div>
             <p className="text-sm font-bold text-slate-900">{t.title}</p>
             <p className="text-[11px] text-slate-500">{t.class_name} • {t.batch_name} {t.subject_name ? `• ${t.subject_name}` : ''}</p>
@@ -64,7 +64,7 @@ export const TestsPage: React.FC = () => {
             </div>
           </button>
         ))}
-        {tests.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No tests scheduled yet.</p>}
+        {tests.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-10">No tests scheduled yet.</p>}
       </div>
 
       {showAdd && (
@@ -94,7 +94,7 @@ const CreateTestModal: React.FC<{ branchId: string; meta: any; onClose: () => vo
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h3 className="font-bold text-slate-900">Create Test</h3>
-          <button onClick={onClose}><X className="w-4 h-4 text-slate-400" /></button>
+          <button onClick={onClose}><X className="w-4 h-4 text-slate-500" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
@@ -166,7 +166,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
     } catch (err: any) { showToast(err.message, 'error'); } finally { setUploading(false); }
   };
 
-  if (!test) return <div className="text-sm text-slate-400 text-center py-16">Loading...</div>;
+  if (!test) return <div className="text-sm text-slate-500 text-center py-16">Loading...</div>;
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
@@ -188,7 +188,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
           <p className="text-sm font-bold text-slate-800 flex items-center gap-2"><FileText className="w-4 h-4" /> Question Paper</p>
           {test.question_paper_url ? (
             <a href={test.question_paper_url} target="_blank" rel="noreferrer" className="text-indigo-600 text-xs font-semibold underline">View uploaded paper</a>
-          ) : <p className="text-xs text-slate-400">No question paper uploaded yet.</p>}
+          ) : <p className="text-xs text-slate-500">No question paper uploaded yet.</p>}
           <label className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs cursor-pointer">
             <Upload className="w-3.5 h-3.5" /> {uploading ? 'Uploading...' : 'Upload Paper'}
             <input type="file" className="hidden" disabled={uploading} onChange={(e) => e.target.files?.[0] && uploadPaper(e.target.files[0])} />
@@ -202,7 +202,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
           <div className="divide-y divide-slate-50">
             {questions.map((q, i) => (
               <div key={q.id} className="py-2.5 text-xs">
-                <p className="font-semibold text-slate-800">{i + 1}. {q.question_text} <span className="text-slate-400">({q.marks} mk)</span></p>
+                <p className="font-semibold text-slate-800">{i + 1}. {q.question_text} <span className="text-slate-500">({q.marks} mk)</span></p>
                 <p className="text-slate-500 mt-1">A) {q.option_a}  B) {q.option_b}  C) {q.option_c}  D) {q.option_d}</p>
                 {q.correct_option && <p className="text-emerald-600 font-bold mt-0.5">Correct: {q.correct_option}</p>}
               </div>
@@ -243,7 +243,7 @@ const TestDetail: React.FC<{ testId: string; onBack: () => void }> = ({ testId, 
                   <td className="p-3">{r.marks_obtained}/{test.total_marks}</td>
                 </tr>
               ))}
-              {results.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">No submissions yet.</td></tr>}
+              {results.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-500">No submissions yet.</td></tr>}
             </tbody>
           </table>
           </div>

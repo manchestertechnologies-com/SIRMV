@@ -78,7 +78,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <div className="font-mono font-extrabold text-base tracking-wider text-white">
                 {timeString}
               </div>
-              <div className="text-[10px] text-slate-400">{dateString}</div>
+              <div className="text-[10px] text-slate-500">{dateString}</div>
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
             </div>
             <div className="text-xl font-extrabold text-white font-mono">6 Periods</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">NEET & JEE Batches active</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">NEET & JEE Batches active</div>
           </div>
 
           <div
@@ -150,7 +150,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <BellRing className="w-3.5 h-3.5 group-hover:rotate-12 transition" />
             </div>
             <div className="text-xl font-extrabold text-amber-400 font-mono">1 Duty Active</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Automated conflict check</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Automated conflict check</div>
           </div>
 
           <div
@@ -162,7 +162,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             </div>
             <div className="text-xl font-extrabold text-emerald-400 font-mono">94.8% Present</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Manual + Photo Assisted</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Manual + Photo Assisted</div>
           </div>
 
           <div
@@ -174,7 +174,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ onNavigate
               <ShieldAlert className="w-3.5 h-3.5 text-sky-400" />
             </div>
             <div className="text-xl font-extrabold text-sky-400 font-mono">1 Outpass Out</div>
-            <div className="text-[10px] text-slate-400 mt-0.5">OTP + Principal Signed</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">OTP + Principal Signed</div>
           </div>
         </div>
       </div>

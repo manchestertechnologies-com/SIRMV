@@ -70,7 +70,7 @@ export const CounsellingModule: React.FC = () => {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100">
         {records.length === 0 && (
-          <p className="text-sm text-slate-400 text-center py-10">No counselling sessions logged yet.</p>
+          <p className="text-sm text-slate-500 text-center py-10">No counselling sessions logged yet.</p>
         )}
         {records.map((r) => (
           <div key={r.id} className="p-4 space-y-1.5">
@@ -78,7 +78,7 @@ export const CounsellingModule: React.FC = () => {
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-indigo-500 shrink-0" />
                 <h3 className="font-bold text-slate-900 text-sm">{r.student_name}</h3>
-                <span className="text-[11px] text-slate-400 font-mono">{r.register_number}</span>
+                <span className="text-[11px] text-slate-500 font-mono">{r.register_number}</span>
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${STATUS_STYLES[r.status] || STATUS_STYLES.OPEN}`}>
                 {r.status}
@@ -110,7 +110,7 @@ export const CounsellingModule: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Log Counselling Session</h3>
-              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
             <form onSubmit={createRecord} className="space-y-3">

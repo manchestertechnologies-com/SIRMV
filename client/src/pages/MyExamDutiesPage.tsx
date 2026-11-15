@@ -286,9 +286,9 @@ export const MyExamDutiesPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {isLoading ? (
-          <div className="col-span-2 text-center text-slate-400 text-sm py-8">Loading duties...</div>
+          <div className="col-span-2 text-center text-slate-500 text-sm py-8">Loading duties...</div>
         ) : duties.length === 0 ? (
-          <div className="col-span-2 text-center text-slate-400 text-sm py-8">No published exam duties yet.</div>
+          <div className="col-span-2 text-center text-slate-500 text-sm py-8">No published exam duties yet.</div>
         ) : (
           duties.map((d) => (
             <div key={`${d.session_id}-${d.room_id}`} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 space-y-2">
@@ -385,7 +385,7 @@ export const MyExamDutiesPage: React.FC = () => {
             <div className="flex items-center gap-3 text-[11px] font-semibold">
               <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> {presentCount} Present</span>
               <span className="flex items-center gap-1 text-rose-600"><XCircle className="w-3.5 h-3.5" /> {absentCount} Absent</span>
-              <span className="text-slate-400">{pendingCount} Unmarked</span>
+              <span className="text-slate-500">{pendingCount} Unmarked</span>
               <button
                 onClick={markAllPresent}
                 disabled={marking || pendingCount === 0}
@@ -507,7 +507,7 @@ export const MyExamDutiesPage: React.FC = () => {
               )}
               <canvas ref={qrCanvasRef} className="mx-auto rounded-xl border border-slate-200 pointer-events-none" />
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-500">
               Refreshes to a new one-time code in {qrSecondsLeft}s — a screenshot stops working as soon as it rotates.
               Valid only until {qrInfo?.validUntil || qrFor.end_time} today, and only until a Floor Attender scans it once.
             </p>

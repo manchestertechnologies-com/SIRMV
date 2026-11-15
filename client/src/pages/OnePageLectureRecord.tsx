@@ -118,40 +118,40 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
 
         {/* Section 1: Lecture Session Details */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             1. Lecture Session Details
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 text-xs">
             <div>
-              <span className="text-slate-400 block">Date</span>
+              <span className="text-slate-500 block">Date</span>
               <span className="font-bold text-slate-900 text-sm">{lecture.date}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Class & Section</span>
+              <span className="text-slate-500 block">Class & Section</span>
               <span className="font-bold text-slate-900 text-sm">{lecture.class_name} {lecture.section_name}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Competitive Batch</span>
+              <span className="text-slate-500 block">Competitive Batch</span>
               <span className="font-bold text-indigo-700 text-sm">{lecture.batch_name}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Subject</span>
+              <span className="text-slate-500 block">Subject</span>
               <span className="font-bold text-slate-900 text-sm">{lecture.subject_name} ({lecture.subject_code})</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Room Number</span>
+              <span className="text-slate-500 block">Room Number</span>
               <span className="font-semibold text-slate-800">Room {lecture.room_number} (Floor {lecture.room_floor})</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Faculty In-Charge</span>
+              <span className="text-slate-500 block">Faculty In-Charge</span>
               <span className="font-semibold text-slate-800">{lecture.original_teacher_name} ({lecture.original_teacher_empid})</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Floor Attender</span>
+              <span className="text-slate-500 block">Floor Attender</span>
               <span className="font-semibold text-slate-800">{lecture.floor_attender_name || 'Ramesh Kumar'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block">Final Verification</span>
+              <span className="text-slate-500 block">Final Verification</span>
               <span className="font-bold text-emerald-700">COMPLETED</span>
             </div>
           </div>
@@ -159,28 +159,28 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
 
         {/* Section 2: Schedule & Timing Log */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             2. Scheduled vs Actual Timestamps
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100 text-xs text-center">
             <div className="bg-white p-3 rounded-xl border border-indigo-100">
-              <span className="text-slate-400 block text-[10px]">Scheduled Slot</span>
+              <span className="text-slate-500 block text-[10px]">Scheduled Slot</span>
               <span className="font-bold text-slate-900 font-mono text-xs">{lecture.scheduled_start} - {lecture.scheduled_end}</span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-indigo-100">
-              <span className="text-slate-400 block text-[10px]">Teacher Time In</span>
+              <span className="text-slate-500 block text-[10px]">Teacher Time In</span>
               <span className="font-bold text-indigo-700 font-mono text-xs">{lecture.teacher_time_in || '--:--'}</span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-indigo-100">
-              <span className="text-slate-400 block text-[10px]">Lecture Started</span>
+              <span className="text-slate-500 block text-[10px]">Lecture Started</span>
               <span className="font-bold text-emerald-700 font-mono text-xs">{lecture.lecture_start_time || '--:--'}</span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-indigo-100">
-              <span className="text-slate-400 block text-[10px]">Lecture Ended</span>
+              <span className="text-slate-500 block text-[10px]">Lecture Ended</span>
               <span className="font-bold text-indigo-700 font-mono text-xs">{lecture.lecture_end_time || '--:--'}</span>
             </div>
             <div className="bg-white p-3 rounded-xl border border-indigo-100">
-              <span className="text-slate-400 block text-[10px]">Teacher Time Out</span>
+              <span className="text-slate-500 block text-[10px]">Teacher Time Out</span>
               <span className="font-bold text-slate-900 font-mono text-xs">{lecture.teacher_time_out || '--:--'}</span>
             </div>
           </div>
@@ -188,7 +188,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
 
         {/* Section 3: Teacher Status & Proxy Allocation */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             3. Faculty Status
           </div>
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs flex items-center justify-between">
@@ -211,7 +211,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
 
         {/* Section 4: Concept & Syllabus Progress */}
         <div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
             4. Concept Taught in Classroom
           </div>
           <div className="p-5 bg-white rounded-2xl border border-slate-200 text-xs space-y-2">
@@ -233,7 +233,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
         {/* Section 5: Student Attendance Metrics & Breakdown */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               5. Student Attendance Summary ({attendanceSummary.attendancePercentage}%)
             </div>
             <div className="flex items-center gap-3 text-xs font-bold">
@@ -250,7 +250,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
                 <div key={rec.id} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
                   <div>
                     <div className="font-bold text-slate-900">{rec.student_name}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{rec.register_number}</div>
+                    <div className="text-[10px] text-slate-500 font-mono">{rec.register_number}</div>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                     rec.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' :
@@ -268,14 +268,14 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Class Photo */}
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               6. Captured Classroom Photo
             </div>
             <div className="aspect-16/9 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center">
               {lecture.classroom_photo_url ? (
                 <img src={lecture.classroom_photo_url} alt="Classroom Verification" className="w-full h-full object-cover" />
               ) : (
-                <div className="text-center p-6 text-slate-400 text-xs">
+                <div className="text-center p-6 text-slate-500 text-xs">
                   <Camera className="w-6 h-6 mx-auto mb-1 opacity-50" />
                   No Classroom Photo Uploaded
                 </div>
@@ -285,7 +285,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
 
           {/* Class Recording */}
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               7. Class Recording (For Absent Students)
             </div>
             <div className="aspect-16/9 bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center text-white p-6 text-center">
@@ -293,7 +293,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
                 <>
                   <Video className="w-8 h-8 text-indigo-400 mb-2" />
                   <div className="text-xs font-bold text-white mb-1">Live Recording Available</div>
-                  <p className="text-[11px] text-slate-400 mb-3 truncate max-w-xs">{lecture.recording_url}</p>
+                  <p className="text-[11px] text-slate-500 mb-3 truncate max-w-xs">{lecture.recording_url}</p>
                   <a
                     href={lecture.recording_url}
                     target="_blank"
@@ -306,7 +306,7 @@ export const OnePageLectureRecord: React.FC<OnePageLectureRecordProps> = ({
               ) : (
                 <>
                   <Video className="w-8 h-8 text-slate-600 mb-2" />
-                  <span className="text-xs font-semibold text-slate-400">Class Recording Not Available</span>
+                  <span className="text-xs font-semibold text-slate-500">Class Recording Not Available</span>
                   <p className="text-[10px] text-slate-500 mt-1">No video stream linked for this period.</p>
                 </>
               )}

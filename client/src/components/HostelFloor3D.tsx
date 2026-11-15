@@ -313,7 +313,7 @@ export const HostelFloor3D: React.FC<{
         onWheelCapture={(e) => e.stopPropagation()}
       >
         {rooms.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">No rooms on this floor yet.</div>
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-500">No rooms on this floor yet.</div>
         ) : (
           <Canvas shadows camera={{ position: [0, 7, 7.5], fov: 42 }}>
             <ambientLight intensity={0.85} />
@@ -380,7 +380,7 @@ export const HostelFloor3D: React.FC<{
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: BED_COLOR_AVAILABLE }} />
           <span className="text-slate-600 font-semibold">Available Bed</span>
         </div>
-        <span className="text-slate-400 ml-auto">Click a room to allocate a student into it.</span>
+        <span className="text-slate-500 ml-auto">Click a room to allocate a student into it.</span>
       </div>
     </div>
   );

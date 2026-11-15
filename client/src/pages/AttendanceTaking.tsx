@@ -286,7 +286,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
         {/* Quick Bulk Marking */}
         {!isFinalized && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Quick Mark:</span>
+            <span className="text-xs text-slate-500">Quick Mark:</span>
             <button
               onClick={() => handleMarkAll('PRESENT')}
               className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold transition"
@@ -306,7 +306,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Search student by name or register number..."
@@ -345,7 +345,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
             <tbody className="divide-y divide-slate-100">
               {filteredStudents.map((st, idx) => (
                 <tr key={st.id} className="hover:bg-slate-50/70 transition">
-                  <td className="py-3 px-4 text-center text-slate-400 font-mono">{idx + 1}</td>
+                  <td className="py-3 px-4 text-center text-slate-500 font-mono">{idx + 1}</td>
                   <td className="py-3 px-4 font-bold text-slate-900">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0">
@@ -353,7 +353,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
                       </div>
                       <div>
                         <div>{st.name}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">
+                        <div className="text-[10px] text-slate-500 font-normal">
                           {st.is_hostelite ? '🏠 Hostelite' : '🚶 Day Scholar'}
                         </div>
                       </div>
@@ -370,7 +370,7 @@ export const AttendanceTaking: React.FC<AttendanceTakingProps> = ({
                         <AlertTriangle className="w-3 h-3" /> {(st.detection_confidence * 100).toFixed(0)}% Uncertain
                       </span>
                     ) : (
-                      <span className="text-[11px] text-slate-400">Manual Entry</span>
+                      <span className="text-[11px] text-slate-500">Manual Entry</span>
                     )}
                   </td>
                   <td className="py-3 px-4 text-center">

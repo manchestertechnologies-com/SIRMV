@@ -67,7 +67,7 @@ export const LeaderboardAcademic: React.FC<{ onExit: () => void; only?: string[]
                   <td className="px-3 whitespace-nowrap">{r.speed} Q/H</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-slate-400">No students in this selection.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-slate-500">No students in this selection.</td></tr>}
             </tbody>
           </table>
         </div>

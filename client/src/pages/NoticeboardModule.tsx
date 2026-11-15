@@ -87,9 +87,9 @@ export const NoticeboardModule: React.FC = () => {
       {/* Notices */}
       <div className="space-y-4">
         {isLoading ? (
-          <p className="text-sm text-slate-400 text-center py-10">Loading notices...</p>
+          <p className="text-sm text-slate-500 text-center py-10">Loading notices...</p>
         ) : announcements.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-10">No announcements yet.</p>
+          <p className="text-sm text-slate-500 text-center py-10">No announcements yet.</p>
         ) : (
           announcements.map((n) => (
             <div
@@ -109,7 +109,7 @@ export const NoticeboardModule: React.FC = () => {
                     {n.category}
                   </span>
                 </div>
-                <span className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" /> {formatDate(n.created_at)}
                 </span>
               </div>
@@ -183,7 +183,7 @@ const ComposerModal: React.FC<{ branchId?: string; onClose: () => void; onPosted
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[88vh] overflow-y-auto shadow-xl">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h3 className="font-bold text-slate-900">Post Announcement</h3>
-          <button onClick={onClose}><X className="w-4 h-4 text-slate-400" /></button>
+          <button onClick={onClose}><X className="w-4 h-4 text-slate-500" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}

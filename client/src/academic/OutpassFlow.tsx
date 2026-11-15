@@ -185,7 +185,7 @@ const NewOutpass: React.FC<{ onCancel: () => void; onDone: (o: Outpass) => void;
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <input value={typed} onChange={(e) => setTyped(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Enter OTP" inputMode="numeric" className="w-40 px-4 py-3 rounded-xl border border-[#ded9cf] text-lg tracking-[0.35em] text-center outline-none focus:border-[#c7222a]" />
             <button disabled={typed.length !== 6 || !otp} onClick={verify} className="px-5 py-3 rounded-xl bg-[#a3161b] text-white text-xs font-semibold disabled:opacity-40">Confirm and send to head warden</button>
-            <button disabled={cool > 0} onClick={() => { setTries(0); sendOtp(); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a3161b] disabled:text-slate-400"><RefreshCw className="w-3.5 h-3.5" />{cool > 0 ? `Resend in ${cool}s` : 'Resend OTP'}</button>
+            <button disabled={cool > 0} onClick={() => { setTries(0); sendOtp(); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#a3161b] disabled:text-slate-500"><RefreshCw className="w-3.5 h-3.5" />{cool > 0 ? `Resend in ${cool}s` : 'Resend OTP'}</button>
           </div>
           {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
           <button onClick={() => setStep(2)} className="mt-4 text-xs font-semibold text-slate-500">Back</button>
@@ -211,7 +211,7 @@ const PhotoStep: React.FC<{ photo: string; onPhoto: (p: string) => void; onBack:
   return (
     <Card title="Capture student photo">
       <div className="flex flex-col sm:flex-row gap-5 items-start">
-        <div className="w-60 h-72 rounded-2xl overflow-hidden bg-slate-100 border border-[#ece4da] flex items-center justify-center text-slate-400 text-xs text-center">
+        <div className="w-60 h-72 rounded-2xl overflow-hidden bg-slate-100 border border-[#ece4da] flex items-center justify-center text-slate-500 text-xs text-center">
           {photo ? <img src={photo} alt="Captured" className="w-full h-full object-cover" /> : cam === 'on' ? <video ref={video} muted playsInline className="w-full h-full object-cover -scale-x-100" /> : <span className="px-4">No photo yet</span>}
         </div>
         <div className="space-y-3 text-sm">

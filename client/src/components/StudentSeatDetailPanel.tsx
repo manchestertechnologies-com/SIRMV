@@ -29,7 +29,7 @@ export interface SeatDetailData {
 
 const Row: React.FC<{ label: string; value: React.ReactNode; bold?: boolean }> = ({ label, value, bold }) => (
   <div className="flex justify-between gap-3 py-1">
-    <span className="text-slate-400">{label}</span>
+    <span className="text-slate-500">{label}</span>
     <span className={bold ? 'font-bold text-slate-900' : 'text-slate-700'}>{value}</span>
   </div>
 );
@@ -44,7 +44,7 @@ export const StudentSeatDetailPanel: React.FC<{
 }> = ({ data, onClose, canMarkAttendance, onMark, marking, onViewProfile }) => {
   const statusColor =
     data.attendanceStatus === 'PRESENT' ? 'text-emerald-600' :
-    data.attendanceStatus === 'ABSENT' ? 'text-rose-600' : 'text-slate-400';
+    data.attendanceStatus === 'ABSENT' ? 'text-rose-600' : 'text-slate-500';
 
   return (
     <div className="bg-white rounded-2xl border-2 border-violet-200 shadow-xs p-5 relative">

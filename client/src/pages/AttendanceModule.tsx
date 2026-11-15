@@ -608,7 +608,7 @@ export const AttendanceModule: React.FC = () => {
 
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
-                <Calendar className="w-4 h-4 text-slate-400" />
+                <Calendar className="w-4 h-4 text-slate-500" />
                 <input
                   type="date"
                   max={new Date().toISOString().split('T')[0]}
@@ -617,7 +617,7 @@ export const AttendanceModule: React.FC = () => {
                   className="bg-transparent font-semibold text-slate-800 outline-none"
                 />
               </div>
-              <span className="text-[10px] text-slate-400 font-semibold">Pick any past date to revisit saved attendance</span>
+              <span className="text-[10px] text-slate-500 font-semibold">Pick any past date to revisit saved attendance</span>
             </div>
           </div>
 
@@ -642,7 +642,7 @@ export const AttendanceModule: React.FC = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                 </div>
               ) : scheduledLectures.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 text-sm">
+                <div className="p-12 text-center text-slate-500 text-sm">
                   No scheduled classes found on Floor {pickerFloor} for {pickerDate}.
                 </div>
               ) : (
@@ -712,7 +712,7 @@ export const AttendanceModule: React.FC = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
                 </div>
               ) : scheduledLectures.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 text-sm">
+                <div className="p-12 text-center text-slate-500 text-sm">
                   No scheduled classes found on Floor {pickerFloor} for {pickerDate}.
                 </div>
               ) : (
@@ -830,7 +830,7 @@ export const AttendanceModule: React.FC = () => {
             </div>
 
             <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
@@ -872,7 +872,7 @@ export const AttendanceModule: React.FC = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
               </div>
             ) : filteredStudents.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div className="p-12 text-center text-slate-500 text-sm">
                 No students found for this lecture session.
               </div>
             ) : (
@@ -963,7 +963,7 @@ export const AttendanceModule: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
-              <Calendar className="w-4 h-4 text-slate-400" />
+              <Calendar className="w-4 h-4 text-slate-500" />
               <input
                 type="date"
                 value={eveningDate}
@@ -998,7 +998,7 @@ export const AttendanceModule: React.FC = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
               </div>
             ) : eveningRoster.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div className="p-12 text-center text-slate-500 text-sm">
                 No evening study session records for {eveningDate}.
               </div>
             ) : (
@@ -1067,7 +1067,7 @@ export const AttendanceModule: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
-              <Calendar className="w-4 h-4 text-slate-400" />
+              <Calendar className="w-4 h-4 text-slate-500" />
               <input
                 type="date"
                 value={hostelDate}
@@ -1102,7 +1102,7 @@ export const AttendanceModule: React.FC = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
               </div>
             ) : hostelRollCall.length === 0 ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div className="p-12 text-center text-slate-500 text-sm">
                 No hostel roll-call records for {hostelDate}.
               </div>
             ) : (

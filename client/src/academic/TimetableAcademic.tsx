@@ -76,7 +76,7 @@ export const SectionTimetable: React.FC<{ sectionId: string }> = ({ sectionId })
                 p++; const pi = p;
                 return (
                   <tr key={s.key} className="border-b border-[#f7f2ec]">
-                    <td className="py-2 pr-3"><b className="block text-slate-900">{s.start}</b><span className="text-slate-400">to {s.end}</span></td>
+                    <td className="py-2 pr-3"><b className="block text-slate-900">{s.start}</b><span className="text-slate-500">to {s.end}</span></td>
                     {WEEKDAYS.map((_, d) => { const c = grid[d][pi]; const t = staffById(c.staffId)!; return (
                       <td key={d} className="pr-2 py-1.5 align-top"><div className="rounded-lg bg-[#fff6f0] border border-[#f3dfd0] px-2 py-1.5"><b className="block text-slate-900 truncate">{c.subject}</b><span className="block text-[10px] text-slate-500 truncate">{t.name}</span></div></td>); })}
                   </tr>);
@@ -91,7 +91,7 @@ export const SectionTimetable: React.FC<{ sectionId: string }> = ({ sectionId })
             p++; const c = grid[day][p]; const t = staffById(c.staffId)!;
             return (
               <li key={s.key} className="py-2.5 flex items-center gap-3">
-                <span className="w-[148px] shrink-0 text-xs"><b className="block text-slate-900">{s.start} – {s.end}</b><span className="text-slate-400">{s.label}</span></span>
+                <span className="w-[148px] shrink-0 text-xs"><b className="block text-slate-900">{s.start} – {s.end}</b><span className="text-slate-500">{s.label}</span></span>
                 <SubjectIcon subject={c.subject} className="w-9 h-9 shrink-0" />
                 <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{c.subject}</b><span className="text-xs text-slate-500 truncate block">{t.name}</span></span>
                 <Pill tone="grey">{c.room}</Pill>
@@ -115,7 +115,7 @@ export const MySlots: React.FC<{ staffId?: string }> = ({ staffId }) => {
           <thead><tr className="text-left text-slate-500"><th className="py-2 pr-3 w-44">Time</th>{WEEKDAYS.map((d, i) => <th key={d} className={`pr-2 ${i === today ? 'text-[#a3161b]' : ''}`}>{d}</th>)}</tr></thead>
           <tbody>
             {SLOTS.map((s) => {
-              if (s.kind === 'break') return <tr key={s.key}><td colSpan={WEEKDAYS.length + 1} className="text-center text-[11px] text-slate-400 bg-[#faf6ee] rounded-lg py-1">{s.label} · {s.start} to {s.end}</td></tr>;
+              if (s.kind === 'break') return <tr key={s.key}><td colSpan={WEEKDAYS.length + 1} className="text-center text-[11px] text-slate-500 bg-[#faf6ee] rounded-lg py-1">{s.label} · {s.start} to {s.end}</td></tr>;
               p++; const pi = p;
               return (
                 <tr key={s.key}>
@@ -123,7 +123,7 @@ export const MySlots: React.FC<{ staffId?: string }> = ({ staffId }) => {
                   {WEEKDAYS.map((d, di) => {
                     const c = grid[di][pi];
                     const sec = c ? sectionById(c.sectionId) : null; const cell = c ? tt.get(c.sectionId)?.[di]?.[pi] : null;
-                    return <td key={d} className="pr-2 align-top">{sec ? <div className="rounded-xl border border-[#e7d3b0] bg-[#fff7e6] px-2 py-1.5"><b className="block text-slate-900">{sec.title}</b><span className="text-[11px] text-slate-500">{cell?.subject} · {cell?.room}</span></div> : <div className="rounded-xl bg-[#f6f3ee] px-2 py-2 text-[11px] text-slate-400 text-center">Free</div>}</td>;
+                    return <td key={d} className="pr-2 align-top">{sec ? <div className="rounded-xl border border-[#e7d3b0] bg-[#fff7e6] px-2 py-1.5"><b className="block text-slate-900">{sec.title}</b><span className="text-[11px] text-slate-500">{cell?.subject} · {cell?.room}</span></div> : <div className="rounded-xl bg-[#f6f3ee] px-2 py-2 text-[11px] text-slate-500 text-center">Free</div>}</td>;
                   })}
                 </tr>
               );

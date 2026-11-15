@@ -195,11 +195,16 @@ export function App() {
     'parent-connect': 'Parent Connect'
   };
 
-  // While the saved session is being checked, show a light splash instead of an empty app shell
+  const pageTitle = user ? moduleTitles[activeTab] : undefined;
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} | SIR MV PU College` : 'SIR MV PU College | Campus ERP';
+  }, [pageTitle]);
+
+  // The saved session is checked first so a logged-in user never sees the login screen flash by
   if (!user && isLoading) {
     return (
       <div className="mt-splash" role="status" aria-label="Loading">
-        <img src="/logo.png" alt="" />
+        <img src="/logo-sm.png" alt="" width="96" height="96" />
         <div className="mt-splash-bar" />
       </div>
     );
@@ -778,12 +783,12 @@ export function App() {
               </div>
 
               {/* Clean Workspace Placeholder */}
-              <div className="bg-[#fdfcfb] border border-[#ded9cf] rounded-2xl p-12 text-center text-slate-400">
+              <div className="bg-[#fdfcfb] border border-[#ded9cf] rounded-2xl p-12 text-center text-slate-500">
                 <div className="max-w-md mx-auto space-y-2">
                   <p className="text-sm font-semibold text-slate-700">
                     {moduleTitles[activeTab] || activeTab} Module
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Ready for institutional workflow.
                   </p>
                 </div>

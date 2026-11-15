@@ -164,7 +164,7 @@ export const ReportsModule: React.FC = () => {
               <div className="text-2xl font-extrabold text-slate-900 font-heading mt-1">
                 {examSummary?.totalStudents || 48}
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">Enrolled Candidates</div>
+              <div className="text-[11px] text-slate-500 mt-1">Enrolled Candidates</div>
             </div>
 
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
@@ -172,7 +172,7 @@ export const ReportsModule: React.FC = () => {
               <div className="text-2xl font-extrabold text-blue-700 font-heading mt-1">
                 {examSummary?.averageMarks || '86.4%'}
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">Across All Subjects</div>
+              <div className="text-[11px] text-slate-500 mt-1">Across All Subjects</div>
             </div>
 
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
@@ -180,7 +180,7 @@ export const ReportsModule: React.FC = () => {
               <div className="text-2xl font-extrabold text-emerald-600 font-heading mt-1">
                 {examSummary?.distinctionCount || 34}
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">≥ 85% Aggregate</div>
+              <div className="text-[11px] text-slate-500 mt-1">≥ 85% Aggregate</div>
             </div>
 
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
@@ -188,7 +188,7 @@ export const ReportsModule: React.FC = () => {
               <div className="text-2xl font-extrabold text-emerald-600 font-heading mt-1">
                 100%
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">Zero Failures</div>
+              <div className="text-[11px] text-slate-500 mt-1">Zero Failures</div>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export const ReportsModule: React.FC = () => {
               <h3 className="font-bold text-slate-900 text-sm font-heading">
                 Subject-Wise Aggregation & Grade Distribution
               </h3>
-              <span className="text-xs text-slate-400">PUC I & PUC II Core Sciences</span>
+              <span className="text-xs text-slate-500">PUC I & PUC II Core Sciences</span>
             </div>
 
             <table className="w-full text-left text-xs border-collapse">
@@ -248,19 +248,19 @@ export const ReportsModule: React.FC = () => {
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
               <div className="text-xs text-slate-500 font-semibold">Campus Attendance Today</div>
               <div className="text-2xl font-extrabold text-emerald-600 font-heading mt-1">96.8%</div>
-              <div className="text-[11px] text-slate-400 mt-1">47 Present • 1 Absent</div>
+              <div className="text-[11px] text-slate-500 mt-1">47 Present • 1 Absent</div>
             </div>
 
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
               <div className="text-xs text-slate-500 font-semibold">Hostel Night Roll-Call</div>
               <div className="text-2xl font-extrabold text-indigo-700 font-heading mt-1">98.2%</div>
-              <div className="text-[11px] text-slate-400 mt-1">2 On Approved Outpass</div>
+              <div className="text-[11px] text-slate-500 mt-1">2 On Approved Outpass</div>
             </div>
 
             <div className="bg-[#fdfcfb] p-5 rounded-2xl border border-[#ded9cf]">
               <div className="text-xs text-slate-500 font-semibold">Evening Study Rate</div>
               <div className="text-2xl font-extrabold text-blue-700 font-heading mt-1">95.4%</div>
-              <div className="text-[11px] text-slate-400 mt-1">Supervised Daily</div>
+              <div className="text-[11px] text-slate-500 mt-1">Supervised Daily</div>
             </div>
           </div>
 

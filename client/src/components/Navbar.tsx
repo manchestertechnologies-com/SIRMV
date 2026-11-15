@@ -220,7 +220,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                 </div>
                 <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto py-1">
                   {notifications.length === 0 ? (
-                    <p className="px-3.5 py-6 text-xs text-slate-400 text-center">No notifications yet.</p>
+                    <p className="px-3.5 py-6 text-xs text-slate-500 text-center">No notifications yet.</p>
                   ) : (
                     notifications.map((n) => (
                       <button
@@ -234,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                         <div className={`min-w-0 ${n.is_read ? 'pl-3.5' : ''}`}>
                           <p className="text-xs font-bold text-slate-800 truncate">{n.title}</p>
                           {n.message && <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>}
-                          <p className="text-[10px] text-slate-400 mt-1">{timeAgo(n.created_at)}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{timeAgo(n.created_at)}</p>
                         </div>
                       </button>
                     ))
@@ -270,7 +270,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                     <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                     Switch Role Persona
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">Pass: 123456</span>
+                  <span className="text-[10px] font-mono text-slate-500">Pass: 123456</span>
                 </div>
 
                 <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto py-1">
@@ -292,7 +292,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
                             <span>{roleItem.label}</span>
                             {isCurrent && <Check className="w-3.5 h-3.5 text-blue-600" />}
                           </div>
-                          <div className="text-[10px] text-slate-400 font-mono">
+                          <div className="text-[10px] text-slate-500 font-mono">
                             {roleItem.email}
                           </div>
                         </div>

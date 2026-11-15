@@ -125,12 +125,12 @@ export const CameraModal: React.FC<CameraModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-sm sm:text-base font-heading tracking-tight">{title}</h3>
-              <p className="text-[10px] text-slate-400 font-mono">LOCAL CV VERIFICATION SYSTEM</p>
+              <p className="text-[10px] text-slate-500 font-mono">LOCAL CV VERIFICATION SYSTEM</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -177,7 +177,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({
 
                       {/* Bottom Status */}
                       <div className="text-center">
-                        <span className="text-[10px] font-mono text-slate-400 bg-slate-950/70 px-3 py-1 rounded-full border border-white/10">
+                        <span className="text-[10px] font-mono text-slate-500 bg-slate-950/70 px-3 py-1 rounded-full border border-white/10">
                           READY FOR SNAPSHOT
                         </span>
                       </div>

@@ -91,7 +91,7 @@ export const BatchesPage: React.FC = () => {
               </div>
               <button onClick={() => deleteBatch(b.id)}><Trash2 className="w-3.5 h-3.5 text-slate-300 hover:text-rose-500" /></button>
             </div>
-            <p className="font-mono text-[11px] text-slate-400">{b.code}</p>
+            <p className="font-mono text-[11px] text-slate-500">{b.code}</p>
             <button onClick={() => setSelectedBatchId(b.id)} className="w-full flex items-center justify-between text-[11px] font-semibold text-slate-500 pt-2 border-t border-slate-100">
               <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {b.studentCount} students</span>
               <span className="text-indigo-600">View →</span>
@@ -100,7 +100,7 @@ export const BatchesPage: React.FC = () => {
         ))}
         {loading && batches.length === 0 && Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-[108px] rounded-2xl bg-slate-100 animate-pulse" />)}
         {failed && batches.length === 0 && <p className="text-sm text-rose-600 col-span-full text-center py-10">Could not load batches. <button onClick={load} className="underline font-semibold">Retry</button></p>}
-        {!loading && !failed && batches.length === 0 && <p className="text-sm text-slate-400 col-span-full text-center py-10">No batches yet. Add one to get started.</p>}
+        {!loading && !failed && batches.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-10">No batches yet. Add one to get started.</p>}
       </div>
 
       {showAdd && (
@@ -108,7 +108,7 @@ export const BatchesPage: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Add Batch</h3>
-              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
             <form onSubmit={createBatch} className="space-y-3">
@@ -150,7 +150,7 @@ const BatchDetail: React.FC<{ batchId: string; branchId: string; onBack: () => v
 
   useEffect(() => { load(); }, [batchId]);
 
-  if (!data) return <div className="text-sm text-slate-400 text-center py-16">Loading...</div>;
+  if (!data) return <div className="text-sm text-slate-500 text-center py-16">Loading...</div>;
 
   // Group class/sections by class for display — one grouping for sections
   // actually registered into this batch (real students), another for
@@ -182,7 +182,7 @@ const BatchDetail: React.FC<{ batchId: string; branchId: string; onBack: () => v
           Upcoming Sections (Default Batch)
         </h3>
         {upcomingByClass.size === 0 ? (
-          <p className="text-xs text-slate-400">No section has this set as its Default Batch yet. Set it from the Classes page.</p>
+          <p className="text-xs text-slate-500">No section has this set as its Default Batch yet. Set it from the Classes page.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Array.from(upcomingByClass.entries()).map(([classId, info]) => (
@@ -210,7 +210,7 @@ const BatchDetail: React.FC<{ batchId: string; branchId: string; onBack: () => v
           Classes / Sections Covered (Registered Students)
         </h3>
         {actualByClass.size === 0 ? (
-          <p className="text-xs text-slate-400">No students registered into this batch yet. Classes/sections will appear here automatically once students are registered with this batch.</p>
+          <p className="text-xs text-slate-500">No students registered into this batch yet. Classes/sections will appear here automatically once students are registered with this batch.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Array.from(actualByClass.entries()).map(([classId, info]) => (
@@ -247,7 +247,7 @@ const BatchDetail: React.FC<{ batchId: string; branchId: string; onBack: () => v
                 <td className="p-3">{s.admission_type}</td>
               </tr>
             ))}
-            {data.students.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">No students in this batch yet.</td></tr>}
+            {data.students.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-500">No students in this batch yet.</td></tr>}
           </tbody>
         </table>
         </div>

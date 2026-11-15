@@ -243,7 +243,7 @@ export const StudentOutpassView: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#fdfcfb] rounded-3xl p-8 border border-[#ded9cf] shadow-xs text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto">
-            <Home className="w-7 h-7 text-slate-400" />
+            <Home className="w-7 h-7 text-slate-500" />
           </div>
           <h2 className="text-base font-bold text-slate-900 font-heading">Hostel Residents Only</h2>
           <p className="text-sm text-slate-500">
@@ -300,7 +300,7 @@ export const StudentOutpassView: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : sortedOutpass.length === 0 ? (
-            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
               No outpass requests yet.
             </div>
           ) : (
@@ -322,22 +322,22 @@ export const StudentOutpassView: React.FC = () => {
                       </div>
                       <p className="text-xs text-slate-600 mt-1">{o.reason}</p>
                     </div>
-                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap">
                       Requested {formatDateTime(o.requested_at)}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs pt-3 border-t border-[#f2eee6]">
                     <div>
-                      <span className="text-slate-400 block font-medium">Pickup Person</span>
+                      <span className="text-slate-500 block font-medium">Pickup Person</span>
                       <span className="font-semibold text-slate-800">{o.pickup_person_name}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">Pickup Phone</span>
+                      <span className="text-slate-500 block font-medium">Pickup Phone</span>
                       <span className="font-semibold text-slate-800">{o.pickup_person_phone}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">Relationship</span>
+                      <span className="text-slate-500 block font-medium">Relationship</span>
                       <span className="font-semibold text-slate-800">{o.relationship}</span>
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export const StudentOutpassView: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : sortedGrievances.length === 0 ? (
-            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
               No grievances filed yet.
             </div>
           ) : (
@@ -420,7 +420,7 @@ export const StudentOutpassView: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap">
                       Filed {formatDateTime(g.created_at)}
                     </span>
                   </div>
@@ -433,7 +433,7 @@ export const StudentOutpassView: React.FC = () => {
                         Warden's Response
                       </span>
                       <p className="text-xs text-slate-700">{g.response}</p>
-                      <p className="text-[10px] text-slate-400 mt-1">
+                      <p className="text-[10px] text-slate-500 mt-1">
                         {g.responded_by_name ? `${g.responded_by_name} • ` : ''}
                         {formatDateTime(g.responded_at)}
                       </p>

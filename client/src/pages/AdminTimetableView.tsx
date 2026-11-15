@@ -96,7 +96,7 @@ export const AdminTimetableView: React.FC = () => {
 
   if (groups.length === 0) {
     return (
-      <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+      <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
         No published timetables found for any class yet. Publish a draft from the Timetable Generator to see
         it here.
       </div>
@@ -179,13 +179,13 @@ export const AdminTimetableView: React.FC = () => {
                   </span>
                 )}
               </h3>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500">
                 {entriesForSelectedDay.length} {entriesForSelectedDay.length === 1 ? 'Period' : 'Periods'}
               </span>
             </div>
 
             {entriesForSelectedDay.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">No periods scheduled on this day.</div>
+              <div className="p-8 text-center text-slate-500 text-xs">No periods scheduled on this day.</div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {entriesForSelectedDay.map((entry) => (
@@ -198,7 +198,7 @@ export const AdminTimetableView: React.FC = () => {
                         P{entry.period_number}
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-slate-500 font-semibold">
-                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                         {entry.start_time}–{entry.end_time}
                       </div>
                     </div>
@@ -207,11 +207,11 @@ export const AdminTimetableView: React.FC = () => {
                       <div className="font-bold text-slate-900 text-sm truncate">{entry.subject_name}</div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[11px] text-slate-500">
                         <span className="flex items-center gap-1">
-                          <User className="w-3.5 h-3.5 text-slate-400" />
+                          <User className="w-3.5 h-3.5 text-slate-500" />
                           {entry.teacher_name || 'N/A'}
                         </span>
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <MapPin className="w-3.5 h-3.5 text-slate-500" />
                           Room {entry.room_number || 'N/A'}
                         </span>
                       </div>

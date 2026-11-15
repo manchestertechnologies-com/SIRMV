@@ -88,7 +88,7 @@ const HostelSide: React.FC = () => {
             <li key={b.id + i} className="py-3 flex flex-wrap items-center gap-3">
               <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900">{b.name}</b><span className="text-[11px] text-slate-500">{b.gender === 'Male' ? 'Boys' : 'Girls'} · {b.floors.length} floors · {b.floors.reduce((a, f) => a + f.rooms, 0)} rooms · {b.floors.reduce((a, f) => a + f.rooms * f.share, 0)} beds · Warden {b.warden.name}</span></span>
               <button onClick={() => open(i)} className="px-3 py-1.5 rounded-xl border border-[#ded9cf] text-xs font-semibold text-slate-700 hover:text-[#a3161b]">Edit</button>
-              <button onClick={() => remove(i)} className="p-2 text-slate-400 hover:text-red-600" title="Remove block"><Trash2 className="w-4 h-4" /></button>
+              <button onClick={() => remove(i)} className="p-2 text-slate-500 hover:text-red-600" title="Remove block"><Trash2 className="w-4 h-4" /></button>
             </li>
           ))}
           {BLOCKS.length === 0 && <li className="py-6 text-sm text-slate-500 text-center">No hostel blocks yet. Press Add block.</li>}

@@ -45,36 +45,36 @@ export const MyProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+            <Mail className="w-4 h-4 text-slate-500 shrink-0" />
             <div>
-              <span className="text-slate-400 block">Email</span>
+              <span className="text-slate-500 block">Email</span>
               <span className="font-semibold text-slate-800">{user.email || 'N/A'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+            <Phone className="w-4 h-4 text-slate-500 shrink-0" />
             <div>
-              <span className="text-slate-400 block">Phone</span>
+              <span className="text-slate-500 block">Phone</span>
               <span className="font-semibold text-slate-800">{user.phone || 'N/A'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+            <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
             <div>
-              <span className="text-slate-400 block">Branch</span>
+              <span className="text-slate-500 block">Branch</span>
               <span className="font-semibold text-slate-800">{user.branch_name || 'N/A'}</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
+            <Briefcase className="w-4 h-4 text-slate-500 shrink-0" />
             <div>
-              <span className="text-slate-400 block">Role</span>
+              <span className="text-slate-500 block">Role</span>
               <span className="font-semibold text-slate-800">{ROLE_LABELS[user.role] || user.role}</span>
             </div>
           </div>
         </div>
 
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-500">
           To update these details, contact your administrator.
         </p>
       </div>

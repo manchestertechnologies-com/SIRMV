@@ -150,7 +150,7 @@ export const EveningStudyDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                <Calendar className="w-4 h-4 text-slate-400" />
+                <Calendar className="w-4 h-4 text-slate-500" />
                 <input
                   type="date"
                   value={date}
@@ -169,7 +169,7 @@ export const EveningStudyDashboard: React.FC = () => {
                 <option value="Library Reading Hall">Library Reading Hall</option>
               </select>
 
-              <span className="text-slate-400 font-mono">Slot: 18:30 - 21:00 (150 mins)</span>
+              <span className="text-slate-500 font-mono">Slot: 18:30 - 21:00 (150 mins)</span>
             </div>
 
             <button
@@ -200,7 +200,7 @@ export const EveningStudyDashboard: React.FC = () => {
                 <tbody className="divide-y divide-slate-100">
                   {students.map((st, idx) => (
                     <tr key={st.id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 text-center text-slate-400">{idx + 1}</td>
+                      <td className="py-3 px-4 text-center text-slate-500">{idx + 1}</td>
                       <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
                       <td className="py-3 px-4 font-mono text-slate-600">{st.register_number}</td>
                       <td className="py-3 px-4">
@@ -215,7 +215,7 @@ export const EveningStudyDashboard: React.FC = () => {
                             onChange={(e) => handleStudentFieldChange(st.id, 'entry_time', e.target.value)}
                             className="bg-slate-50 border border-slate-200 rounded p-1 font-mono text-[11px]"
                           />
-                          <span className="text-slate-400">-</span>
+                          <span className="text-slate-500">-</span>
                           <input
                             type="time"
                             value={st.exit_time || '21:00'}
@@ -267,23 +267,23 @@ export const EveningStudyDashboard: React.FC = () => {
           {reportsData?.summary && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block">Total Logs</span>
+                <span className="text-xs text-slate-500 block">Total Logs</span>
                 <span className="text-xl font-bold text-slate-900">{reportsData.summary.totalRecords}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block">Present</span>
+                <span className="text-xs text-slate-500 block">Present</span>
                 <span className="text-xl font-bold text-emerald-600">{reportsData.summary.present}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block">Absent</span>
+                <span className="text-xs text-slate-500 block">Absent</span>
                 <span className="text-xl font-bold text-rose-600">{reportsData.summary.absent}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block">Late Arrivals</span>
+                <span className="text-xs text-slate-500 block">Late Arrivals</span>
                 <span className="text-xl font-bold text-amber-600">{reportsData.summary.late}</span>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-200 text-center">
-                <span className="text-xs text-slate-400 block">Left Early</span>
+                <span className="text-xs text-slate-500 block">Left Early</span>
                 <span className="text-xl font-bold text-purple-600">{reportsData.summary.leftEarly}</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ export const EveningStudyDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm">Evening Study Attendance History</h3>
-              <span className="text-xs text-slate-400">Monthly Aggregates</span>
+              <span className="text-xs text-slate-500">Monthly Aggregates</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -313,7 +313,7 @@ export const EveningStudyDashboard: React.FC = () => {
                     <tr key={r.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3 px-4 font-mono font-semibold text-slate-700">{r.date}</td>
                       <td className="py-3 px-4 font-bold text-slate-900">
-                        {r.student_name} <span className="font-mono text-slate-400 text-[10px]">({r.register_number})</span>
+                        {r.student_name} <span className="font-mono text-slate-500 text-[10px]">({r.register_number})</span>
                       </td>
                       <td className="py-3 px-4 text-slate-600">{r.study_hall}</td>
                       <td className="py-3 px-4 font-mono text-[11px] text-slate-600">

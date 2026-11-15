@@ -316,7 +316,7 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
           <tbody>{used.map((p) => { const c = (m: Mark) => p.seats.filter((s) => s.student && markOf(s.student.no, s.student.sectionId) === m).length; const iv = inv.map.get(p.room.id); const w = inv.waiting.get(p.room.id); return (
             <tr key={p.room.id} onClick={() => setSel(p.room.id)} className={`border-b border-[#f7f2ec] cursor-pointer ${cur?.room.id === p.room.id ? 'bg-[#fff6f4]' : 'hover:bg-[#fffaf7]'}`}>
               <td className="py-2.5 pr-3 font-semibold text-slate-900">{p.room.name}</td><td className="pr-3">{floorName(p.room.floor)}</td><td className="pr-3">{classes(p)}</td><td className="pr-3">{p.count}</td>
-              <td className="pr-3" onClick={(e) => e.stopPropagation()}>{iv ? <StaffLink s={iv} /> : w ? <Pill tone="gold">Waiting for {w} HOD</Pill> : <span className="text-slate-400">Not assigned</span>}</td>
+              <td className="pr-3" onClick={(e) => e.stopPropagation()}>{iv ? <StaffLink s={iv} /> : w ? <Pill tone="gold">Waiting for {w} HOD</Pill> : <span className="text-slate-500">Not assigned</span>}</td>
               <td className="pr-3 text-emerald-700 font-semibold">{c('present')}</td><td className="pr-3 text-red-600 font-semibold">{c('absent')}</td><td className="text-amber-600 font-semibold">{c('leave')}</td>
             </tr>); })}</tbody>
         </table></div>
@@ -324,7 +324,7 @@ const Live: React.FC<{ onSetup: () => void; canSetup: boolean }> = ({ onSetup, c
       {cur && (
         <Card title={`${cur.room.name} · ${floorName(cur.room.floor)}`} right={inv.map.get(cur.room.id) ? <span className="text-[11px] text-slate-500">Invigilator <button onClick={() => gotoDetail('staff', inv.map.get(cur.room.id)!.id)} className="font-semibold text-[#a3161b] hover:underline">{inv.map.get(cur.room.id)!.name}</button></span> : undefined}>
           <Room3D plan={cur} color={markColor} onSeat={(s) => gotoDetail('student', s.student!.id)} />
-          <p className="mt-3 text-[11px] text-slate-600 flex flex-wrap gap-x-5 gap-y-1"><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: OK }} />present</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: ABS }} />absent</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: LEAVE }} />on leave</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: EMPTY }} />empty seat</span><span className="text-slate-400">Tap a seat to open the student.</span></p>
+          <p className="mt-3 text-[11px] text-slate-600 flex flex-wrap gap-x-5 gap-y-1"><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: OK }} />present</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: ABS }} />absent</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: LEAVE }} />on leave</span><span><i className="inline-block w-3 h-3 rounded-sm align-middle mr-1" style={{ background: EMPTY }} />empty seat</span><span className="text-slate-500">Tap a seat to open the student.</span></p>
         </Card>
       )}
     </div>
@@ -373,7 +373,7 @@ const Requests: React.FC<{ onChanged: () => void }> = ({ onChanged }) => {
                 <div className="flex flex-wrap gap-2">
                   {list.map((f) => { const on = chosen.includes(f.id); return (
                     <span key={f.id} className={`inline-flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 rounded-xl border text-xs ${on ? 'border-[#a3161b] bg-[#fff1ee] font-semibold' : 'border-[#ded9cf] bg-white'}`}>
-                      <button onClick={() => toggle(r, f.id)} className="inline-flex items-center gap-2"><Avatar name={f.name} pid={f.id} size={22} />{f.name}<span className="text-slate-400">{f.subject}</span>{on && <Check className="w-3.5 h-3.5 text-[#a3161b]" />}</button>
+                      <button onClick={() => toggle(r, f.id)} className="inline-flex items-center gap-2"><Avatar name={f.name} pid={f.id} size={22} />{f.name}<span className="text-slate-500">{f.subject}</span>{on && <Check className="w-3.5 h-3.5 text-[#a3161b]" />}</button>
                       <button onClick={() => gotoDetail('staff', f.id)} className="text-[10px] font-semibold text-[#a3161b] hover:underline">details</button>
                     </span>); })}
                   {list.length === 0 && <span className="text-xs text-slate-500">Nobody in {r.dept} is free. Show other departments.</span>}
@@ -410,7 +410,7 @@ const Notifications: React.FC<{ role: string; me?: string }> = ({ role, me }) =>
             <i className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.read ? 'bg-slate-200' : 'bg-[#a3161b]'}`} />
             <div className="min-w-0 flex-1">
               <p className={`text-sm ${n.read ? 'text-slate-600' : 'text-slate-900 font-medium'}`}>{n.text}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-2">{new Date(n.ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              <p className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap items-center gap-x-2">{new Date(n.ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 {n.staffId && <button onClick={() => gotoDetail('staff', n.staffId!)} className="font-semibold text-[#a3161b] hover:underline">{staffById(n.staffId)?.name}</button>}
                 {n.staffId && n.roomId && <button onClick={() => pdf(n.staffId!, n.roomId!)} className="inline-flex items-center gap-1 font-semibold text-[#a3161b] hover:underline"><Download className="w-3 h-3" />Duty details PDF</button>}</p>
             </div>

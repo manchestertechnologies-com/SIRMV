@@ -196,7 +196,7 @@ export const NonTeachingStaffModule: React.FC = () => {
       {/* Filters Toolbar */}
       <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400" />
+          <Filter className="w-4 h-4 text-slate-500" />
           <span className="text-xs font-bold text-slate-700">Department:</span>
           <select
             value={selectedRole}
@@ -211,7 +211,7 @@ export const NonTeachingStaffModule: React.FC = () => {
         </div>
 
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
             value={searchQuery}
@@ -228,7 +228,7 @@ export const NonTeachingStaffModule: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : filteredStaff.length === 0 ? (
-        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
           No non-teaching staff found matching your criteria.
         </div>
       ) : (
@@ -277,15 +277,15 @@ export const NonTeachingStaffModule: React.FC = () => {
 
                 <div className="mt-4 pt-3 border-t border-[#f2eee6] space-y-1.5 text-xs text-slate-600">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    <Mail className="w-3.5 h-3.5 text-slate-500" />
                     <span className="truncate">{s.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <Phone className="w-3.5 h-3.5 text-slate-500" />
                     <span>{s.phone || '+91 98450 11223'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    <Building className="w-3.5 h-3.5 text-slate-500" />
                     <span>{s.branch_name} ({s.branch_city})</span>
                   </div>
                 </div>
@@ -295,7 +295,7 @@ export const NonTeachingStaffModule: React.FC = () => {
                 <span className="text-emerald-700 font-bold flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Active Staff
                 </span>
-                <span className="text-slate-400 font-mono text-[10px]">
+                <span className="text-slate-500 font-mono text-[10px]">
                   Institutional ERP
                 </span>
               </div>
@@ -342,7 +342,7 @@ export const NonTeachingStaffModule: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-700 font-bold"
+                className="text-slate-500 hover:text-slate-700 font-bold"
               >
                 ✕
               </button>

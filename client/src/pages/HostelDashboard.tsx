@@ -211,15 +211,15 @@ export const HostelDashboard: React.FC = () => {
       {/* KPI Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-400 block font-medium">Total Beds — Floor {floor}</span>
+          <span className="text-xs text-slate-500 block font-medium">Total Beds — Floor {floor}</span>
           <span className="text-2xl font-bold text-slate-900 mt-1">{totalCapacityOnFloor}</span>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-400 block font-medium">Allocated</span>
+          <span className="text-xs text-slate-500 block font-medium">Allocated</span>
           <span className="text-2xl font-bold text-emerald-600 mt-1">{totalOccupiedOnFloor}</span>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-400 block font-medium">Available</span>
+          <span className="text-xs text-slate-500 block font-medium">Available</span>
           <span className="text-2xl font-bold text-amber-600 mt-1">{totalAvailableOnFloor}</span>
         </div>
       </div>
@@ -227,7 +227,7 @@ export const HostelDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           {hierarchyLoading ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-12 text-center text-slate-400 text-xs">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-12 text-center text-slate-500 text-xs">
               Loading room data...
             </div>
           ) : (
@@ -243,7 +243,7 @@ export const HostelDashboard: React.FC = () => {
         {/* Selected room detail / allocation panel */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
           {!selectedRoom ? (
-            <div className="h-full flex items-center justify-center text-center text-xs text-slate-400 py-12">
+            <div className="h-full flex items-center justify-center text-center text-xs text-slate-500 py-12">
               Click a room in the 3D view to allocate or vacate students.
             </div>
           ) : (
@@ -255,7 +255,7 @@ export const HostelDashboard: React.FC = () => {
                     Floor {selectedRoom.floor} • {selectedRoom.capacity}-Sharing • {selectedRoom.occupiedCount}/{selectedRoom.capacity} Filled
                   </p>
                 </div>
-                <button onClick={() => setSelectedRoomId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+                <button onClick={() => setSelectedRoomId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -264,7 +264,7 @@ export const HostelDashboard: React.FC = () => {
                 {selectedRoom.bedsInRoom.map((b: any) => (
                   <div key={b.id} className="border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2">
                     <div>
-                      <div className="text-[11px] font-bold text-slate-400">{b.bed_number}</div>
+                      <div className="text-[11px] font-bold text-slate-500">{b.bed_number}</div>
                       {b.student_id ? (
                         <>
                           <div className="text-sm font-bold text-slate-900">{b.student_name}</div>
@@ -306,7 +306,7 @@ export const HostelDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full border border-slate-200">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm">Add Hostel Room</h3>
-              <button onClick={() => setShowAddRoom(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+              <button onClick={() => setShowAddRoom(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -390,13 +390,13 @@ export const HostelDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 max-h-[80vh] flex flex-col">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm">Allocate a Student</h3>
-              <button onClick={() => setAllocatingBedId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
+              <button onClick={() => setAllocatingBedId(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="p-4 border-b border-slate-100">
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 <input
                   autoFocus
                   type="text"
@@ -412,9 +412,9 @@ export const HostelDashboard: React.FC = () => {
             </div>
             <div className="overflow-y-auto p-2 flex-1">
               {studentsLoading ? (
-                <div className="p-8 text-center text-slate-400 text-xs">Loading students...</div>
+                <div className="p-8 text-center text-slate-500 text-xs">Loading students...</div>
               ) : unallocatedStudents.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs">
+                <div className="p-8 text-center text-slate-500 text-xs">
                   No unallocated students found{studentSearch ? ' matching your search' : ''}.
                 </div>
               ) : (

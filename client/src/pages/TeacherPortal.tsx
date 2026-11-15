@@ -96,17 +96,17 @@ export const TeacherPortal: React.FC = () => {
         {/* Quick Metrics */}
         <div className="flex flex-wrap gap-3">
           <div className="bg-[#fbfaf8] border border-[#eae8e1] px-4 py-2.5 rounded-2xl text-center">
-            <div className="text-[11px] text-slate-400 font-semibold">Today's Classes</div>
+            <div className="text-[11px] text-slate-500 font-semibold">Today's Classes</div>
             <div className="text-base font-extrabold text-slate-800 font-heading">{todayTimetable.length} Periods</div>
           </div>
           <div className="bg-[#fbfaf8] border border-[#eae8e1] px-4 py-2.5 rounded-2xl text-center">
-            <div className="text-[11px] text-slate-400 font-semibold">Proxy Duties</div>
+            <div className="text-[11px] text-slate-500 font-semibold">Proxy Duties</div>
             <div className={`text-base font-extrabold font-heading ${substitutionDuties.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
               {substitutionDuties.length} Active
             </div>
           </div>
           <div className="bg-[#fbfaf8] border border-[#eae8e1] px-4 py-2.5 rounded-2xl text-center">
-            <div className="text-[11px] text-slate-400 font-semibold">Pending Att.</div>
+            <div className="text-[11px] text-slate-500 font-semibold">Pending Att.</div>
             <div className={`text-base font-extrabold font-heading ${pendingAttendance.length > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
               {pendingAttendance.length}
             </div>
@@ -200,7 +200,7 @@ export const TeacherPortal: React.FC = () => {
                           <div className="text-xs text-slate-600 mt-0.5">
                             {sub.subject_name} • {sub.class_name} {sub.section_name} ({sub.batch_name})
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-1">
+                          <div className="text-[11px] text-slate-500 mt-1">
                             Room {sub.room_number} • Original: {sub.original_teacher_name}
                           </div>
                         </div>
@@ -227,7 +227,7 @@ export const TeacherPortal: React.FC = () => {
           {/* Today's Schedule Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {todayTimetable.length === 0 ? (
-              <div className="col-span-full bg-white p-8 rounded-3xl text-center border border-[#eae8e1] text-slate-400 text-sm">
+              <div className="col-span-full bg-white p-8 rounded-3xl text-center border border-[#eae8e1] text-slate-500 text-sm">
                 No scheduled lectures for today ({timetableData?.currentDay}).
               </div>
             ) : (
@@ -241,7 +241,7 @@ export const TeacherPortal: React.FC = () => {
                       PERIOD {period.period_number}
                     </span>
                     <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <Clock className="w-3.5 h-3.5 text-slate-500" />
                       {period.start_time} - {period.end_time}
                     </span>
                   </div>
@@ -253,7 +253,7 @@ export const TeacherPortal: React.FC = () => {
 
                   <div className="mt-4 pt-3 border-t border-[#f1efe8] flex items-center justify-between text-xs text-slate-500">
                     <div className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
                       <span>Room {period.room_number} (Floor {period.floor})</span>
                     </div>
                     <span className="px-2 py-0.5 bg-[#ecfdf5] text-[#047857] font-bold rounded-lg text-[10px] border border-[#a7f3d0]">
@@ -272,7 +272,7 @@ export const TeacherPortal: React.FC = () => {
         <div className="bg-white rounded-3xl border border-[#eae8e1] overflow-hidden shadow-xs">
           <div className="p-4 border-b border-[#eae8e1] flex items-center justify-between">
             <h3 className="font-bold text-slate-800 text-sm font-heading">Weekly Academic Grid</h3>
-            <span className="text-xs text-slate-400">6 Periods Daily • Monday to Saturday</span>
+            <span className="text-xs text-slate-500">6 Periods Daily • Monday to Saturday</span>
           </div>
 
           <div className="overflow-x-auto">
@@ -280,11 +280,11 @@ export const TeacherPortal: React.FC = () => {
               <thead>
                 <tr className="bg-[#fbfaf8] border-b border-[#eae8e1] text-slate-600 font-bold">
                   <th className="py-3 px-4 w-28">Day</th>
-                  <th className="py-3 px-4">Period 1<br/><span className="text-[10px] text-slate-400 font-normal">08:45 - 09:30</span></th>
-                  <th className="py-3 px-4">Period 2<br/><span className="text-[10px] text-slate-400 font-normal">09:30 - 10:15</span></th>
-                  <th className="py-3 px-4">Period 3<br/><span className="text-[10px] text-slate-400 font-normal">10:30 - 11:15</span></th>
-                  <th className="py-3 px-4">Period 4<br/><span className="text-[10px] text-slate-400 font-normal">11:15 - 12:00</span></th>
-                  <th className="py-3 px-4">Period 5<br/><span className="text-[10px] text-slate-400 font-normal">12:45 - 01:30</span></th>
+                  <th className="py-3 px-4">Period 1<br/><span className="text-[10px] text-slate-500 font-normal">08:45 - 09:30</span></th>
+                  <th className="py-3 px-4">Period 2<br/><span className="text-[10px] text-slate-500 font-normal">09:30 - 10:15</span></th>
+                  <th className="py-3 px-4">Period 3<br/><span className="text-[10px] text-slate-500 font-normal">10:30 - 11:15</span></th>
+                  <th className="py-3 px-4">Period 4<br/><span className="text-[10px] text-slate-500 font-normal">11:15 - 12:00</span></th>
+                  <th className="py-3 px-4">Period 5<br/><span className="text-[10px] text-slate-500 font-normal">12:45 - 01:30</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1efe8]">
@@ -301,7 +301,7 @@ export const TeacherPortal: React.FC = () => {
                               <div className="bg-[#f0f9ff] border border-[#bae6fd] p-2.5 rounded-2xl">
                                 <div className="font-bold text-[#0369a1] font-heading">{match.subject_name}</div>
                                 <div className="text-[11px] text-[#0284c7] font-semibold">{match.class_name} {match.section_name} ({match.batch_name})</div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">Rm {match.room_number} (Fl {match.floor})</div>
+                                <div className="text-[10px] text-slate-500 mt-0.5">Rm {match.room_number} (Fl {match.floor})</div>
                               </div>
                             ) : (
                               <div className="text-slate-300 italic text-[11px] py-2">-- Free --</div>
@@ -323,7 +323,7 @@ export const TeacherPortal: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 border border-[#eae8e1] shadow-xs space-y-4">
           <h3 className="font-bold text-slate-800 text-base font-heading">Assigned Proxy & Substitution Duties</h3>
           {substitutionDuties.length === 0 ? (
-            <p className="text-slate-400 text-xs">No substitution duties assigned for today.</p>
+            <p className="text-slate-500 text-xs">No substitution duties assigned for today.</p>
           ) : (
             <div className="space-y-3">
               {substitutionDuties.map((sub: any) => (
@@ -331,7 +331,7 @@ export const TeacherPortal: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-800 text-sm font-heading">Period {sub.period_number}</span>
-                      <span className="text-xs text-slate-400">({sub.start_time} - {sub.end_time})</span>
+                      <span className="text-xs text-slate-500">({sub.start_time} - {sub.end_time})</span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
                         {sub.status}
                       </span>
@@ -339,7 +339,7 @@ export const TeacherPortal: React.FC = () => {
                     <p className="text-xs text-slate-700 mt-1 font-semibold">
                       {sub.subject_name} • {sub.class_name} Section {sub.section_name} ({sub.batch_name})
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Room {sub.room_number} • Original: {sub.original_teacher_name} • Assigned by HOD: {sub.assigned_by_name}
                     </p>
                   </div>
@@ -369,23 +369,23 @@ export const TeacherPortal: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div>
-                <span className="text-slate-400 block">Full Name</span>
+                <span className="text-slate-500 block">Full Name</span>
                 <span className="font-bold text-slate-800">{profile.name}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Employee ID</span>
+                <span className="text-slate-500 block">Employee ID</span>
                 <span className="font-mono font-bold text-indigo-700">{profile.employee_id}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Phone & Email</span>
+                <span className="text-slate-500 block">Phone & Email</span>
                 <span className="font-medium text-slate-700">{profile.phone} • {profile.email}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Qualification</span>
+                <span className="text-slate-500 block">Qualification</span>
                 <span className="font-medium text-slate-700">{profile.qualification}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Address</span>
+                <span className="text-slate-500 block">Address</span>
                 <span className="font-medium text-slate-700">{profile.address}</span>
               </div>
             </div>
@@ -414,7 +414,7 @@ export const TeacherPortal: React.FC = () => {
                   <div className="text-xs text-indigo-700 font-semibold mt-0.5">
                     Batch: {asg.batch_name}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-1">
+                  <div className="text-[11px] text-slate-500 mt-1">
                     Dept: {asg.department_name}
                   </div>
                 </div>

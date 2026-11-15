@@ -43,7 +43,7 @@ export const StudentGrid: React.FC<{ sectionId: string; onOpen: (id: string) => 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {list.map((s) => (
             <button key={s.id} onClick={() => onOpen(s.id)} className="mt-tile-card text-left rounded-2xl border border-[#ece4da] bg-white p-3 flex items-center gap-3 hover:border-[#d9a85a] transition">
-              <span className="w-7 text-xs font-semibold text-slate-400 text-right shrink-0">{s.no}.</span>
+              <span className="w-7 text-xs font-semibold text-slate-500 text-right shrink-0">{s.no}.</span>
               <Avatar name={s.name} pid={s.id} size={52} square />
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-slate-900 truncate">{s.name}</span>
@@ -126,7 +126,7 @@ const Documents: React.FC<{ student: Student }> = ({ student }) => (
         </li>
       ))}
     </ul>
-    <p className="text-[11px] text-slate-400 mt-3">Sample documents. Uploaded files will be saved with the student record.</p>
+    <p className="text-[11px] text-slate-500 mt-3">Sample documents. Uploaded files will be saved with the student record.</p>
   </Card>
 );
 
@@ -177,7 +177,7 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-5">
-        <Card title="Last 10 tests" right={<span className="text-[11px] text-slate-400">tap a bar for test analysis</span>}>
+        <Card title="Last 10 tests" right={<span className="text-[11px] text-slate-500">tap a bar for test analysis</span>}>
           <BarChart max={100} data={last10.map((t) => ({
             label: t.name.replace(/(Unit|Weekly|Part|Grand) Test /, '$1 ').replace('Weekly', 'W').replace('Unit', 'U').replace('Part', 'P').replace('Grand', 'G'),
             title: `${t.name}: ${t.percent}%`, onClick: () => onTest(t.id),
@@ -196,12 +196,12 @@ const Overview: React.FC<{ student: Student; onSubject: (s: SubjectName) => void
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
           {subs.flatMap((sub) => chapterReport(student, sub).map((c) => ({ ...c, sub }))).sort((a, b) => a.accuracy - b.accuracy).slice(0, 12).map((c) => (
             <button key={c.sub + c.chapter} onClick={() => onChapter(c.sub, c.chapter)} className="text-left group">
-              <div className="flex justify-between items-center text-xs mb-1"><span className="inline-flex items-center gap-2 text-slate-700 group-hover:text-[#a3161b]"><ChapterIcon chapter={c.chapter} className="w-5 h-5" />{c.chapter} <span className="text-slate-400">· {c.sub}</span></span><b className="text-slate-900">{c.accuracy}%</b></div>
+              <div className="flex justify-between items-center text-xs mb-1"><span className="inline-flex items-center gap-2 text-slate-700 group-hover:text-[#a3161b]"><ChapterIcon chapter={c.chapter} className="w-5 h-5" />{c.chapter} <span className="text-slate-500">· {c.sub}</span></span><b className="text-slate-900">{c.accuracy}%</b></div>
               <Bar value={c.accuracy} color={c.accuracy >= 70 ? GREEN : c.accuracy >= 45 ? AMBER : RED} />
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-slate-400 mt-3">Showing the weakest chapters first.</p>
+        <p className="text-[11px] text-slate-500 mt-3">Showing the weakest chapters first.</p>
       </Card>
     </div>
   );
@@ -292,7 +292,7 @@ const ChapterAnalysis: React.FC<{ student: Student; subject: SubjectName; chapte
   return (
     <div className="space-y-5">
       <button onClick={onBack} className="block text-xs font-semibold text-[#a3161b] hover:underline">← Back</button>
-      <h3 className="text-base font-bold font-heading text-slate-900 inline-flex items-center gap-3"><ChapterIcon chapter={chapter} className="w-9 h-9" />{chapter}<span className="text-xs font-medium text-slate-400">· {subject}</span></h3>
+      <h3 className="text-base font-bold font-heading text-slate-900 inline-flex items-center gap-3"><ChapterIcon chapter={chapter} className="w-9 h-9" />{chapter}<span className="text-xs font-medium text-slate-500">· {subject}</span></h3>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Chapter score" value={row.percent} suffix="%" tone="green" />
         <StatCard label="Chapter rank" value={rank} suffix="in section" />
@@ -352,7 +352,7 @@ const QCard: React.FC<{ q: QResult; show: { opts?: boolean; key?: boolean; yours
         <p className="text-sm text-slate-800"><b className="mr-1">Q{q.n}.</b>{p.text}</p>
         {show.yours && <Pill tone={tone}>{q.status === 'correct' ? 'Correct' : q.status === 'wrong' ? 'Incorrect' : 'Skipped'}</Pill>}
       </div>
-      <p className="text-[11px] text-slate-400 mt-1">{q.subject} · {q.chapter}</p>
+      <p className="text-[11px] text-slate-500 mt-1">{q.subject} · {q.chapter}</p>
       {show.opts && (
         <div className="grid sm:grid-cols-2 gap-2 mt-3">
           {p.opts.map((o) => {
@@ -406,7 +406,7 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
       <div className="rounded-3xl bg-white border border-[#ece4da] p-5 grid sm:grid-cols-[auto_1fr] gap-6 items-center">
         <div className="text-center sm:text-left">
           <p className="text-xs text-slate-500">Your score</p>
-          <p className="text-4xl font-semibold font-heading text-[#a3161b]">{test.marks}<span className="text-lg text-slate-400">/{test.max}</span></p>
+          <p className="text-4xl font-semibold font-heading text-[#a3161b]">{test.marks}<span className="text-lg text-slate-500">/{test.max}</span></p>
           <p className="text-xs text-slate-500 mt-1">{test.percent}% · +4 correct, -1 wrong</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -468,7 +468,7 @@ const TestAnalysis: React.FC<{ student: Student; testId: string; onBack: () => v
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
           {topicRows.map((r) => (
             <div key={r.sub + r.chapter}>
-              <div className="flex justify-between text-xs mb-1"><span className="text-slate-700">{r.chapter} <span className="text-slate-400">· {r.sub}</span></span><b>{r.c}/{r.t}</b></div>
+              <div className="flex justify-between text-xs mb-1"><span className="text-slate-700">{r.chapter} <span className="text-slate-500">· {r.sub}</span></span><b>{r.c}/{r.t}</b></div>
               <Bar value={(r.c / r.t) * 100} color={r.c / r.t >= 0.7 ? GREEN : r.c / r.t >= 0.45 ? AMBER : RED} />
             </div>
           ))}

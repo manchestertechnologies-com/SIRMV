@@ -91,7 +91,7 @@ export const CalendarPage: React.FC = () => {
         {FILTERS.map((f) => <button key={f} onClick={() => setFilter(f)} className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border ${filter === f ? 'bg-[#a3161b] text-white border-[#a3161b]' : 'bg-white text-slate-700 border-[#ded9cf]'}`}>{LABEL[f]}</button>)}
         <label className="ml-auto text-xs text-slate-600 inline-flex items-center gap-1.5"><input type="checkbox" checked={showPast} onChange={(e) => setShowPast(e.target.checked)} className="accent-[#a3161b]" />Show past events</label>
       </div>
-      {sorted.length === 0 && <p className="text-sm text-slate-400 text-center py-10 bg-white rounded-2xl border border-slate-200">Nothing to show for this filter.</p>}
+      {sorted.length === 0 && <p className="text-sm text-slate-500 text-center py-10 bg-white rounded-2xl border border-slate-200">Nothing to show for this filter.</p>}
       {Object.entries(groups).map(([month, list]) => (
         <section key={month} className="space-y-2">
           <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{month}</h2>
@@ -108,7 +108,7 @@ export const CalendarPage: React.FC = () => {
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${TYPE_STYLES[ev.event_type] || TYPE_STYLES.EVENT}`}>{LABEL[ev.event_type] ? LABEL[ev.event_type].replace(/s$/, '') : ev.event_type}</span>
                     </div>
                     <p className="text-xs text-slate-500">{ev.end_date && ev.end_date !== ev.event_date ? `${dayBox(ev.event_date).join(' ')} – ${dayBox(ev.end_date).join(' ')}` : new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long' })}</p>
-                    {ev.description && <p className="text-xs text-slate-400 mt-0.5">{ev.description}</p>}
+                    {ev.description && <p className="text-xs text-slate-500 mt-0.5">{ev.description}</p>}
                   </div>
                 </div>
                 {canManage && !ev.builtin && (
@@ -124,7 +124,7 @@ export const CalendarPage: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Add Calendar Event</h3>
-              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs">{error}</div>}
             <form onSubmit={createEvent} className="space-y-3">

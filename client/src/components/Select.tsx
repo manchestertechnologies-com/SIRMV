@@ -67,10 +67,10 @@ export const Select: React.FC<SelectProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className={`truncate text-left ${!selected ? 'text-slate-400 font-normal' : ''}`}>
+        <span className={`truncate text-left ${!selected ? 'text-slate-500 font-normal' : ''}`}>
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Hidden native select keeps this accessible for form validation / autofill,
@@ -104,7 +104,7 @@ export const Select: React.FC<SelectProps> = ({
                 </div>
                 <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between shrink-0">
                   <span className="text-sm font-bold text-slate-800">{sheetTitle || placeholder}</span>
-                  <button onClick={() => setIsOpen(false)} className="press p-1 text-slate-400">
+                  <button onClick={() => setIsOpen(false)} className="press p-1 text-slate-500">
                     <X className="w-4.5 h-4.5" />
                   </button>
                 </div>

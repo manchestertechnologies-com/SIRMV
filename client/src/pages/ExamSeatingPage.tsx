@@ -58,9 +58,9 @@ export const ExamSeatingPage: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center text-slate-400 text-sm py-8">Loading...</div>
+        <div className="text-center text-slate-500 text-sm py-8">Loading...</div>
       ) : seating.length === 0 ? (
-        <div className="text-center text-slate-400 text-sm py-8">No published exam seating yet.</div>
+        <div className="text-center text-slate-500 text-sm py-8">No published exam seating yet.</div>
       ) : (
         Object.entries(grouped).map(([groupKey, rows]) => (
           <div key={groupKey} className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -71,10 +71,10 @@ export const ExamSeatingPage: React.FC = () => {
             <div className="divide-y divide-slate-100">
               {rows.map((r, i) => (
                 <div key={i} className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div><span className="text-slate-400 block">Subject</span><span className="font-semibold text-slate-900">{r.subject_name}</span></div>
-                  <div><span className="text-slate-400 block flex items-center gap-1"><Clock className="w-3 h-3" /> Date / Time</span>{r.exam_date} · {r.start_time}–{r.end_time}</div>
-                  <div><span className="text-slate-400 block flex items-center gap-1"><DoorOpen className="w-3 h-3" /> Room / Floor</span>Room {r.room_number}, Floor {r.floor}</div>
-                  <div><span className="text-slate-400 block flex items-center gap-1"><Armchair className="w-3 h-3" /> Bench / Seat</span>Bench {r.bench_number}, Seat {r.seat_number}</div>
+                  <div><span className="text-slate-500 block">Subject</span><span className="font-semibold text-slate-900">{r.subject_name}</span></div>
+                  <div><span className="text-slate-500 block flex items-center gap-1"><Clock className="w-3 h-3" /> Date / Time</span>{r.exam_date} · {r.start_time}–{r.end_time}</div>
+                  <div><span className="text-slate-500 block flex items-center gap-1"><DoorOpen className="w-3 h-3" /> Room / Floor</span>Room {r.room_number}, Floor {r.floor}</div>
+                  <div><span className="text-slate-500 block flex items-center gap-1"><Armchair className="w-3 h-3" /> Bench / Seat</span>Bench {r.bench_number}, Seat {r.seat_number}</div>
                   {r.reporting_time && <div className="col-span-2 sm:col-span-4 text-amber-700 bg-amber-50 rounded-lg px-2 py-1">Report by {r.reporting_time}</div>}
                   {r.instructions && (
                     <div className="col-span-2 sm:col-span-4 flex items-start gap-1.5 text-slate-500 italic">

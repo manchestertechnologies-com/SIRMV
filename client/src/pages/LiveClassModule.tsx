@@ -97,7 +97,7 @@ export const LiveClassModule: React.FC = () => {
 
         {/* Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
+          <Filter className="w-4 h-4 text-slate-500" />
           <Select
             value={selectedSubject}
             onChange={setSelectedSubject}
@@ -146,9 +146,9 @@ export const LiveClassModule: React.FC = () => {
 
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5 text-slate-400" /> {activeVideo.faculty}</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-slate-400" /> {activeVideo.date}</span>
-              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-slate-400" /> {activeVideo.duration}</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5 text-slate-500" /> {activeVideo.faculty}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-slate-500" /> {activeVideo.date}</span>
+              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-slate-500" /> {activeVideo.duration}</span>
             </div>
             <span className="text-[11px] bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold">
               HD 1080p Verified Lecture
@@ -169,7 +169,7 @@ export const LiveClassModule: React.FC = () => {
                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                   {item.subject}
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {item.duration}
                 </span>
               </div>
@@ -185,9 +185,9 @@ export const LiveClassModule: React.FC = () => {
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <span className="flex items-center gap-1 font-medium">
-                  <User className="w-3.5 h-3.5 text-slate-400" /> {item.faculty}
+                  <User className="w-3.5 h-3.5 text-slate-500" /> {item.faculty}
                 </span>
-                <span className="text-[11px] text-slate-400 font-mono">
+                <span className="text-[11px] text-slate-500 font-mono">
                   {item.date}
                 </span>
               </div>

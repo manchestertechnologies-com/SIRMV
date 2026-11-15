@@ -113,7 +113,7 @@ export const TestsAndMarksModule: React.FC = () => {
               <div>
                 <h3 className="text-sm font-bold text-slate-900">{exam.name}</h3>
                 <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> {exam.date}
+                  <Calendar className="w-3.5 h-3.5 text-slate-500" /> {exam.date}
                 </p>
               </div>
 
@@ -151,7 +151,7 @@ export const TestsAndMarksModule: React.FC = () => {
             </div>
 
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}

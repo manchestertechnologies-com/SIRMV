@@ -138,7 +138,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
             p++; const c = row[p]; const t = staffById(c.staffId)!;
             return (
               <li key={s.key} className="py-2.5 flex items-center gap-3">
-                <span className="w-[148px] shrink-0 text-xs"><b className="block text-slate-900">{s.start} – {s.end}</b><span className="text-slate-400">{s.label}</span></span>
+                <span className="w-[148px] shrink-0 text-xs"><b className="block text-slate-900">{s.start} – {s.end}</b><span className="text-slate-500">{s.label}</span></span>
                 <SubjectIcon subject={c.subject} className="w-9 h-9 shrink-0" />
                 <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{c.subject}</b><span className="text-xs text-slate-500 truncate block">{t.name}</span></span>
                 <Pill tone="grey">{c.room}</Pill>
@@ -153,7 +153,7 @@ const Timetable: React.FC<{ sec: SectionDef }> = ({ sec }) => {
             <li key={id} className="flex items-center gap-3"><Avatar name={t.name} size={34} /><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-slate-900 truncate">{t.name}</p><p className="text-[11px] text-slate-500">{v.subject}</p></div><Pill tone="gold">{v.n} hrs</Pill></li>
           ); })}
         </ul>
-        <p className="text-[11px] text-slate-400 mt-3">Weekly count of periods this faculty takes in {sec.title}.</p>
+        <p className="text-[11px] text-slate-500 mt-3">Weekly count of periods this faculty takes in {sec.title}.</p>
       </Card>
     </div>
   );
@@ -272,7 +272,7 @@ const Board: React.FC<{ sec: SectionDef; onStudent: (id: string) => void }> = ({
           {rows.map((r) => (
             <li key={r.st.id}>
               <button onClick={() => onStudent(r.st.id)} className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-[#fff8f4] rounded-xl px-2">
-                <span className="w-8 text-sm font-semibold text-slate-400">{r.rank}</span>
+                <span className="w-8 text-sm font-semibold text-slate-500">{r.rank}</span>
                 <Avatar name={r.st.name} pid={r.st.id} size={36} />
                 <span className="min-w-0 flex-1"><b className="block text-sm text-slate-900 truncate">{r.st.name}</b><span className="text-[11px] text-slate-500">Roll {r.st.roll}</span></span>
                 <span className="w-32 hidden sm:block"><Bar value={r.avg} color={r.avg >= 70 ? GREEN : r.avg >= 45 ? AMBER : RED} /></span>

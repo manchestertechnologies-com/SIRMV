@@ -750,7 +750,7 @@ export const ExamFloor3D: React.FC<{
           onWheelCapture={(e) => e.stopPropagation()}
         >
           {activeRooms.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400">No rooms on this floor yet.</div>
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-500">No rooms on this floor yet.</div>
           ) : (
             <Canvas shadows camera={{ position: [0, 8, 8.5], fov: 42 }}>
               <ambientLight intensity={0.8} />
@@ -901,7 +901,7 @@ export const ExamFloor3D: React.FC<{
           colors mean anything beyond the plain wood default. */}
       {batchLegend.length > 0 && (
         <div className="px-3 pb-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-2">
-          <span className="text-[11px] text-slate-400 font-semibold">Bench seating:</span>
+          <span className="text-[11px] text-slate-500 font-semibold">Bench seating:</span>
           {batchLegend.map((l) => (
             <div key={l.label} className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <span className="w-2.5 h-2.5 rounded-sm" style={{ background: l.color }} />
@@ -932,20 +932,20 @@ export const ExamFloor3D: React.FC<{
               {STATUS_LABEL[selectedRoom.status]}
             </span>
           </div>
-          {selectedRoom.building && <div className="text-[11px] text-slate-400 mt-0.5">{selectedRoom.building}</div>}
+          {selectedRoom.building && <div className="text-[11px] text-slate-500 mt-0.5">{selectedRoom.building}</div>}
           {selectedRoom.homeClassLabel && (
             <div className="text-[11px] font-bold text-indigo-700 mt-1">Class/Section: {selectedRoom.homeClassLabel}</div>
           )}
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-xs text-slate-600">
-            <div><span className="text-slate-400 block">Benches</span>{selectedRoom.benches}</div>
-            <div><span className="text-slate-400 block">Seats / Bench</span>{selectedRoom.seatsPerBench}</div>
-            <div><span className="text-slate-400 block">Benches Available</span><span className="font-bold text-emerald-600">{benchAvailability(selectedRoom).availableBenches}</span></div>
-            <div><span className="text-slate-400 block">Total Capacity</span>{selectedRoom.capacity}</div>
-            <div><span className="text-slate-400 block">Students Assigned</span>{selectedRoom.studentsAssigned}</div>
-            <div><span className="text-slate-400 block">Seats Available</span>{Math.max(0, selectedRoom.capacity - selectedRoom.studentsAssigned)}</div>
-            <div><span className="text-slate-400 block">Occupancy</span>{selectedRoom.capacity > 0 ? Math.round((selectedRoom.studentsAssigned / selectedRoom.capacity) * 100) : 0}%</div>
-            <div><span className="text-slate-400 block">Room ID</span><span className="font-mono text-[10px]">{selectedRoom.roomId}</span></div>
+            <div><span className="text-slate-500 block">Benches</span>{selectedRoom.benches}</div>
+            <div><span className="text-slate-500 block">Seats / Bench</span>{selectedRoom.seatsPerBench}</div>
+            <div><span className="text-slate-500 block">Benches Available</span><span className="font-bold text-emerald-600">{benchAvailability(selectedRoom).availableBenches}</span></div>
+            <div><span className="text-slate-500 block">Total Capacity</span>{selectedRoom.capacity}</div>
+            <div><span className="text-slate-500 block">Students Assigned</span>{selectedRoom.studentsAssigned}</div>
+            <div><span className="text-slate-500 block">Seats Available</span>{Math.max(0, selectedRoom.capacity - selectedRoom.studentsAssigned)}</div>
+            <div><span className="text-slate-500 block">Occupancy</span>{selectedRoom.capacity > 0 ? Math.round((selectedRoom.studentsAssigned / selectedRoom.capacity) * 100) : 0}%</div>
+            <div><span className="text-slate-500 block">Room ID</span><span className="font-mono text-[10px]">{selectedRoom.roomId}</span></div>
           </div>
 
           <div className="mt-3 h-1.5 rounded-full bg-slate-200 overflow-hidden">

@@ -86,13 +86,13 @@ export const CommandPalette: React.FC<Props> = ({ onNavigate }) => {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onInputKey}
             placeholder="Jump to a page…  (students, attendance, exams)"
-            className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+            className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-500"
           />
-          <kbd className="hidden sm:inline text-[10px] font-semibold text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">ESC</kbd>
+          <kbd className="hidden sm:inline text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-1.5 py-0.5">ESC</kbd>
         </div>
         <div ref={listRef} className="max-h-[52vh] overflow-y-auto p-2 custom-scrollbar">
           {items.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-slate-400">Nothing matches “{query}”.</div>
+            <div className="px-4 py-8 text-center text-sm text-slate-500">Nothing matches “{query}”.</div>
           )}
           {items.map((item, i) => {
             const sel = i === index;
@@ -121,7 +121,7 @@ export const CommandPalette: React.FC<Props> = ({ onNavigate }) => {
             );
           })}
         </div>
-        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-[#fdfaf4] text-[10px] text-slate-400 font-medium">
+        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-[#fdfaf4] text-[10px] text-slate-500 font-medium">
           <span>↑ ↓ to move &nbsp;·&nbsp; Enter to open</span>
           <span>Ctrl K anywhere</span>
         </div>

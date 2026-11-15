@@ -132,7 +132,7 @@ export const StatCard: React.FC<{ label: string; value: string | number; suffix?
     <>
       <p className="text-[11px] text-slate-500 font-medium">{label}</p>
       <p className={`mt-1 text-2xl font-semibold font-heading ${colour}`}>{value}</p>
-      {(suffix || sub) && <p className="text-[11px] text-slate-400 mt-0.5">{suffix || sub}</p>}
+      {(suffix || sub) && <p className="text-[11px] text-slate-500 mt-0.5">{suffix || sub}</p>}
       {onClick && <p className="text-[10px] text-[#a3161b] font-semibold mt-1">View list</p>}
     </>
   );
@@ -175,7 +175,7 @@ export const PeopleModal: React.FC<{ title: string; rows: PersonRow[]; initial?:
               </button>
             </li>
           ))}
-          {shown.length === 0 && <li className="py-8 text-center text-xs text-slate-400">Nobody in this list.</li>}
+          {shown.length === 0 && <li className="py-8 text-center text-xs text-slate-500">Nobody in this list.</li>}
         </ul>
       </div>
     </div>

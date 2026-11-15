@@ -172,7 +172,7 @@ export const ExamSeatingView3D: React.FC<{
             {l.label}
           </div>
         ))}
-        <div className="flex items-center gap-1.5 text-slate-400">
+        <div className="flex items-center gap-1.5 text-slate-500">
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: EMPTY_SEAT_COLOR }} />
           Empty
         </div>

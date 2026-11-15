@@ -67,7 +67,7 @@ function dayCellClasses(status: DayRecord['status']): string {
     case 'PARTIAL':
       return 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100';
     default:
-      return 'bg-slate-50 border-slate-100 text-slate-400';
+      return 'bg-slate-50 border-slate-100 text-slate-500';
   }
 }
 
@@ -252,14 +252,14 @@ export const StudentAttendanceView: React.FC = () => {
       {/* Calendar grid */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
         {isLoading ? (
-          <div className="text-center text-slate-400 text-sm py-10">Loading attendance...</div>
+          <div className="text-center text-slate-500 text-sm py-10">Loading attendance...</div>
         ) : !calendar || calendar.days.length === 0 ? (
-          <div className="text-center text-slate-400 text-sm py-10">No attendance records for this month yet.</div>
+          <div className="text-center text-slate-500 text-sm py-10">No attendance records for this month yet.</div>
         ) : (
           <>
             <div className="grid grid-cols-7 gap-1.5 mb-2">
               {WEEKDAY_LABELS.map((label) => (
-                <div key={label} className="text-center text-[10px] font-bold uppercase text-slate-400 py-1">
+                <div key={label} className="text-center text-[10px] font-bold uppercase text-slate-500 py-1">
                   {label}
                 </div>
               ))}
@@ -313,9 +313,9 @@ export const StudentAttendanceView: React.FC = () => {
             </div>
             <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
               {isDayLoading ? (
-                <div className="text-center text-slate-400 text-sm py-8">Loading periods...</div>
+                <div className="text-center text-slate-500 text-sm py-8">Loading periods...</div>
               ) : !dayDetail || dayDetail.periods.length === 0 ? (
-                <div className="text-center text-slate-400 text-sm py-8">No periods recorded for this day.</div>
+                <div className="text-center text-slate-500 text-sm py-8">No periods recorded for this day.</div>
               ) : (
                 dayDetail.periods
                   .slice()
@@ -325,7 +325,7 @@ export const StudentAttendanceView: React.FC = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                            <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                            <BookOpen className="w-3.5 h-3.5 text-slate-500" />
                             Period {p.period_number} — {p.subject_name}
                           </div>
                           <div className="flex flex-wrap gap-3 mt-1.5 text-[11px] text-slate-500">
@@ -334,7 +334,7 @@ export const StudentAttendanceView: React.FC = () => {
                             {p.room_number && <span className="flex items-center gap-1"><DoorOpen className="w-3 h-3" /> Room {p.room_number}</span>}
                           </div>
                           {p.attendance_remarks && (
-                            <div className="text-[11px] text-slate-400 italic mt-1">{p.attendance_remarks}</div>
+                            <div className="text-[11px] text-slate-500 italic mt-1">{p.attendance_remarks}</div>
                           )}
                         </div>
                         <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap ${periodStatusBadge(p.status)}`}>

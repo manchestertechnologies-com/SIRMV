@@ -539,13 +539,13 @@ export const TeachersModule: React.FC = () => {
             <div className="bg-[#fdfcfb] p-4 rounded-2xl border border-[#ded9cf] flex flex-col sm:flex-row gap-3 items-center justify-between">
               {user?.role === 'HOD' && (
                 <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
-                  <Filter className="w-4 h-4 text-slate-400" />
+                  <Filter className="w-4 h-4 text-slate-500" />
                   Showing your department's faculty only.
                 </div>
               )}
               {user?.role !== 'HOD' && (
                 <div className="flex items-center gap-2 w-full sm:w-auto text-xs font-semibold text-slate-600">
-                  <Filter className="w-4 h-4 text-slate-400" />
+                  <Filter className="w-4 h-4 text-slate-500" />
                   {selectedDept === 'ALL' ? 'All Departments' : departments.find((d) => d.id === selectedDept)?.name}
                   <button
                     type="button"
@@ -558,7 +558,7 @@ export const TeachersModule: React.FC = () => {
               )}
 
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -576,11 +576,11 @@ export const TeachersModule: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : !hasPickedDept ? (
-            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
               Pick a department above to view its faculty.
             </div>
           ) : filteredTeachers.length === 0 ? (
-            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+            <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
               No faculty members found matching your search or filter.
             </div>
           ) : (
@@ -630,15 +630,15 @@ export const TeachersModule: React.FC = () => {
 
                     <div className="mt-4 pt-3 border-t border-[#f2eee6] space-y-1.5 text-xs text-slate-600">
                       <div className="flex items-center gap-2">
-                        <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                        <GraduationCap className="w-3.5 h-3.5 text-slate-500" />
                         <span className="truncate">{t.qualification || 'M.Sc.'}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <Mail className="w-3.5 h-3.5 text-slate-500" />
                         <span className="truncate">{t.email}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
+                        <Phone className="w-3.5 h-3.5 text-slate-500" />
                         <span>{t.phone || '+91 98450 12345'}</span>
                       </div>
                     </div>
@@ -649,7 +649,7 @@ export const TeachersModule: React.FC = () => {
                       View Timetable & Assignments
                       <ChevronRight className="w-3.5 h-3.5" />
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-slate-500">
                       {t.period_count || 0} Periods/Wk
                     </span>
                   </div>
@@ -672,7 +672,7 @@ export const TeachersModule: React.FC = () => {
               <div className="text-2xl font-extrabold text-slate-900 font-heading mt-1">
                 {myTimetableData?.todayTimetable?.length || 0} Periods
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">
+              <div className="text-[11px] text-slate-500 mt-1">
                 Day: {myTimetableData?.currentDay}
               </div>
             </div>
@@ -688,7 +688,7 @@ export const TeachersModule: React.FC = () => {
               >
                 {myTimetableData?.substitutionDuties?.length || 0} Active
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">
+              <div className="text-[11px] text-slate-500 mt-1">
                 Requires Acknowledgment
               </div>
             </div>
@@ -700,7 +700,7 @@ export const TeachersModule: React.FC = () => {
                   ? 'Yes'
                   : 'Faculty'}
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">
+              <div className="text-[11px] text-slate-500 mt-1">
                 {myProfileData?.profile?.department_name} Department
               </div>
             </div>
@@ -731,7 +731,7 @@ export const TeachersModule: React.FC = () => {
                           <div className="text-xs text-slate-600 mt-0.5">
                             {sub.subject_name} • {sub.class_name} {sub.section_name} ({sub.batch_name})
                           </div>
-                          <div className="text-[11px] text-slate-400 mt-1">
+                          <div className="text-[11px] text-slate-500 mt-1">
                             Room {sub.room_number} • Original: {sub.original_teacher_name}
                           </div>
                         </div>
@@ -763,7 +763,7 @@ export const TeachersModule: React.FC = () => {
             </h3>
 
             {(!myTimetableData?.todayTimetable || myTimetableData.todayTimetable.length === 0) ? (
-              <p className="text-slate-400 text-xs py-4">No scheduled lectures for today.</p>
+              <p className="text-slate-500 text-xs py-4">No scheduled lectures for today.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myTimetableData.todayTimetable.map((period: any) => (
@@ -785,7 +785,7 @@ export const TeachersModule: React.FC = () => {
                     </p>
                     <div className="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <MapPin className="w-3.5 h-3.5 text-slate-500" />
                         Room {period.room_number} (Fl {period.floor})
                       </span>
                       <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
@@ -824,7 +824,7 @@ export const TeachersModule: React.FC = () => {
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2 bg-white border border-[#ded9cf] rounded-xl px-3 py-1.5 text-xs">
-                <Calendar className="w-4 h-4 text-slate-400" />
+                <Calendar className="w-4 h-4 text-slate-500" />
                 <input
                   type="date"
                   value={subDate}
@@ -877,7 +877,7 @@ export const TeachersModule: React.FC = () => {
                         </div>
                         <div>
                           <div className="text-xs font-bold text-slate-900">
-                            {abs.teacher_name} <span className="text-slate-400 font-mono font-normal">({abs.employee_id})</span>
+                            {abs.teacher_name} <span className="text-slate-500 font-mono font-normal">({abs.employee_id})</span>
                           </div>
                           <div className="text-[11px] text-slate-500">
                             {abs.department_name || 'Unassigned Department'} • <span className="italic">{abs.reason}</span>
@@ -906,7 +906,7 @@ export const TeachersModule: React.FC = () => {
             </div>
 
             {(!substitutionData?.requirements || substitutionData.requirements.length === 0) ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div className="p-12 text-center text-slate-500 text-sm">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
                 {substitutionData?.absences && substitutionData.absences.length > 0
                   ? 'None of today\'s absent faculty have any timetable periods scheduled for this day.'
@@ -937,7 +937,7 @@ export const TeachersModule: React.FC = () => {
                             <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                               {entry.class_name} • Section {entry.section_name} ({entry.batch_name})
                             </span>
-                            <span className="text-xs text-slate-400 font-mono">
+                            <span className="text-xs text-slate-500 font-mono">
                               {entry.start_time} - {entry.end_time}
                             </span>
                           </div>
@@ -1042,25 +1042,25 @@ export const TeachersModule: React.FC = () => {
                 {/* Personal & Professional Info */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-[#fdfcfb] border border-[#ded9cf] text-xs">
                   <div>
-                    <span className="text-slate-400 block font-medium">Employee ID</span>
+                    <span className="text-slate-500 block font-medium">Employee ID</span>
                     <span className="font-bold text-slate-800 font-mono">
                       {selectedTeacherDetail?.profile?.employee_id}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Qualification</span>
+                    <span className="text-slate-500 block font-medium">Qualification</span>
                     <span className="font-bold text-slate-800">
                       {selectedTeacherDetail?.profile?.qualification}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Phone</span>
+                    <span className="text-slate-500 block font-medium">Phone</span>
                     <span className="font-bold text-slate-800">
                       {selectedTeacherDetail?.profile?.user_phone || 'N/A'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Email</span>
+                    <span className="text-slate-500 block font-medium">Email</span>
                     <span className="font-bold text-slate-800 truncate block">
                       {selectedTeacherDetail?.profile?.user_email}
                     </span>
@@ -1127,7 +1127,7 @@ export const TeachersModule: React.FC = () => {
                                         <div className={match.substitute_teacher_name ? 'text-amber-700' : 'text-blue-700'}>
                                           {match.class_name} {match.section_name}
                                         </div>
-                                        <div className="text-slate-400">
+                                        <div className="text-slate-500">
                                           {match.start_time}–{match.end_time} • Rm {match.room_number} (Fl {match.floor})
                                         </div>
                                         {match.substitute_teacher_name && (
@@ -1169,7 +1169,7 @@ export const TeachersModule: React.FC = () => {
                 <UserX className="w-4 h-4 text-rose-600" />
                 Record Faculty Absence / Leave
               </h3>
-              <button onClick={() => setShowMarkAbsentModal(false)} className="text-slate-400 hover:text-slate-700 font-bold">
+              <button onClick={() => setShowMarkAbsentModal(false)} className="text-slate-500 hover:text-slate-700 font-bold">
                 ✕
               </button>
             </div>
@@ -1200,7 +1200,7 @@ export const TeachersModule: React.FC = () => {
                         </option>
                       )}
                 </select>
-                <p className="text-[10px] text-slate-400 mt-1">
+                <p className="text-[10px] text-slate-500 mt-1">
                   {isManagement ? 'Only faculty currently marked present are listed.' : 'Faculty can only mark themselves absent.'}
                 </p>
               </div>
@@ -1261,7 +1261,7 @@ export const TeachersModule: React.FC = () => {
                   {selectedReq.timetableEntry.subject_name} • Room {selectedReq.timetableEntry.room_number}
                 </p>
               </div>
-              <button onClick={() => { setSelectedReq(null); setAssignQueue([]); }} className="text-slate-400 hover:text-slate-700 font-bold">
+              <button onClick={() => { setSelectedReq(null); setAssignQueue([]); }} className="text-slate-500 hover:text-slate-700 font-bold">
                 ✕
               </button>
             </div>
@@ -1368,7 +1368,7 @@ export const TeachersModule: React.FC = () => {
                 <Plus className="w-4 h-4 text-blue-600" />
                 Register New Faculty Member
               </h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-700 font-bold">
+              <button onClick={() => setShowCreateModal(false)} className="text-slate-500 hover:text-slate-700 font-bold">
                 ✕
               </button>
             </div>

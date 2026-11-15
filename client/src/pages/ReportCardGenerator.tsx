@@ -334,18 +334,18 @@ export const ReportCardGenerator: React.FC = () => {
                 Student Demographics & Stream
               </div>
               <div className="grid grid-cols-2 gap-2 text-slate-700">
-                <div><span className="text-slate-400">Class & Section:</span> <strong>{reportData.student.class_name} {reportData.student.section_name}</strong></div>
-                <div><span className="text-slate-400">Competitive Stream:</span> <strong className="text-indigo-700">{reportData.student.batch_name}</strong></div>
-                <div><span className="text-slate-400">Parent / Guardian:</span> <span>{reportData.student.parent_name}</span></div>
-                <div><span className="text-slate-400">Contact Number:</span> <span className="font-mono">{reportData.student.parent_phone}</span></div>
-                <div><span className="text-slate-400">Residential Status:</span> <span>{reportData.student.is_hostelite ? 'Hostelite (Campus Hostel)' : 'Day Scholar'}</span></div>
-                <div><span className="text-slate-400">Academic Year:</span> <span>{reportData.exam.academic_year}</span></div>
+                <div><span className="text-slate-500">Class & Section:</span> <strong>{reportData.student.class_name} {reportData.student.section_name}</strong></div>
+                <div><span className="text-slate-500">Competitive Stream:</span> <strong className="text-indigo-700">{reportData.student.batch_name}</strong></div>
+                <div><span className="text-slate-500">Parent / Guardian:</span> <span>{reportData.student.parent_name}</span></div>
+                <div><span className="text-slate-500">Contact Number:</span> <span className="font-mono">{reportData.student.parent_phone}</span></div>
+                <div><span className="text-slate-500">Residential Status:</span> <span>{reportData.student.is_hostelite ? 'Hostelite (Campus Hostel)' : 'Day Scholar'}</span></div>
+                <div><span className="text-slate-500">Academic Year:</span> <span>{reportData.exam.academic_year}</span></div>
               </div>
             </div>
 
             {/* Attendance & Overall Stats */}
             <div className="space-y-2 bg-white p-4 rounded-xl border border-slate-200 text-center flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Attendance & Class Standing</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Attendance & Class Standing</span>
               <div className="text-2xl font-black text-indigo-600">{reportData.summary.attendancePercentage}</div>
               <p className="text-[10px] text-slate-500">Class Rank: <strong>#{reportData.summary.classRank}</strong> • Batch Rank: <strong>#{reportData.summary.batchRank}</strong></p>
               <div className="text-xs font-bold text-emerald-700 bg-emerald-50 py-1 rounded-lg border border-emerald-100">
@@ -356,7 +356,7 @@ export const ReportCardGenerator: React.FC = () => {
 
           {/* MARKS & SUBJECT PERFORMANCE TABLE */}
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               Assessment Subject Breakdown
             </div>
 
@@ -380,7 +380,7 @@ export const ReportCardGenerator: React.FC = () => {
                       <tr key={s.subject_id} className="hover:bg-slate-50/70 transition">
                         <td className="py-3.5 px-4 font-bold text-slate-900">
                           {s.subject_name}
-                          <span className="block font-mono text-[10px] text-slate-400 font-normal">{s.subject_code}</span>
+                          <span className="block font-mono text-[10px] text-slate-500 font-normal">{s.subject_code}</span>
                         </td>
                         <td className="py-3.5 px-4 text-center font-mono font-semibold text-slate-600">{s.max_marks}</td>
                         <td className="py-3.5 px-4 text-center font-mono font-black text-slate-900 text-sm">{s.marks_obtained}</td>
@@ -442,7 +442,7 @@ export const ReportCardGenerator: React.FC = () => {
               Assessment has been dropped from the card entirely. */}
           {(user?.role === 'STUDENT' || user?.role === 'PARENT') && (
             <div className="space-y-3 pt-2">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Faculty & Leadership Feedback
               </div>
               <div className="grid grid-cols-1 gap-4 text-xs">
@@ -483,7 +483,7 @@ export const ReportCardGenerator: React.FC = () => {
               </div>
               <button
                 onClick={() => setActiveEvaluatedPaperUrl(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-500 hover:text-white p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -498,7 +498,7 @@ export const ReportCardGenerator: React.FC = () => {
                 <div className="py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500 text-xs space-y-2">
                   <FileCheck2 className="w-12 h-12 text-indigo-600 mx-auto opacity-75" />
                   <p className="font-semibold text-slate-800">Secure Evaluated Paper Document Verified</p>
-                  <p className="font-mono text-[11px] text-slate-400">File Path: {activeEvaluatedPaperUrl}</p>
+                  <p className="font-mono text-[11px] text-slate-500">File Path: {activeEvaluatedPaperUrl}</p>
                 </div>
                 <p className="text-xs text-slate-500">
                   Valued by faculty with step marks, corrections, and question-by-question scoring breakdown.
@@ -527,7 +527,7 @@ export const ReportCardGenerator: React.FC = () => {
                 <Users className="w-5 h-5 text-indigo-400" />
                 Bulk Report Card Batch Generation
               </h3>
-              <button onClick={() => setShowBulkModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              <button onClick={() => setShowBulkModal(false)} className="text-slate-500 hover:text-white">✕</button>
             </div>
 
             <div className="p-6 space-y-4 text-xs">

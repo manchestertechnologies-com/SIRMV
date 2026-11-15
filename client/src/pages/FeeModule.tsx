@@ -36,7 +36,7 @@ export const FeeModule: React.FC = () => {
         <div className="bg-white rounded-2xl border border-[#ded8cb] p-5 shadow-2xs space-y-1">
           <span className="text-xs text-slate-500 font-medium">Total Academic Fee</span>
           <div className="text-xl font-black text-slate-900">₹{feeDetails.totalFee.toLocaleString()}</div>
-          <span className="text-[10px] text-slate-400">Academic Year 2026-27</span>
+          <span className="text-[10px] text-slate-500">Academic Year 2026-27</span>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#ded8cb] p-5 shadow-2xs space-y-1">

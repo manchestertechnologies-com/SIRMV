@@ -96,7 +96,7 @@ export const StudentsAcademic: React.FC<{ onExit: () => void; onManage?: () => v
       <PageHead title={student.name} sub={`${sec.title} · Roll ${student.roll}`} onBack={() => backFromStudent(student.id)}
         crumbs={[{ label: 'Students', onClick: () => setNav({ v: 'home' }) }, { label: std.label, onClick: () => setNav({ v: 'std', std: sec.std }) }, { label: sec.title, onClick: () => setNav({ v: 'sec', sec: sec.id }) }, { label: student.name }]} />
       <StudentProfile student={student} />
-      <Card><p className="text-[11px] text-slate-400">Screens use sample data until the database is connected.</p></Card>
+      <Card><p className="text-[11px] text-slate-500">Screens use sample data until the database is connected.</p></Card>
     </div>
   );
 };

@@ -83,7 +83,7 @@ export const AdmissionAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) 
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {['All', ...CLASSES].map((c) => <Chip key={c} active={cls === c} onClick={() => setCls(c)}>{c === 'All' ? 'All classes' : c}</Chip>)}
-        <label className="relative ml-auto"><Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or ID" className="pl-8 pr-3 py-2 text-xs bg-white border border-[#ded9cf] rounded-xl w-52 outline-none" /></label>
+        <label className="relative ml-auto"><Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or ID" className="pl-8 pr-3 py-2 text-xs bg-white border border-[#ded9cf] rounded-xl w-52 outline-none" /></label>
       </div>
       <Card className="!p-0 overflow-hidden">
         {shown.length === 0 ? <Empty text="No applications match." /> : (
@@ -111,7 +111,7 @@ export const AdmissionAcademic: React.FC<{ onExit: () => void }> = ({ onExit }) 
             <div className="flex items-start gap-3">
               <Avatar name={open.name} person={{ seed: open.id, gender: open.gender, age: 16, role: 'student' }} size={64} />
               <div className="flex-1"><h3 className="font-bold text-lg text-slate-900 font-heading">{open.name}</h3><p className="text-xs text-slate-500">{open.id} · {open.cls} · {open.stream}</p><Pill tone={tone(open.stage)}>{open.stage}</Pill></div>
-              <button onClick={() => setOpen(null)} aria-label="Close"><X className="w-4 h-4 text-slate-400" /></button>
+              <button onClick={() => setOpen(null)} aria-label="Close"><X className="w-4 h-4 text-slate-500" /></button>
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               {[['Parent', open.parent], ['Phone', open.phone], ['Board', open.board], ['SSLC / Class 10', `${open.sslc}%`], ['Hostel needed', open.hostel ? 'Yes' : 'No'], ['Heard about us', open.source], ['Applied on', new Date(open.applied).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })]].map(([k, v]) => <div key={k}><dt className="text-slate-500">{k}</dt><dd className="font-semibold text-slate-800">{v}</dd></div>)}
@@ -138,7 +138,7 @@ const AddForm: React.FC<{ onClose: () => void; onSave: (a: Applicant) => void; i
   return (
     <div className="fixed inset-0 z-[70] bg-black/45 flex items-center justify-center p-4" onClick={onClose}>
       <form className="bg-white rounded-3xl w-full max-w-md p-5 space-y-3" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); if (!ok) return; onSave({ id: `ADM-${idNo}`, name: f.name.trim(), gender: f.gender as 'Male' | 'Female', parent: f.parent.trim(), phone: f.phone, sslc: Number(f.sslc), board: f.board, cls: f.cls, stream: f.stream, stage: 'Applied', applied: new Date().toISOString().slice(0, 10), hostel: f.hostel, source: 'Walk-in', note: 'Application received at the office' }); }}>
-        <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">New application</h3><button type="button" onClick={onClose} aria-label="Close"><X className="w-4 h-4 text-slate-400" /></button></div>
+        <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">New application</h3><button type="button" onClick={onClose} aria-label="Close"><X className="w-4 h-4 text-slate-500" /></button></div>
         <input className={inp} placeholder="Student name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <input className={inp} placeholder="Parent name" value={f.parent} onChange={(e) => setF({ ...f, parent: e.target.value })} />
         <div className="grid grid-cols-2 gap-2"><input className={inp} placeholder="Parent mobile (10 digits)" inputMode="numeric" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })} /><input className={inp} placeholder="SSLC %" inputMode="decimal" value={f.sslc} onChange={(e) => setF({ ...f, sslc: e.target.value })} /></div>

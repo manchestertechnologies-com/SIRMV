@@ -106,7 +106,7 @@ export const StaffsAcademic: React.FC<{ onExit: () => void; onManage?: () => voi
 
 const Group: React.FC<{ title: string; list: Staff[]; onOpen: (id: string) => void }> = ({ title, list, onOpen }) => (
   <div>
-    <h3 className="text-sm font-bold font-heading text-slate-900 mb-2">{title} <span className="text-slate-400 font-medium">({list.length})</span></h3>
+    <h3 className="text-sm font-bold font-heading text-slate-900 mb-2">{title} <span className="text-slate-500 font-medium">({list.length})</span></h3>
     {list.length === 0 ? <p className="text-xs text-slate-500">No staff in this group.</p> : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map((s) => {
@@ -242,7 +242,7 @@ const StaffTimetable: React.FC<{ staff: Staff }> = ({ staff }) => {
               p++;
               return (
                 <tr key={s.key} className="border-b border-[#f7f2ec]">
-                  <td className="py-2 pr-3"><b className="block text-slate-900">{s.start}</b><span className="text-slate-400">to {s.end}</span></td>
+                  <td className="py-2 pr-3"><b className="block text-slate-900">{s.start}</b><span className="text-slate-500">to {s.end}</span></td>
                   {WEEKDAYS.map((_, d) => { const c = grid[d][p]; return <td key={d} className="pr-2 py-1.5">{c ? <span className="block rounded-lg bg-[#fff1ee] text-[#8c1118] font-semibold px-2 py-1.5 truncate">{sectionById(c.sectionId)!.title.replace(' - ', ' ')}</span> : <span className="text-slate-300">-</span>}</td>; })}
                 </tr>
               );

@@ -82,7 +82,7 @@ export const Blueprint: React.FC = () => {
         <div className="rounded-2xl border border-[#ece4da] bg-white p-4"><p className="text-[11px] text-slate-500">Warden</p><p className="mt-1 text-sm font-semibold text-slate-900">{block.warden.name}</p><p className="text-[11px] text-slate-500">{block.warden.phone}</p></div>
       </div>
       <div className="grid lg:grid-cols-[1fr_300px] gap-5 items-start">
-        <Card title={`${block.name} · ${block.gender === 'Male' ? 'Boys' : 'Girls'} hostel`} right={<span className="text-[11px] text-slate-400">{block.shape === 'bar' ? 'Straight block' : block.shape === 'L' ? 'L-shaped block' : 'U-shaped block with courtyard'}</span>}>
+        <Card title={`${block.name} · ${block.gender === 'Male' ? 'Boys' : 'Girls'} hostel`} right={<span className="text-[11px] text-slate-500">{block.shape === 'bar' ? 'Straight block' : block.shape === 'L' ? 'L-shaped block' : 'U-shaped block with courtyard'}</span>}>
           <div className="space-y-4">{[...block.floors.keys()].reverse().map((fi) => <FloorPlan key={fi} block={block} fi={fi} rooms={rooms} occ={occ} sel={sel} onSel={setSel} />)}</div>
           <div className="mt-5 pt-4 border-t border-[#f0ebe4]"><p className="text-xs font-semibold text-slate-700 mb-2">3D model · tap a room</p><Blueprint3D floors={floors3d} selected={sel} onSelect={setSel} height={400} /></div>
           <div className="flex flex-wrap gap-4 mt-4 text-[11px] text-slate-600">
@@ -150,11 +150,11 @@ const ShuffleView: React.FC<{ onApplied: () => void }> = ({ onApplied }) => {
         <StatCard label="Rooms mixing both" value={mixedRooms} suffix={`of ${plan.length} rooms`} tone="gold" />
       </div>
       <div className="grid xl:grid-cols-[1fr_380px] gap-5 items-start">
-        <Card title="Proposed rooms" right={<span className="text-[11px] text-slate-400">average test % per room</span>}>
+        <Card title="Proposed rooms" right={<span className="text-[11px] text-slate-500">average test % per room</span>}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
             {plan.map((p) => { const a = roomAvg(p.people); return (
               <div key={p.room.label} className="rounded-xl border border-[#ece4da] p-2.5">
-                <div className="flex justify-between text-xs"><b className="text-slate-900">{p.room.label}</b><span className="text-slate-400">{p.room.floor.replace(' Floor', '')}</span></div>
+                <div className="flex justify-between text-xs"><b className="text-slate-900">{p.room.label}</b><span className="text-slate-500">{p.room.floor.replace(' Floor', '')}</span></div>
                 <div className="mt-1.5 mb-2"><Bar value={a} color={a >= 60 ? GREEN : a >= 45 ? AMBER : RED} h="h-1.5" /></div>
                 {p.people.map((s) => <p key={s.id} className="flex justify-between items-center text-[11px] text-slate-600 leading-5"><span className="truncate inline-flex items-center gap-1.5"><i className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: studentAvg(s.id) >= 65 ? GREEN : studentAvg(s.id) < 45 ? RED : AMBER }} />{s.name}</span><b className="text-slate-800 ml-2">{studentAvg(s.id)}%</b></p>)}
               </div>); })}
@@ -163,7 +163,7 @@ const ShuffleView: React.FC<{ onApplied: () => void }> = ({ onApplied }) => {
         <Card title={`Changes (${moves.length})`}>
           {moves.length === 0 ? <p className="text-sm text-slate-500">Rooms already match this plan.</p> : (
             <ul className="divide-y divide-[#f3ede6]">
-              {moves.map((m) => <li key={m.s.id} className="py-2 flex items-center gap-2.5 text-xs"><Avatar name={m.s.name} pid={m.s.id} size={30} /><span className="min-w-0 flex-1"><b className="block text-slate-900 truncate">{m.s.name} <span className="text-slate-400 font-normal">· {studentAvg(m.s.id)}%</span></b><span className="text-slate-500">{m.s.hostel!.room} → <b className="text-[#a3161b]">{m.to.label}</b> · {m.bed}</span></span></li>)}
+              {moves.map((m) => <li key={m.s.id} className="py-2 flex items-center gap-2.5 text-xs"><Avatar name={m.s.name} pid={m.s.id} size={30} /><span className="min-w-0 flex-1"><b className="block text-slate-900 truncate">{m.s.name} <span className="text-slate-500 font-normal">· {studentAvg(m.s.id)}%</span></b><span className="text-slate-500">{m.s.hostel!.room} → <b className="text-[#a3161b]">{m.to.label}</b> · {m.bed}</span></span></li>)}
             </ul>
           )}
         </Card>

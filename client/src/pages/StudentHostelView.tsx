@@ -240,21 +240,21 @@ export const StudentHostelView: React.FC = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div>
-                <span className="text-slate-400 block font-medium flex items-center gap-1">
+                <span className="text-slate-500 block font-medium flex items-center gap-1">
                   <Building className="w-3 h-3" /> Block
                 </span>
                 <span className="font-bold text-slate-800">{room.block_name}</span>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium">Floor</span>
+                <span className="text-slate-500 block font-medium">Floor</span>
                 <span className="font-bold text-slate-800">{room.floor}</span>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium">Room Number</span>
+                <span className="text-slate-500 block font-medium">Room Number</span>
                 <span className="font-bold text-slate-800 font-mono">{room.room_number}</span>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium flex items-center gap-1">
+                <span className="text-slate-500 block font-medium flex items-center gap-1">
                   <Bed className="w-3 h-3" /> Bed
                 </span>
                 <span className="font-bold text-slate-800">
@@ -275,7 +275,7 @@ export const StudentHostelView: React.FC = () => {
               Roommates
             </h3>
             {roommates.length === 0 ? (
-              <p className="text-slate-400 text-xs">No roommates yet — you have the room to yourself.</p>
+              <p className="text-slate-500 text-xs">No roommates yet — you have the room to yourself.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {roommates.map((rm) => (
@@ -288,7 +288,7 @@ export const StudentHostelView: React.FC = () => {
                       <div className="font-bold text-slate-900 text-xs truncate">{rm.name}</div>
                       <div className="text-[11px] text-slate-500 font-mono">{rm.register_number}</div>
                       <div className="flex items-center justify-between mt-0.5">
-                        <span className="text-[10px] text-slate-400">Bed {rm.bed_number}</span>
+                        <span className="text-[10px] text-slate-500">Bed {rm.bed_number}</span>
                         {rm.phone && (
                           <span className="text-[10px] text-slate-500 flex items-center gap-1">
                             <Phone className="w-2.5 h-2.5" /> {rm.phone}
@@ -311,7 +311,7 @@ export const StudentHostelView: React.FC = () => {
               </h3>
             </div>
             {scheduleByDay.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">Cleaning schedule not available yet.</div>
+              <div className="p-8 text-center text-slate-500 text-xs">Cleaning schedule not available yet.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
@@ -365,9 +365,9 @@ export const StudentHostelView: React.FC = () => {
               </h3>
             </div>
             {requestsLoading ? (
-              <div className="p-8 text-center text-slate-400 text-xs">Loading your requests...</div>
+              <div className="p-8 text-center text-slate-500 text-xs">Loading your requests...</div>
             ) : requests.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs">No maintenance requests filed yet.</div>
+              <div className="p-8 text-center text-slate-500 text-xs">No maintenance requests filed yet.</div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {requests.map((req) => (
@@ -387,7 +387,7 @@ export const StudentHostelView: React.FC = () => {
                       </div>
                       <p className="text-xs text-slate-600">{req.description}</p>
                     </div>
-                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap">
                       {new Date(req.created_at).toLocaleDateString()}
                     </span>
                   </div>

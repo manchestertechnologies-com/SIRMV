@@ -399,19 +399,19 @@ export const StudentsModule: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
-              <span className="text-slate-400 block font-medium">Guardian</span>
+              <span className="text-slate-500 block font-medium">Guardian</span>
               <span className="font-bold text-slate-800">{myProfileData.profile.parent_name || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Guardian Phone</span>
+              <span className="text-slate-500 block font-medium">Guardian Phone</span>
               <span className="font-bold text-slate-800">{myProfileData.profile.parent_phone || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Category</span>
+              <span className="text-slate-500 block font-medium">Category</span>
               <span className="font-bold text-slate-800">{myProfileData.profile.category || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Admission Type</span>
+              <span className="text-slate-500 block font-medium">Admission Type</span>
               <span className="font-bold text-slate-800">
                 {ADMISSION_TYPE_LABELS[myProfileData.profile.admission_type] || myProfileData.profile.admission_type}
               </span>
@@ -424,7 +424,7 @@ export const StudentsModule: React.FC = () => {
               Board Marks ({myBoardMarks.length})
             </h4>
             {myBoardMarks.length === 0 ? (
-              <p className="text-slate-400 text-xs">No board exam cycle results published yet.</p>
+              <p className="text-slate-500 text-xs">No board exam cycle results published yet.</p>
             ) : (
               <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
                 <table className="w-full text-left text-xs">
@@ -578,7 +578,7 @@ export const StudentsModule: React.FC = () => {
 
         {/* Search */}
         <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
             value={searchQuery}
@@ -595,7 +595,7 @@ export const StudentsModule: React.FC = () => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : filteredStudents.length === 0 ? (
-        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-400 text-sm">
+        <div className="p-12 text-center bg-[#fdfcfb] rounded-3xl border border-[#ded9cf] text-slate-500 text-sm">
           No students found matching your criteria.
         </div>
       ) : (
@@ -640,24 +640,24 @@ export const StudentsModule: React.FC = () => {
 
                   <div className="mt-4 pt-3 border-t border-[#f2eee6] space-y-1.5 text-xs text-slate-600">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Register No:</span>
+                      <span className="text-slate-500">Register No:</span>
                       <span className="font-mono font-bold text-slate-800">{s.register_number}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400 flex items-center gap-1">
+                      <span className="text-slate-500 flex items-center gap-1">
                         <Phone className="w-3 h-3" /> Phone:
                       </span>
                       <span className="font-semibold text-slate-700">{s.phone || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Admission:</span>
+                      <span className="text-slate-500">Admission:</span>
                       <span className="font-semibold text-blue-700">
                         {ADMISSION_TYPE_LABELS[s.admission_type] || s.admission_type || 'N/A'}
                       </span>
                     </div>
                     {isHostelStaff && (
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-400 flex items-center gap-1">
+                        <span className="text-slate-500 flex items-center gap-1">
                           <Home className="w-3 h-3" /> Room / Bed:
                         </span>
                         <span className="font-semibold text-slate-700">
@@ -672,7 +672,7 @@ export const StudentsModule: React.FC = () => {
 
                 <div className="mt-4 pt-3 border-t border-[#f2eee6] flex items-center justify-between text-xs font-semibold text-blue-700">
                   {isWarden ? (
-                    <span className="text-slate-400 font-semibold normal-case">Basic Info Only</span>
+                    <span className="text-slate-500 font-semibold normal-case">Basic Info Only</span>
                   ) : (
                     <span className="flex items-center gap-1 group-hover:underline">
                       View Student 360° Profile
@@ -725,37 +725,37 @@ export const StudentsModule: React.FC = () => {
                     <Avatar name={studentDetail?.profile?.name || ''} src={studentDetail?.profile?.photo_url || undefined} size={80} square />
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs flex-1">
                       <div>
-                        <span className="text-slate-400 block font-medium">Register Number</span>
+                        <span className="text-slate-500 block font-medium">Register Number</span>
                         <span className="font-bold text-slate-800 font-mono">{studentDetail?.profile?.register_number}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block font-medium">SSLC Result</span>
+                        <span className="text-slate-500 block font-medium">SSLC Result</span>
                         <span className="font-bold text-slate-800">{studentDetail?.profile?.sslc_result || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block font-medium">Category</span>
+                        <span className="text-slate-500 block font-medium">Category</span>
                         <span className="font-bold text-slate-800">{studentDetail?.profile?.category || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block font-medium">Gender / DOB</span>
+                        <span className="text-slate-500 block font-medium">Gender / DOB</span>
                         <span className="font-bold text-slate-800">
                           {studentDetail?.profile?.gender || 'N/A'} • {studentDetail?.profile?.date_of_birth || 'N/A'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block font-medium">Admission Type</span>
+                        <span className="text-slate-500 block font-medium">Admission Type</span>
                         <span className="font-bold text-slate-800">
                           {ADMISSION_TYPE_LABELS[studentDetail?.profile?.admission_type] || studentDetail?.profile?.admission_type}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block font-medium">Residency</span>
+                        <span className="text-slate-500 block font-medium">Residency</span>
                         <span className="font-bold text-slate-800">
                           {RESIDENCE_LABELS[residenceOf(studentDetail?.profile)]}
                         </span>
                       </div>
                       <div className="col-span-2 sm:col-span-3">
-                        <span className="text-slate-400 block font-medium">Address</span>
+                        <span className="text-slate-500 block font-medium">Address</span>
                         <span className="font-semibold text-slate-800">{studentDetail?.profile?.address || 'N/A'}</span>
                       </div>
                     </div>
@@ -832,15 +832,15 @@ export const StudentsModule: React.FC = () => {
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div>
-                      <span className="text-slate-400 block">Guardian Name</span>
+                      <span className="text-slate-500 block">Guardian Name</span>
                       <span className="font-semibold text-slate-800">{studentDetail?.profile?.parent_name || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Primary Contact</span>
+                      <span className="text-slate-500 block">Primary Contact</span>
                       <span className="font-semibold text-slate-800">{studentDetail?.profile?.parent_phone || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Guardian Email</span>
+                      <span className="text-slate-500 block">Guardian Email</span>
                       <span className="font-semibold text-slate-800 truncate block">
                         {studentDetail?.profile?.parent_email || 'N/A'}
                       </span>
@@ -881,7 +881,7 @@ export const StudentsModule: React.FC = () => {
                     Theory Marks ({theoryMarks.length})
                   </h4>
                   {theoryMarks.length === 0 ? (
-                    <p className="text-slate-400 text-xs">No theory exam records uploaded yet.</p>
+                    <p className="text-slate-500 text-xs">No theory exam records uploaded yet.</p>
                   ) : (
                     <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
                       <table className="w-full text-left text-xs">
@@ -927,7 +927,7 @@ export const StudentsModule: React.FC = () => {
                     Board Marks ({boardMarks.length})
                   </h4>
                   {boardMarks.length === 0 ? (
-                    <p className="text-slate-400 text-xs">No board exam cycle results published yet.</p>
+                    <p className="text-slate-500 text-xs">No board exam cycle results published yet.</p>
                   ) : (
                     <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
                       <table className="w-full text-left text-xs">
@@ -974,12 +974,12 @@ export const StudentsModule: React.FC = () => {
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
                     Competitive Exam Marks ({competitiveMarks.length})
                   </h4>
-                  <p className="text-[10px] text-slate-400 mb-2.5">
+                  <p className="text-[10px] text-slate-500 mb-2.5">
                     NEET / JEE / CET — {ADMISSION_TYPE_LABELS[studentDetail?.profile?.admission_type] || 'N/A'} • Batch{' '}
                     {studentDetail?.profile?.batch_name}
                   </p>
                   {competitiveMarks.length === 0 ? (
-                    <p className="text-slate-400 text-xs">No competitive exam records uploaded yet.</p>
+                    <p className="text-slate-500 text-xs">No competitive exam records uploaded yet.</p>
                   ) : (
                     <div className="border border-[#ded9cf] rounded-2xl overflow-hidden overflow-x-auto">
                       <table className="w-full text-left text-xs">
@@ -1078,23 +1078,23 @@ export const StudentsModule: React.FC = () => {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2 border-t border-slate-100">
                   <div>
-                    <span className="text-slate-400 block font-medium">Total Marks</span>
+                    <span className="text-slate-500 block font-medium">Total Marks</span>
                     <span className="font-bold text-slate-800">
                       {marksCardData?.totalObtained} / {marksCardData?.totalMarks}
                     </span>
                   </div>
                   {marksCard.type === 'theory' && (
                     <div>
-                      <span className="text-slate-400 block font-medium">Percentage</span>
+                      <span className="text-slate-500 block font-medium">Percentage</span>
                       <span className="font-bold text-slate-800">{marksCardData?.percentage}%</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-slate-400 block font-medium">Section Rank</span>
+                    <span className="text-slate-500 block font-medium">Section Rank</span>
                     <span className="font-bold text-slate-800">{marksCardData?.sectionRank ?? '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Overall Rank</span>
+                    <span className="text-slate-500 block font-medium">Overall Rank</span>
                     <span className="font-bold text-slate-800">{marksCardData?.overallRank ?? '—'}</span>
                   </div>
                 </div>
@@ -1117,7 +1117,7 @@ export const StudentsModule: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-700 font-bold"
+                className="text-slate-500 hover:text-slate-700 font-bold"
               >
                 ✕
               </button>

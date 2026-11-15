@@ -51,7 +51,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-live-dot"></span>
             <span className="font-semibold text-slate-700">{branchName}</span>
             <span className="text-slate-300">•</span>
-            <span className="text-slate-400">Davangere • Shivamogga • Ballari</span>
+            <span className="text-slate-500">Davangere • Shivamogga • Ballari</span>
           </div>
         </div>
       )}

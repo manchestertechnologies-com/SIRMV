@@ -76,7 +76,7 @@ export const LoginModal: React.FC = () => {
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Email or Username</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
                   type="text"
                   value={identifier}
@@ -91,7 +91,7 @@ export const LoginModal: React.FC = () => {
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Password</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
                   type="password"
                   value={password}
@@ -120,7 +120,7 @@ export const LoginModal: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 Instant Demo Personas (1-Click)
               </span>
-              <span className="text-[10px] font-mono text-slate-400">Demo@12345</span>
+              <span className="text-[10px] font-mono text-slate-500">Demo@12345</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -134,7 +134,7 @@ export const LoginModal: React.FC = () => {
                 >
                   <div className="truncate mr-2">
                     <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700 truncate">{account.label}</div>
-                    <div className="text-[10px] text-slate-400 font-mono truncate">{account.email.split('@')[0]}</div>
+                    <div className="text-[10px] text-slate-500 font-mono truncate">{account.email.split('@')[0]}</div>
                   </div>
                   <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0 ${account.color}`}>
                     {account.role}
