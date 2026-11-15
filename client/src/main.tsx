@@ -55,7 +55,7 @@ createRoot(document.getElementById('root')!).render(
 
 // load every portrait picture in the background so faces appear instantly wherever they are used
 try {
-  const names = ['ms17', 'ms18', 'ms17b', 'fs18', 'fs17', 'fs18b', 'mp42', 'mp52', 'mp52b', 'mp47', 'fp42', 'fp49', 'mt58', 'mt45', 'ft30', 'ft30b', 'fa50', 'fa48'];
+  const names = ['ms17', 'fs18', 'mp42', 'fp42', 'mt58', 'ft30'];
   const warm = () => names.forEach((n) => { [n, `${n}-f`].forEach((x) => { const i = new Image(); i.decoding = 'async'; i.src = `/portraits/${x}.webp`; }); });
-  (window as any).requestIdleCallback ? (window as any).requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 600);
+  (window as any).requestIdleCallback ? (window as any).requestIdleCallback(warm, { timeout: 6000 }) : setTimeout(warm, 3000);
 } catch { /* ignore */ }

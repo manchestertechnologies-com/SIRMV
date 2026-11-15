@@ -15,6 +15,20 @@ clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Photos and the logo are cached the first time they are seen (never blocks install),
+// so they show instantly on every later visit without slowing the first load.
+self.addEventListener('fetch', (event: FetchEvent) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || !/^\/(portraits\/|logo-sm\.png|logo\.png)/.test(url.pathname)) return;
+  event.respondWith(
+    caches.open('sirmv-images-v1').then((c) =>
+      c.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; }))
+    )
+  );
+});
+
 // Maps a notification's `data.type` to the existing in-app tab that should
 // open when it's tapped — reusing App.tsx's real tab ids, not new pages.
 const TYPE_TO_TAB: Record<string, string> = {

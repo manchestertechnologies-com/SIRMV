@@ -155,7 +155,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onNavigate }) => {
           {/* the sidebar already carries the logo on desktop; show it here only on mobile */}
           <div className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white flex items-center justify-center p-0.5 shrink-0 ring-1 ring-[#c28535]/60">
             <img
-              src="/logo.png"
+              src="/logo-sm.png" decoding="async"
               alt="SIR MV PU College Logo"
               className="w-full h-full object-contain rounded-lg"
             />

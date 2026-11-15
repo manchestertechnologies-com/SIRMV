@@ -84,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         {/* Official logo */}
         <div className={`px-3 pt-4 pb-3 flex items-center gap-2 border-b border-white/10 ${wide ? 'justify-between' : 'md:flex-col md:justify-center'} justify-between`}>
           <img
-            src="/logo.png"
+            src="/logo-sm.png" decoding="async"
             alt="SIR MV PU College Logo"
             className={`object-contain rounded-[12px] bg-white p-1 ring-2 ring-[#d9a85a]/70 ${wide ? 'w-12 h-12' : 'w-12 h-12 md:w-10 md:h-10'}`}
           />

@@ -74,7 +74,7 @@ export const LoginPage: React.FC = () => {
 
         <div className="relative z-10 mt-slide flex items-center gap-3" style={{ ['--i' as any]: 0 }}>
           <img
-            src="/logo.png"
+            src="/logo-sm.png" decoding="async"
             alt="SIR MV PU College Logo"
             className="w-14 h-14 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
           />
@@ -135,7 +135,7 @@ export const LoginPage: React.FC = () => {
         <div className="relative w-full max-w-md">
           <div className="lg:hidden mt-reveal flex flex-col items-center text-white mb-6" style={{ ['--i' as any]: 0 }}>
             <img
-              src="/logo.png"
+              src="/logo-sm.png" decoding="async"
               alt="SIR MV PU College Logo"
               className="w-16 h-16 rounded-2xl object-contain bg-white p-1 ring-1 ring-[#c28535]/70 shadow-xl shadow-black/50"
             />

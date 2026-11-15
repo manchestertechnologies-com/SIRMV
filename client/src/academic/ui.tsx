@@ -57,7 +57,7 @@ export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?:
   const tint = TINTS[(name.charCodeAt(0) + name.length) % TINTS.length];
   const style: React.CSSProperties = { width: size, height: size, borderRadius: square ? 14 : size, background: src ? undefined : tint, fontSize: size * 0.36 };
   return src ? (
-    <img src={src} alt={name} style={style} className="object-cover shrink-0" decoding="sync" fetchPriority="high" onError={() => setBad(true)} />
+    <img src={src} alt={name} style={style} className="object-cover shrink-0" decoding="async" loading="lazy" onError={() => setBad(true)} />
   ) : (
     <span style={style} className="inline-flex items-center justify-center shrink-0 text-white font-semibold select-none ring-2 ring-white shadow-sm">{initials}</span>
   );
