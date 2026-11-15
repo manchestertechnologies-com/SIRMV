@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Avatar } from '../academic/ui';
 import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -518,6 +519,7 @@ export const TeachersModule: React.FC = () => {
                       onClick={() => setSelectedDept(d.id)}
                       title={d.name}
                       data-active={active}
+                      style={{ ['--i' as any]: departments.indexOf(d) + 1 }}
                       className="mt-chip flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border"
                     >
                       <DeptIcon className="w-7 h-7" />
@@ -600,13 +602,7 @@ export const TeachersModule: React.FC = () => {
                               className="w-12 h-12 rounded-2xl object-cover border border-blue-200"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-base font-heading">
-                              {t.name
-                                ?.split(' ')
-                                .map((n: string) => n[0])
-                                .slice(0, 2)
-                                .join('')}
-                            </div>
+                            <Avatar name={t.name} pid={t.id} size={48} square />
                           )}
                           <span
                             title={t.is_absent_today ? 'Absent today' : 'Present today'}

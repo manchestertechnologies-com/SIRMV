@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Avatar } from '../academic/ui';
 import { apiFetch } from '../services/api';
 import { X, User, BookOpen, CalendarCheck2, Award } from 'lucide-react';
 
@@ -115,9 +116,7 @@ export const ExamStudentProfileModal: React.FC<{ studentId: string; onClose: () 
               {profile.photo_url ? (
                 <img src={profile.photo_url} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover border border-violet-200" />
               ) : (
-                <div className="w-16 h-16 rounded-2xl bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-700 font-bold text-xl">
-                  {profile.name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                </div>
+                <Avatar name={profile.name || ""} size={64} square />
               )}
               <div>
                 <div className="font-bold text-slate-900">{profile.name}</div>

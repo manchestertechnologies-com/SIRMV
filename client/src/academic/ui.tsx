@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Pencil } from 'lucide-react';
 import { compressImage, getEdits, getPhoto, saveEdits, savePhoto } from './store';
-import { findStudent, staffById } from './sampleData';
+import { findStudent, staffById, getStaff } from './sampleData';
+import { guessGender } from '../utils/userPortrait';
 import { portraitUrl, type PortraitSpec } from '../utils/portrait';
 import { ArrowLeft, ChevronRight, X } from 'lucide-react';
 import type { SubjectName } from './sampleData';
@@ -31,10 +32,24 @@ const identityOf = (pid?: string): PortraitSpec | null => {
   } catch { /* fall through to initials */ }
   return null;
 };
+// no id given: a staff member with this exact name, otherwise a fitting guess from the name
+const staffByName = new Map<string, string>();
+const identityByName = (name: string): PortraitSpec | null => {
+  if (!name || !name.trim()) return null;
+  try {
+    if (staffByName.size === 0) getStaff().forEach((s) => staffByName.set(s.name.toLowerCase(), s.id));
+    const id = staffByName.get(name.trim().toLowerCase());
+    if (id) return identityOf(id);
+  } catch { /* fall back */ }
+  const titled = /^(mr|mrs|ms|dr|smt|shri|sri)\b/i.test(name.trim());
+  return { seed: name, gender: guessGender(name), age: titled ? 40 : 17, role: titled ? 'teacher' : 'student' };
+};
 const hash32 = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
 
+export const portraitSrc = (pid: string, name: string): string | undefined => { const spec = identityOf(pid) || identityByName(name); return spec ? portraitUrl(spec) : undefined; };
+
 export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?: number; square?: boolean; person?: PortraitSpec }> = ({ name, src: srcIn, pid, size = 48, square, person }) => {
-  const spec = person || identityOf(pid);
+  const spec = person || identityOf(pid) || identityByName(name);
   const [bad, setBad] = useState(false); // a saved picture that no longer exists falls back to the portrait
   const own = srcIn || getPhoto(pid);
   const src = (own && !bad ? own : undefined) || (spec ? portraitUrl(spec) : undefined);
@@ -42,7 +57,7 @@ export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?:
   const tint = TINTS[(name.charCodeAt(0) + name.length) % TINTS.length];
   const style: React.CSSProperties = { width: size, height: size, borderRadius: square ? 14 : size, background: src ? undefined : tint, fontSize: size * 0.36 };
   return src ? (
-    <img src={src} alt={name} style={style} className="object-cover shrink-0" loading="lazy" decoding="async" onError={() => setBad(true)} />
+    <img src={src} alt={name} style={style} className="object-cover shrink-0" decoding="sync" fetchPriority="high" onError={() => setBad(true)} />
   ) : (
     <span style={style} className="inline-flex items-center justify-center shrink-0 text-white font-semibold select-none ring-2 ring-white shadow-sm">{initials}</span>
   );
@@ -340,7 +355,7 @@ export const Empty: React.FC<{ text: string }> = ({ text }) => <div className="t
 
 // photo box: shows the saved picture or an "Add photo" placeholder; picking a file saves it
 export const PhotoBox: React.FC<{ pid: string; name: string; size?: number }> = ({ pid, name, size = 96 }) => {
-  const [src, setSrc] = useState<string | undefined>(getPhoto(pid));
+  const [src, setSrc] = useState<string | undefined>(getPhoto(pid) || portraitSrc(pid, name));
   const ref = useRef<HTMLInputElement>(null);
   const pick = async (f?: File) => { if (!f) return; try { const d = await compressImage(f); savePhoto(pid, d); setSrc(d); } catch { /* ignore bad file */ } };
   return (

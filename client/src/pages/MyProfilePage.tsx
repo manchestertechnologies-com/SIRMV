@@ -1,4 +1,5 @@
 import React from 'react';
+import { accountPortraitUrl } from '../utils/userPortrait';
 import { useAuth } from '../context/AuthContext';
 import { UserCircle, Mail, Phone, Building2, Briefcase } from 'lucide-react';
 
@@ -32,9 +33,7 @@ export const MyProfilePage: React.FC = () => {
     <div className="max-w-2xl mx-auto space-y-5">
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-5">
         <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xl">
-            {initials || <UserCircle className="w-8 h-8" />}
-          </div>
+          <img src={accountPortraitUrl(user)} alt={user.name} className="w-16 h-16 rounded-2xl object-cover" />
           <div>
             <h2 className="text-lg font-bold text-slate-900">{user.name}</h2>
             <p className="text-xs text-slate-500 font-semibold">
