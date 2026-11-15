@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Avatar } from '../academic/ui';
 import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -618,17 +619,7 @@ export const StudentsModule: React.FC = () => {
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-sm font-heading shrink-0 overflow-hidden">
-                        {s.photo_url ? (
-                          <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
-                        ) : (
-                          s.name
-                            ?.split(' ')
-                            .map((n: string) => n[0])
-                            .slice(0, 2)
-                            .join('')
-                        )}
-                      </div>
+                      <Avatar name={s.name || ''} src={s.photo_url || undefined} size={44} square />
                       <div>
                         <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-700 transition">
                           {s.name}
@@ -731,17 +722,7 @@ export const StudentsModule: React.FC = () => {
                     Student Academic Details
                   </h4>
                   <div className="p-4 rounded-2xl bg-[#fdfcfb] border border-[#ded9cf] flex flex-col sm:flex-row gap-4">
-                    <div className="w-20 h-20 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-xl font-heading shrink-0 overflow-hidden">
-                      {studentDetail?.profile?.photo_url ? (
-                        <img src={studentDetail.profile.photo_url} alt={studentDetail.profile.name} className="w-full h-full object-cover" />
-                      ) : (
-                        studentDetail?.profile?.name
-                          ?.split(' ')
-                          .map((n: string) => n[0])
-                          .slice(0, 2)
-                          .join('')
-                      )}
-                    </div>
+                    <Avatar name={studentDetail?.profile?.name || ''} src={studentDetail?.profile?.photo_url || undefined} size={80} square />
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs flex-1">
                       <div>
                         <span className="text-slate-400 block font-medium">Register Number</span>

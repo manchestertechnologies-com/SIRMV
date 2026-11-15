@@ -113,11 +113,7 @@ export const ExamStudentProfileModal: React.FC<{ studentId: string; onClose: () 
           <div className="p-5 space-y-5">
             {/* Basic Info */}
             <div className="flex items-center gap-4">
-              {profile.photo_url ? (
-                <img src={profile.photo_url} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover border border-violet-200" />
-              ) : (
-                <Avatar name={profile.name || ""} size={64} square />
-              )}
+              <Avatar name={profile.name || ""} src={profile.photo_url || undefined} size={64} square />
               <div>
                 <div className="font-bold text-slate-900">{profile.name}</div>
                 <div className="text-xs text-slate-500">{profile.register_number}</div>

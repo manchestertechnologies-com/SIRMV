@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Avatar } from '../academic/ui';
 import { showToast } from '../utils/toast';
 import { apiFetch } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -282,17 +283,7 @@ export const StudentHostelView: React.FC = () => {
                     key={rm.student_id}
                     className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/60"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-800 font-bold text-xs shrink-0 overflow-hidden">
-                      {rm.photo_url ? (
-                        <img src={rm.photo_url} alt={rm.name} className="w-full h-full object-cover" />
-                      ) : (
-                        rm.name
-                          ?.split(' ')
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join('')
-                      )}
-                    </div>
+                    <Avatar name={rm.name || ''} src={rm.photo_url || undefined} size={40} square />
                     <div className="min-w-0 flex-1">
                       <div className="font-bold text-slate-900 text-xs truncate">{rm.name}</div>
                       <div className="text-[11px] text-slate-500 font-mono">{rm.register_number}</div>
