@@ -50,6 +50,17 @@ function ensureTables(): Promise<void> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`);
       await execute(`CREATE TABLE IF NOT EXISTS pc_blocked (student_user_id VARCHAR(64) PRIMARY KEY, reason TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
+      await execute(`CREATE TABLE IF NOT EXISTS pc_contacts (
+        id VARCHAR(64) PRIMARY KEY,
+        student_profile_id VARCHAR(64) NOT NULL,
+        relationship VARCHAR(24) NOT NULL DEFAULT 'Father',
+        name VARCHAR(160) NOT NULL,
+        phone VARCHAR(24),
+        user_id VARCHAR(64),
+        is_authorized INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`);
+      await execute(`CREATE INDEX IF NOT EXISTS idx_pc_contacts_sp ON pc_contacts(student_profile_id)`);
       await execute(`CREATE INDEX IF NOT EXISTS idx_pc_signals_to ON pc_signals(to_user_id, id)`);
       await execute(`CREATE INDEX IF NOT EXISTS idx_pc_calls_users ON pc_calls(student_user_id, parent_user_id)`);
       const n = await queryOne<{ c: string }>(`SELECT COUNT(*) AS c FROM pc_schedule`);
@@ -135,6 +146,7 @@ parentConnectRouter.get('/contacts', authenticate, async (req: AuthRequest, res:
     const me = req.user!;
     const pairs = await pairsFor(me);
     const blocked = new Set((await query<{ student_user_id: string }>(`SELECT student_user_id FROM pc_blocked`)).map((b) => b.student_user_id));
+    const revoked = new Set((await query<{ su: string; pu: string }>(`SELECT sp.user_id AS su, c.user_id AS pu FROM pc_contacts c JOIN student_profiles sp ON sp.id = c.student_profile_id WHERE c.is_authorized = 0 AND c.user_id IS NOT NULL`)).map((r) => `${r.su}:${r.pu}`));
     const contacts = pairs.map((p) => {
       const iAmStudent = me.role === 'STUDENT';
       return {
@@ -152,7 +164,7 @@ parentConnectRouter.get('/contacts', authenticate, async (req: AuthRequest, res:
         studentGender: p.gender, dob: p.date_of_birth,
         classLabel: [p.class_name, p.section_name].filter(Boolean).join(' · '),
         hostelite: !!p.is_hostelite,
-        blocked: blocked.has(p.student_user_id),
+        blocked: blocked.has(p.student_user_id) || revoked.has(`${p.student_user_id}:${p.parent_user_id}`),
       };
     });
     return res.json({ contacts });
@@ -186,6 +198,8 @@ parentConnectRouter.post('/calls', authenticate, requireRoles('STUDENT', 'PARENT
     const parentId = me.role === 'PARENT' ? me.id : to_user_id;
     const link = await queryOne(`SELECT 1 FROM student_profiles WHERE user_id = $1 AND parent_user_id = $2 AND is_active = 1`, [studentId, parentId]);
     if (!link) return res.status(400).json({ error: 'Unauthorized call: this student and parent are not linked.' });
+    if (await queryOne(`SELECT 1 FROM pc_contacts c JOIN student_profiles sp ON sp.id = c.student_profile_id WHERE sp.user_id = $1 AND c.user_id = $2 AND c.is_authorized = 0`, [studentId, parentId]))
+      return res.status(403).json({ error: 'The hostel office has withdrawn this parent\'s calling access.' });
     if (await queryOne(`SELECT 1 FROM pc_blocked WHERE student_user_id = $1`, [studentId])) return res.status(403).json({ error: 'Calling is switched off for this student by the hostel.' });
     const av = await availability();
     if (!av.isAllowed) return res.status(403).json({ error: av.reason });
@@ -313,6 +327,107 @@ parentConnectRouter.post('/students/:studentUserId/block', authenticate, require
     if (blocked) await execute(`INSERT INTO pc_blocked (student_user_id, reason) VALUES ($1,$2) ON CONFLICT (student_user_id) DO UPDATE SET reason = EXCLUDED.reason`, [req.params.studentUserId, req.body?.reason || null]);
     else await execute(`DELETE FROM pc_blocked WHERE student_user_id = $1`, [req.params.studentUserId]);
     await logAudit(req, blocked ? 'PARENT_CONNECT_BLOCKED' : 'PARENT_CONNECT_UNBLOCKED', 'pc_blocked', req.params.studentUserId, {});
+    return res.json({ success: true });
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
+
+// ---------- admin: student register, dossier, parent contacts ----------
+const pucLevel = (cls?: string | null): 'I PU' | 'II PU' | '' => {
+  const n = (cls || '').toLowerCase();
+  if (/(^|[^a-z0-9])(2|ii|12|2nd|second)(\s|nd|th|$|[^a-z0-9])|12th|2 ?puc|ii ?pu/.test(n)) return 'II PU';
+  if (/(^|[^a-z0-9])(1|i|11|1st|first)(\s|st|th|$|[^a-z0-9])|11th|1 ?puc|i ?pu/.test(n)) return 'I PU';
+  return '';
+};
+const relationFor = (name: string) => (/^\s*(mrs|ms|smt|miss|shrimati)\b/i.test(name) ? 'Mother' : 'Father');
+
+// give every student at least their on-file parent as an authorised contact
+async function seedContacts() {
+  const missing = await query<any>(
+    `SELECT sp.id, sp.parent_name, sp.parent_phone, sp.parent_user_id, pu.name AS pu_name, pu.phone AS pu_phone
+     FROM student_profiles sp LEFT JOIN users pu ON pu.id = sp.parent_user_id
+     WHERE sp.is_active = 1 AND NOT EXISTS (SELECT 1 FROM pc_contacts c WHERE c.student_profile_id = sp.id)`);
+  for (const m of missing) {
+    const name = clean(m.parent_name || m.pu_name);
+    if (!name) continue;
+    await execute(`INSERT INTO pc_contacts (id, student_profile_id, relationship, name, phone, user_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+      [crypto.randomUUID(), m.id, relationFor(name), name, m.parent_phone || m.pu_phone || null, m.parent_user_id || null]);
+  }
+}
+
+parentConnectRouter.get('/register', authenticate, requireRoles(...(ADMIN_ROLES as any)), async (_req, res: Response) => {
+  try {
+    await seedContacts();
+    const rows = await query<any>(
+      `SELECT sp.id, sp.user_id, sp.name, sp.register_number, sp.gender, sp.date_of_birth, COALESCE(sp.photo_url, su.avatar_url) AS photo,
+              c.name AS class_name, s.name AS section_name,
+              ROW_NUMBER() OVER (ORDER BY sp.register_number, sp.id) AS tab_no,
+              COALESCE((SELECT SUM(duration_seconds) FROM pc_calls k WHERE k.student_user_id = sp.user_id), 0) AS talk_seconds,
+              (SELECT COUNT(*) FROM pc_calls k WHERE k.student_user_id = sp.user_id AND k.status <> 'ringing') AS call_count,
+              EXISTS (SELECT 1 FROM pc_blocked b WHERE b.student_user_id = sp.user_id) AS blocked,
+              (SELECT COUNT(*) FROM pc_contacts pc WHERE pc.student_profile_id = sp.id AND pc.is_authorized = 1) AS allowed_contacts
+       FROM student_profiles sp
+       LEFT JOIN users su ON su.id = sp.user_id
+       LEFT JOIN classes c ON c.id = sp.class_id LEFT JOIN sections s ON s.id = sp.section_id
+       WHERE sp.is_active = 1 ORDER BY sp.register_number, sp.id`);
+    return res.json({ students: rows.map((r) => ({
+      id: r.id, userId: r.user_id, name: clean(r.name), registerNumber: r.register_number, gender: r.gender, dob: r.date_of_birth, photo: r.photo,
+      classLabel: [r.class_name, r.section_name].filter(Boolean).join(' · '), level: pucLevel(r.class_name),
+      tab: `TAB-${String(Number(r.tab_no)).padStart(3, '0')}`, talkSeconds: Number(r.talk_seconds), callCount: Number(r.call_count),
+      enabled: !r.blocked, allowedContacts: Number(r.allowed_contacts),
+    })) });
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
+parentConnectRouter.get('/register/:id', authenticate, requireRoles(...(ADMIN_ROLES as any)), async (req: AuthRequest, res: Response) => {
+  try {
+    await seedContacts();
+    const sp = await queryOne<any>(`SELECT id, user_id FROM student_profiles WHERE id = $1`, [req.params.id]);
+    if (!sp) return res.status(404).json({ error: 'Student not found.' });
+    const contacts = await query<any>(`SELECT id, relationship, name, phone, is_authorized FROM pc_contacts WHERE student_profile_id = $1 ORDER BY CASE relationship WHEN 'Father' THEN 0 WHEN 'Mother' THEN 1 ELSE 2 END, created_at`, [sp.id]);
+    const calls = await query<any>(
+      `SELECT k.id, k.status, k.initiated_at, k.duration_seconds, k.end_reason, k.caller_user_id, k.parent_user_id,
+              COALESCE(pc.name, pu.name) AS who, COALESCE(pc.relationship, 'Parent') AS relationship, COALESCE(pc.phone, pu.phone) AS phone
+       FROM pc_calls k LEFT JOIN users pu ON pu.id = k.parent_user_id
+       LEFT JOIN pc_contacts pc ON pc.student_profile_id = $2 AND pc.user_id = k.parent_user_id
+       WHERE k.student_user_id = $1 ORDER BY k.initiated_at DESC LIMIT 60`, [sp.user_id, sp.id]);
+    return res.json({
+      contacts: contacts.map((c) => ({ id: c.id, relationship: c.relationship, name: clean(c.name), phone: c.phone || '', authorized: c.is_authorized === 1 })),
+      calls: calls.map((k) => ({ id: k.id, status: k.status, at: k.initiated_at, seconds: k.duration_seconds || 0, direction: k.caller_user_id === sp.user_id ? 'outgoing' : 'incoming', name: clean(k.who), relationship: k.relationship, phone: k.phone || '' })),
+    });
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
+const phoneOk = /^[+0-9][0-9 \-]{6,18}$/;
+parentConnectRouter.post('/register/:id/contacts', authenticate, requireRoles(...(ADMIN_ROLES as any)), async (req: AuthRequest, res: Response) => {
+  try {
+    const { relationship, name, phone } = req.body || {};
+    if (!['Father', 'Mother', 'Guardian'].includes(relationship) || !String(name || '').trim()) return res.status(400).json({ error: 'Choose Father, Mother or Guardian and enter a name.' });
+    if (phone && !phoneOk.test(String(phone).trim())) return res.status(400).json({ error: 'Enter a valid phone number.' });
+    const id = crypto.randomUUID();
+    await execute(`INSERT INTO pc_contacts (id, student_profile_id, relationship, name, phone) VALUES ($1,$2,$3,$4,$5)`, [id, req.params.id, relationship, String(name).trim(), phone ? String(phone).trim() : null]);
+    await logAudit(req, 'PARENT_CONNECT_CONTACT_ADDED', 'pc_contacts', id, { student: req.params.id });
+    return res.json({ success: true, id });
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
+parentConnectRouter.put('/contacts/:id', authenticate, requireRoles(...(ADMIN_ROLES as any)), async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, phone } = req.body || {};
+    if (phone && !phoneOk.test(String(phone).trim())) return res.status(400).json({ error: 'Enter a valid phone number.' });
+    const n = await execute(`UPDATE pc_contacts SET name = COALESCE(NULLIF($1,''), name), phone = $2 WHERE id = $3`, [name ? String(name).trim() : '', phone ? String(phone).trim() : null, req.params.id]);
+    if (!n) return res.status(404).json({ error: 'Contact not found.' });
+    await logAudit(req, 'PARENT_CONNECT_CONTACT_EDITED', 'pc_contacts', req.params.id, {});
+    return res.json({ success: true });
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
+parentConnectRouter.post('/contacts/:id/authorize', authenticate, requireRoles(...(ADMIN_ROLES as any)), async (req: AuthRequest, res: Response) => {
+  try {
+    const on = !!req.body?.authorized;
+    const n = await execute(`UPDATE pc_contacts SET is_authorized = $1 WHERE id = $2`, [on ? 1 : 0, req.params.id]);
+    if (!n) return res.status(404).json({ error: 'Contact not found.' });
+    await logAudit(req, on ? 'PARENT_CONNECT_ACCESS_RESTORED' : 'PARENT_CONNECT_ACCESS_REVOKED', 'pc_contacts', req.params.id, {});
     return res.json({ success: true });
   } catch (e: any) { return res.status(500).json({ error: e.message }); }
 });
