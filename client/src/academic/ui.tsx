@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Camera, Pencil } from 'lucide-react';
 import { compressImage, getEdits, getPhoto, saveEdits, savePhoto } from './store';
+import { findStudent, staffById } from './sampleData';
+import { portraitUrl, type PortraitSpec } from '../utils/portrait';
 import { ArrowLeft, ChevronRight, X } from 'lucide-react';
 import type { SubjectName } from './sampleData';
 
@@ -12,13 +14,35 @@ export const MAROON = '#a3161b';
 
 // ---------- avatar (initials now; image once photos come from the database) ----------
 const TINTS = ['#a3161b', '#c28535', '#8c1118', '#b4533a', '#7a4a1c', '#c7222a'];
-export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?: number; square?: boolean }> = ({ name, src: srcIn, pid, size = 48, square }) => {
-  const src = srcIn || getPhoto(pid);
+// who a record is, so a fitting portrait can be drawn when there is no photo
+const identityOf = (pid?: string): PortraitSpec | null => {
+  if (!pid) return null;
+  try {
+    const stf = pid.startsWith('stf-') ? staffById(pid) : null;
+    if (stf) {
+      const n = hash32(pid);
+      const age = Math.min(62, 24 + stf.experience + (n % 4));
+      return { seed: pid, gender: stf.gender, age, role: stf.role === 'HOD' ? 'hod' : stf.role === 'Teacher' ? 'teacher' : 'staff' };
+    }
+    if (/-\d+$/.test(pid) && !/-t\d+$/.test(pid)) {
+      const st = findStudent(pid);
+      if (st) return { seed: pid, gender: st.gender, age: Math.max(15, new Date().getFullYear() - Number(st.dob.slice(0, 4))), role: 'student' };
+    }
+  } catch { /* fall through to initials */ }
+  return null;
+};
+const hash32 = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+
+export const Avatar: React.FC<{ name: string; src?: string; pid?: string; size?: number; square?: boolean; person?: PortraitSpec }> = ({ name, src: srcIn, pid, size = 48, square, person }) => {
+  const spec = person || identityOf(pid);
+  const [bad, setBad] = useState(false); // a saved picture that no longer exists falls back to the portrait
+  const own = srcIn || getPhoto(pid);
+  const src = (own && !bad ? own : undefined) || (spec ? portraitUrl(spec) : undefined);
   const initials = name.replace(/^(Mr|Mrs|Ms|Dr)\.?\s+/i, '').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
   const tint = TINTS[(name.charCodeAt(0) + name.length) % TINTS.length];
   const style: React.CSSProperties = { width: size, height: size, borderRadius: square ? 14 : size, background: src ? undefined : tint, fontSize: size * 0.36 };
   return src ? (
-    <img src={src} alt={name} style={style} className="object-cover shrink-0" />
+    <img src={src} alt={name} style={style} className="object-cover shrink-0" loading="lazy" decoding="async" onError={() => setBad(true)} />
   ) : (
     <span style={style} className="inline-flex items-center justify-center shrink-0 text-white font-semibold select-none ring-2 ring-white shadow-sm">{initials}</span>
   );

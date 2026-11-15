@@ -20,6 +20,8 @@ import { BlueprintModule } from './academic/BlueprintModule';
 import { sectionsFor as scopedSections, deptOfHod } from './academic/scope';
 import { TimetableGenerator } from './academic/TimetableGenerator';
 import { LeaderboardAcademic } from './academic/LeaderboardAcademic';
+import { ParentConnectAcademic } from './academic/ParentConnectAcademic';
+import { CallOverlay } from './components/CallOverlay';
 import { ScreenBoundary } from './components/ScreenBoundary';
 import { clearAllState, clearTabState } from './academic/persist';
 
@@ -188,7 +190,8 @@ export function App() {
     admission: 'Admission',
     leaderboard: 'Leaderboard',
     settings: 'Settings',
-    'report-card': 'Report Card'
+    'report-card': 'Report Card',
+    'parent-connect': 'Parent Connect'
   };
 
   // While the saved session is being checked, show a light splash instead of an empty app shell
@@ -213,6 +216,7 @@ export function App() {
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-transparent text-slate-800 font-sans">
       <ToastContainer />
+      <CallOverlay />
       <CommandPalette onNavigate={(tab) => { selectTab(tab); setIsSidebarOpen(false); }} />
       {/* Left Sidebar — off-canvas drawer on mobile, static column from md: up */}
       <Sidebar
@@ -249,6 +253,8 @@ export function App() {
             <Suspense fallback={<AcademicLoading />}><TimetableAcademic onExit={() => setActiveTab('dashboard-home')} only={myClasses} staffId={user?.staffId} /></Suspense>
           ) : activeTab === 'blueprint' && (hostelRole || user?.role === 'WARDEN') ? (
             <Suspense fallback={<AcademicLoading />}><BlueprintModule onExit={() => setActiveTab('dashboard-home')} /></Suspense>
+          ) : activeTab === 'parent-connect' ? (
+            <ParentConnectAcademic onExit={() => selectTab('dashboard-home')} />
           ) : activeTab === 'leaderboard' && academicRole ? (
             <LeaderboardAcademic onExit={() => selectTab('dashboard-home')} only={myClasses} />
           ) : activeTab === 'exam-management' ? (

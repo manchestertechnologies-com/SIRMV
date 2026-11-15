@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { CallProvider } from './context/CallContext';
 import { initUiEffects } from './utils/uiEffects';
 import { initSelectMenu } from './utils/selectMenu';
 import { initScrollReveal } from './utils/scrollReveal';
@@ -45,7 +46,9 @@ initSelectMenu();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <CallProvider>
+        <App />
+      </CallProvider>
     </AuthProvider>
   </StrictMode>,
 );

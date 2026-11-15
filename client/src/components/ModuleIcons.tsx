@@ -480,3 +480,15 @@ export const IconBlueprint: React.FC<IconProps> = ({ className = 'w-12 h-12', si
     <path d="M38 41h6M41 38v6" stroke="#2B2D42" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
+
+// Parent Connect Icon
+export const IconParentConnect: React.FC<IconProps> = ({ className = 'w-12 h-12', size }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} width={size} height={size}>
+    <rect x="4" y="8" width="56" height="48" rx="12" fill="#FDECEA" stroke="#A3161B" strokeWidth="3" />
+    <circle cx="22" cy="24" r="6" fill="#F4C7A1" stroke="#7A1014" strokeWidth="2" />
+    <path d="M11 44c0-7 5-11 11-11s11 4 11 11" fill="#A3161B" />
+    <circle cx="44" cy="22" r="4.5" fill="#F4C7A1" stroke="#7A1014" strokeWidth="2" />
+    <path d="M36 38c0-5 3.5-8 8-8s8 3 8 8" fill="#C28535" />
+    <path d="M30 18c3 0 6 1 8 3M30 12c6 0 11 3 14 7" stroke="#C28535" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>
+);

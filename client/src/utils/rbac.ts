@@ -14,6 +14,7 @@ import {
   IconLiveClass,
   IconSms,
   IconNoticeboard,
+  IconParentConnect,
   IconCounsellings,
   IconHostel,
   IconBlueprint,
@@ -104,6 +105,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'gate-pass', label: 'My Outpass Requests', icon: IconGatePass, targetTab: 'gate-pass', description: 'Apply for gate pass & view OTP status' },
           { id: 'exam-seating', label: 'Exam Seating', icon: IconExamManagement, targetTab: 'exam-seating', description: 'Room, floor and seat for upcoming exams' },
           { id: 'hostel', label: 'Hostel Info', icon: IconHostel, targetTab: 'hostel', description: 'Room, floor & mess details' },
+          { id: 'parent-connect', label: 'Parent Connect', icon: IconParentConnect, targetTab: 'parent-connect', description: 'Voice call your parents from the hostel' },
           { id: 'noticeboard', label: 'Noticeboard', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Exam dates & college announcements' }
         ],
         otherTools: [
@@ -120,6 +122,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'attendance', label: 'Daily Attendance', icon: IconAttendance, targetTab: 'attendance', description: 'Subject-wise class attendance log' },
           { id: 'gate-pass', label: 'Outpass Approvals (OTP)', icon: IconGatePass, targetTab: 'gate-pass', description: 'Verify pickup person & approve outpass' },
           { id: 'exam-seating', label: 'Exam Seating', icon: IconExamManagement, targetTab: 'exam-seating', description: "Your ward's room, floor and seat for upcoming exams" },
+          { id: 'parent-connect', label: 'Parent Connect', icon: IconParentConnect, targetTab: 'parent-connect', description: 'Voice call your ward during calling hours' },
           { id: 'fee', label: 'Fee & Dues', icon: IconFee, targetTab: 'fee', description: 'Fee receipts & payment breakdown' },
           { id: 'noticeboard', label: 'College Notices', icon: IconNoticeboard, targetTab: 'noticeboard', description: 'Circulars from Principal office' }
         ],
@@ -171,6 +174,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'gate-pass', label: 'Hostel Outpasses', icon: IconGatePass, targetTab: 'gate-pass', description: 'Review hosteller check-in/out' },
           { id: 'students', label: 'Hosteller Registry & Admission', icon: IconStudents, targetTab: 'students', description: 'Resident student profile & emergency contacts' },
           { id: 'discipline', label: 'Student Discipline', icon: IconDiscipline, targetTab: 'discipline', description: 'Log & track hosteller discipline incidents' },
+          { id: 'parent-connect', label: 'Parent Connect', icon: IconParentConnect, targetTab: 'parent-connect', description: 'Calling hours, live calls & call log' },
           // Announcements are a Head Warden privilege only — a regular
           // Warden doesn't get to broadcast hostel-wide notices.
           ...(role === 'HEAD_WARDEN'
@@ -243,6 +247,7 @@ export function getRoleNavigation(role: UserRole | string | undefined): {
           { id: 'blueprint', label: 'Blueprint', icon: IconBlueprint, targetTab: 'blueprint' },
           { id: 'admission', label: 'Admission', icon: IconAdmission, targetTab: 'admission' },
           { id: 'leaderboard', label: 'Leaderboard', icon: IconLeaderboard, targetTab: 'leaderboard' },
+          { id: 'parent-connect', label: 'Parent Connect', icon: IconParentConnect, targetTab: 'parent-connect' },
           { id: 'settings', label: 'Settings', icon: IconSettings, targetTab: 'settings' },
         ],
         otherTools: []

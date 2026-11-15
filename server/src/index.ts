@@ -31,6 +31,7 @@ import { disciplineRouter } from './routes/discipline';
 import { floorIssuesRouter } from './routes/floorIssues';
 import { grievancesRouter } from './routes/grievances';
 import { questionPapersRouter } from './routes/questionPapers';
+import { parentConnectRouter } from './routes/parentConnect';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -81,6 +82,7 @@ app.use('/api/discipline', disciplineRouter);
 app.use('/api/floor-issues', floorIssuesRouter);
 app.use('/api/grievances', grievancesRouter);
 app.use('/api/question-papers', questionPapersRouter);
+app.use('/api/parent-connect', parentConnectRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
